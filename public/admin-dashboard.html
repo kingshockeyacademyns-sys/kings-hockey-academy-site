@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Registration Admin | Kings Hockey Academy</title>
+  <link rel="stylesheet" href="styles.css?v=admin-pages-2">
+</head>
+<body class="admin-page admin-dashboard-page" data-admin-page="dashboard">
+  <header class="site-header">
+    <div class="wrap brand-wrap">
+      <a class="brand" href="index.html" aria-label="Kings Hockey Academy home">
+        <span class="brand-mark"><img src="assets/kha-logo.png" alt="Kings Hockey Academy logo"></span>
+      </a>
+    </div>
+  </header>
+  <div class="menu-bar">
+    <nav class="main-nav wrap" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <div class="nav-dropdown">
+        <a href="teams.html">Teams</a>
+        <button class="nav-dropdown-toggle" type="button" aria-label="Show Teams subpages" aria-expanded="false"><span aria-hidden="true">⌄</span></button>
+        <div class="nav-submenu">
+          <a href="teams/nova-scotia-kings.html">Nova Scotia Kings</a>
+          <a href="teams/nova-scotia-vipers.html">Nova Scotia Vipers</a>
+        </div>
+      </div>
+      <a href="registration.html">Registration</a>
+    </nav>
+  </div>
+  <div class="alert error admin-message" data-admin-message hidden role="status"></div>
+  <header class="admin-head">
+    <a class="brand" href="index.html"><span class="crest">K</span><span>KINGS <small>REGISTRATION ADMIN</small></span></a>
+    <div class="admin-top-actions">
+      <button class="button button-red" data-admin-export type="button">DOWNLOAD CSV ↗</button>
+      <button class="admin-logout" data-admin-logout type="button">Sign out</button>
+    </div>
+  </header>
+  <main class="admin-main">
+    <p class="eyebrow red">PRIVATE REGISTRATION RECORDS</p>
+    <h1>REGISTRATION<br><em>INQUIRIES</em></h1>
+    <p data-admin-email></p>
+    <p data-registration-count>Loading…</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Received</th><th>Program</th><th>Player</th><th>Year</th><th>Parent / guardian</th><th>Contact</th><th>Details</th><th>Action</th></tr></thead>
+        <tbody data-registration-rows></tbody>
+      </table>
+    </div>
+    <p class="admin-privacy">Registration inquiries can include information about minors. Keep this account private and delete records when they are no longer needed.</p>
+  </main>
+  <script src="supabase-config.js"></script>
+  <script src="js/site.js"></script>
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

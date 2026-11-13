@@ -70,3 +70,7 @@
 .admin-login-intro{margin:-6px 0 0;color:#6e7978;font-size:12px;line-height:1.65}.admin-setup-link{font-weight:700;color:#966b1e!important}.admin-top-actions{display:flex;align-items:center;gap:18px}.admin-top-actions form{margin:0}.admin-logout{border:0;background:transparent;padding:10px 0;cursor:pointer}.admin-delete-form{margin:0}.admin-delete-button{border:1px solid #8d3028;background:transparent;color:#8d3028;padding:7px 10px;font:700 9px var(--sans);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}.admin-delete-button:hover{background:#8d3028;color:white}.admin-notice{background:#e7f0e5;color:#315d35;padding:12px 15px;max-width:520px}
 .program-card-blue{background:var(--black)}.program-card:after{display:none}
 .admin-page [hidden]{display:none!important}
+.admin-login-wrap{padding:52px 0 80px;min-height:calc(100vh - 372px)}
+.admin-login-wrap>.alert{width:min(420px,90vw);margin:0 auto 15px}
+.admin-login{margin:0 auto}
+.admin-message{margin:18px 7% 0}
