@@ -9,7 +9,7 @@ This folder contains the converted static website. The pages keep the design and
 - `supabase/functions/send-question/` — private email-forwarding code. The Resend API key stays in Supabase secrets, never in the website.
 - `.github/workflows/pages.yml` — publishes only `public/` to GitHub Pages when the `main` branch changes.
 
-The old PHP package remains in `work/current-site/` for reference and is not part of the published Pages website.
+The original PHP package is not included in this repository. GitHub Pages publishes only the static files in `public/`.
 
 ## Account setup guide
 
