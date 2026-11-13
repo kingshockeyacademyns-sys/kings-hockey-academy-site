@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Registration Admin | Kings Hockey Academy</title>
-  <link rel="stylesheet" href="styles.css?v=admin-pages-2">
+  <link rel="stylesheet" href="styles.css?v=admin-pages-3">
 </head>
 <body class="admin-page admin-dashboard-page" data-admin-page="dashboard">
   <header class="site-header">
@@ -34,33 +34,16 @@
   <header class="admin-head">
     <a class="brand" href="index.html"><span class="crest">K</span><span>KINGS <small>REGISTRATION ADMIN</small></span></a>
     <div class="admin-top-actions">
+      <a class="admin-top-link is-current" href="admin-dashboard.html" aria-current="page">SUBMISSIONS</a>
+      <a class="admin-top-link" href="admin-programs.html">PROGRAMS</a>
       <button class="button button-red" data-admin-export type="button">DOWNLOAD CSV ↗</button>
       <button class="admin-logout" data-admin-logout type="button">Sign out</button>
     </div>
   </header>
   <main class="admin-main">
     <p class="eyebrow red">PRIVATE REGISTRATION RECORDS</p>
-    <h1>REGISTRATION<br><em>INQUIRIES</em></h1>
+    <h1>REGISTRATION<br><em>SUBMISSIONS</em></h1>
     <p data-admin-email></p>
-    <section class="admin-programs" aria-labelledby="programs-heading">
-      <div class="admin-programs-heading">
-        <div><p class="eyebrow red">PARENT REGISTRATION</p><h2 id="programs-heading">PROGRAMS & FORMS</h2></div>
-        <p>Create a program and its registration form. Open programs appear on the public Camps & Programs page.</p>
-      </div>
-      <div class="alert" data-program-message hidden role="status"></div>
-      <form class="program-editor" data-program-form>
-        <label>Program name <b>*</b><input name="title" maxlength="120" placeholder="Winter Skills Camp" required></label>
-        <label>Season / category<input name="season" maxlength="60" placeholder="Winter 2027"></label>
-        <label class="program-editor-wide">Description<textarea name="description" rows="3" maxlength="1600" placeholder="Tell parents what players will work on."></textarea></label>
-        <label>Dates<input name="dates" maxlength="160" placeholder="Saturdays, January–March"></label>
-        <label>Location<input name="location" maxlength="160" placeholder="Arena or community"></label>
-        <label>Age groups<input name="age_groups" maxlength="160" placeholder="U11 and U13"></label>
-        <label>Fee<input name="fee" maxlength="80" placeholder="$150"></label>
-        <label class="program-editor-wide">Extra questions <small>Optional. Add one question on each line, up to 12.</small><textarea name="questions" rows="4" placeholder="What position does the player play?&#10;Any important details we should know?"></textarea></label>
-        <button class="button button-gold" type="submit">CREATE PROGRAM & FORM <b>↗</b></button>
-      </form>
-      <div class="admin-program-list" data-program-list><p>Loading programs…</p></div>
-    </section>
     <p data-registration-count>Loading…</p>
     <div class="table-wrap">
       <table>

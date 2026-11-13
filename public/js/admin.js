@@ -2,7 +2,11 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const configured = window.KHA_SUPABASE_URL?.startsWith('https://') && window.KHA_SUPABASE_PUBLISHABLE_KEY && !window.KHA_SUPABASE_PUBLISHABLE_KEY.includes('PASTE_');
 const client = configured ? createClient(window.KHA_SUPABASE_URL, window.KHA_SUPABASE_PUBLISHABLE_KEY) : null;
-const isDashboardPage = document.body.dataset.adminPage === 'dashboard';
+const adminPage = document.body.dataset.adminPage || 'login';
+const isDashboardPage = adminPage === 'dashboard';
+const isProgramsPage = adminPage === 'programs';
+const isLoginPage = adminPage === 'login';
+const isAuthenticatedAdminPage = isDashboardPage || isProgramsPage;
 const login = document.querySelector('[data-admin-login]');
 const notice = document.querySelector('[data-admin-message]');
 const setMessage = text => {
@@ -87,19 +91,19 @@ async function initializePage() {
     return;
   }
 
-  if (!isDashboardPage) {
+  if (isLoginPage) {
     if (session) window.location.replace('admin-dashboard.html');
     return;
   }
 
-  if (!session) {
+  if (!isAuthenticatedAdminPage || !session) {
     window.location.replace('admin.html');
     return;
   }
 
   document.querySelector('[data-admin-email]').textContent = session.user.email;
-  await loadPrograms();
-  await loadRows();
+  if (isProgramsPage) await loadPrograms();
+  if (isDashboardPage) await loadRows();
 }
 
 document.querySelector('[data-program-form]')?.addEventListener('submit', async event => {
@@ -171,8 +175,8 @@ document.querySelector('[data-admin-export]')?.addEventListener('click', async (
 
 if (client) {
   client.auth.onAuthStateChange(event => {
-    if (event === 'SIGNED_OUT' && isDashboardPage) window.location.replace('admin.html');
-    if (event === 'SIGNED_IN' && !isDashboardPage) window.location.replace('admin-dashboard.html');
+    if (event === 'SIGNED_OUT' && isAuthenticatedAdminPage) window.location.replace('admin.html');
+    if (event === 'SIGNED_IN' && isLoginPage) window.location.replace('admin-dashboard.html');
   });
 }
 
