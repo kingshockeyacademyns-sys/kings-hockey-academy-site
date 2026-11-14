@@ -11,6 +11,7 @@ create table if not exists public.programs (
   fee text check (char_length(fee) <= 80),
   questions jsonb not null default '[]'::jsonb
     check (jsonb_typeof(questions) = 'array' and jsonb_array_length(case when jsonb_typeof(questions) = 'array' then questions else '[]'::jsonb end) <= 12),
+  jersey_size_enabled boolean not null default false,
   is_open boolean not null default true,
   created_at timestamptz not null default now()
 );

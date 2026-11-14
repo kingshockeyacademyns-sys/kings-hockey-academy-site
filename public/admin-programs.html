@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Programs & Forms Admin | Kings Hockey Academy</title>
-  <link rel="stylesheet" href="styles.css?v=admin-pages-3">
+  <link rel="stylesheet" href="styles.css?v=admin-pages-4">
 </head>
 <body class="admin-page admin-programs-page" data-admin-page="programs">
   <header class="site-header">
@@ -41,28 +41,48 @@
   </header>
   <main class="admin-main">
     <p class="eyebrow red">PARENT REGISTRATION</p>
-    <h1>PROGRAMS<br><em>& FORMS</em></h1>
+    <h1>ACTIVE PROGRAM<br><em>REGISTRATIONS</em></h1>
     <p data-admin-email></p>
-    <p class="admin-program-intro">Create a program and its registration form. Open programs appear on the public Camps & Programs page.</p>
+    <p class="admin-program-intro">See the programs currently accepting registrations and open submissions for a specific program.</p>
+    <button class="button button-gold create-program-button" data-show-program-wizard type="button">CREATE A NEW REGISTRATION FORM <b>↗</b></button>
+    <section class="program-wizard" data-program-wizard hidden aria-labelledby="create-program-heading">
+      <div class="program-wizard-heading"><div><p class="eyebrow red">NEW PARENT REGISTRATION</p><h2 id="create-program-heading">CREATE A FORM</h2></div><button class="admin-logout" data-cancel-program type="button">Cancel</button></div>
+      <form class="program-editor" data-program-form>
+        <input type="hidden" name="season" data-selected-season>
+        <section class="program-step" data-program-step="season">
+          <p class="program-step-label">STEP 1 OF 2 · SELECT THE SEASON</p>
+          <p class="program-step-question">When will this program run?</p>
+          <div class="season-options">
+            <label class="season-option"><input type="radio" name="season" value="Fall/Winter" required><span>FALL / WINTER</span></label>
+            <label class="season-option"><input type="radio" name="season" value="Spring/Summer" required><span>SPRING / SUMMER</span></label>
+          </div>
+          <button class="button button-gold" data-next-program-step type="button">CONTINUE <b>↗</b></button>
+        </section>
+        <section class="program-step" data-program-step="details" hidden>
+          <p class="program-step-label">STEP 2 OF 2 · PROGRAM DETAILS</p>
+          <div class="program-editor-fields">
+            <label>Program name <b>*</b><input name="title" maxlength="120" placeholder="Winter Skills Camp" required></label>
+            <label class="program-editor-wide">Description<textarea name="description" rows="3" maxlength="1600" placeholder="Tell parents what players will work on."></textarea></label>
+            <label>Dates<input name="dates" maxlength="160" placeholder="Saturdays, January–March"></label>
+            <label>Location<input name="location" maxlength="160" placeholder="Arena or community"></label>
+            <label>Age groups<input name="age_groups" maxlength="160" placeholder="U11 and U13"></label>
+            <label>Fee<input name="fee" maxlength="80" placeholder="$150"></label>
+            <label class="program-editor-wide program-optional-field"><input name="jersey_size_enabled" type="checkbox" value="1"><span>Include an optional jersey size field on the registration form</span></label>
+            <label class="program-editor-wide">Extra questions <small>Optional. Add one question on each line, up to 12.</small><textarea name="questions" rows="3" placeholder="What position does the player play?&#10;Any important details we should know?"></textarea></label>
+          </div>
+          <div class="program-step-actions"><button class="button button-light" data-back-program-step type="button">BACK</button><button class="button button-gold" type="submit">PUBLISH REGISTRATION FORM <b>↗</b></button></div>
+        </section>
+      </form>
+    </section>
     <div class="alert" data-program-message hidden role="status"></div>
-    <form class="program-editor" data-program-form>
-      <label>Program name <b>*</b><input name="title" maxlength="120" placeholder="Winter Skills Camp" required></label>
-      <label>Season / category<input name="season" maxlength="60" placeholder="Winter 2027"></label>
-      <label class="program-editor-wide">Description<textarea name="description" rows="3" maxlength="1600" placeholder="Tell parents what players will work on."></textarea></label>
-      <label>Dates<input name="dates" maxlength="160" placeholder="Saturdays, January–March"></label>
-      <label>Location<input name="location" maxlength="160" placeholder="Arena or community"></label>
-      <label>Age groups<input name="age_groups" maxlength="160" placeholder="U11 and U13"></label>
-      <label>Fee<input name="fee" maxlength="80" placeholder="$150"></label>
-      <label class="program-editor-wide">Extra questions <small>Optional. Add one question on each line, up to 12.</small><textarea name="questions" rows="4" placeholder="What position does the player play?&#10;Any important details we should know?"></textarea></label>
-      <button class="button button-gold" type="submit">CREATE PROGRAM & FORM <b>↗</b></button>
-    </form>
-    <section aria-labelledby="existing-programs-heading" class="existing-programs">
-      <div class="existing-programs-heading"><h2 id="existing-programs-heading">YOUR PROGRAMS</h2><p>Preview a form or close and reopen registration at any time.</p></div>
+    <section aria-labelledby="active-programs-heading" class="existing-programs">
+      <div class="existing-programs-heading"><h2 id="active-programs-heading">OPEN REGISTRATIONS</h2><p>Select a program’s submission link to review parents’ forms.</p></div>
       <div class="admin-program-list" data-program-list><p>Loading programs…</p></div>
+      <details class="closed-programs" data-closed-programs hidden><summary>Closed programs</summary><div class="admin-program-list" data-closed-program-list></div></details>
     </section>
   </main>
   <script src="supabase-config.js"></script>
   <script src="js/site.js"></script>
-  <script type="module" src="js/admin.js?v=admin-pages-3"></script>
+  <script type="module" src="js/admin.js?v=admin-pages-4"></script>
 </body>
 </html>
