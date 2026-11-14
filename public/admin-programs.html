@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Programs & Forms Admin | Kings Hockey Academy</title>
-  <link rel="stylesheet" href="styles.css?v=admin-waivers-1">
+  <link rel="stylesheet" href="styles.css?v=registration-steps-1">
 </head>
 <body class="admin-page admin-programs-page" data-admin-page="programs">
   <header class="site-header">
@@ -67,8 +67,9 @@
             <label>Dates<input name="dates" maxlength="160" placeholder="Saturdays, January–March"></label>
             <label>Location<input name="location" maxlength="160" placeholder="Arena or community"></label>
             <label>Age groups<input name="age_groups" maxlength="160" placeholder="U11 and U13"></label>
-            <label>Fee<input name="fee" maxlength="80" placeholder="$150"></label>
+            <label>Full program cost (CAD) <b>*</b><input name="fee" type="number" min="0" max="100000" step="0.01" placeholder="600.00" required></label>
             <label class="program-editor-wide program-optional-field"><input name="jersey_size_enabled" type="checkbox" value="1"><span>Include an optional jersey size field on the registration form</span></label>
+            <label class="program-editor-wide program-optional-field"><input name="jersey_number_enabled" type="checkbox" value="1"><span>Include an optional player jersey number field on the registration form</span></label>
             <p class="program-editor-wide waiver-program-note">Active waivers from <a href="admin-waivers.html">Manage Waivers</a> are automatically included on every open registration form.</p>
             <label class="program-editor-wide">Extra questions <small>Optional. Add one question on each line, up to 12.</small><textarea name="questions" rows="3" placeholder="What position does the player play?&#10;Any important details we should know?"></textarea></label>
           </div>
@@ -85,6 +86,6 @@
   </main>
   <script src="supabase-config.js"></script>
   <script src="js/site.js"></script>
-  <script type="module" src="js/admin.js?v=admin-waivers-1"></script>
+  <script type="module" src="js/admin.js?v=registration-steps-1"></script>
 </body>
 </html>

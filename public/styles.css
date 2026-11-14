@@ -154,8 +154,35 @@
 .registration-waiver h3{margin:0 0 9px;font:700 17px/1.2 var(--serif);color:#211d14}
 .registration-waiver-body{white-space:normal;color:#514b3c;font-size:11px;line-height:1.8;overflow-wrap:anywhere}
 .registration-waiver .waiver-consent{margin-top:12px!important;border-top:1px solid #e2dccd}
+.registration-form [data-registration-step]{display:grid;gap:15px}
+.registration-form [data-registration-step][hidden]{display:none!important}
+.registration-step-label{padding:0 0 11px;border-bottom:1px solid #e9e4d9;color:#966b1e;font-size:9px;font-weight:700;letter-spacing:.13em}
+.registration-step-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:7px;padding-top:13px;border-top:1px solid #e9e4d9}
+.registration-step-actions>span{color:#746f63;font-size:9px}
+.registration-step-actions .button{border:0;cursor:pointer}
+.registration-step-intro{margin:0;color:#746f63;font-size:11px;line-height:1.7}
+.second-guardian-toggle{display:flex!important;align-items:center;gap:9px;padding:12px;border:1px solid #e2dccd;background:#f6f4ed;font-weight:400!important;cursor:pointer}
+.second-guardian-toggle input{width:auto!important;margin:0!important;accent-color:#b98724}
+.second-guardian-fields,.emergency-contact-fields{display:grid;gap:14px;padding:14px;border:1px solid #e2dccd;background:#fffefa}
+.emergency-contact-fields .eyebrow{margin:0}
+.review-program{display:grid;gap:5px;padding:15px;background:#f3f0e7;border-left:3px solid var(--gold)}
+.review-program>span:first-child{color:#746f63;font-size:8px;font-weight:700;letter-spacing:.12em}
+.review-program strong{font:700 21px/1.15 var(--serif)}
+.review-program>span,.review-program small{color:#746f63;font-size:10px;line-height:1.6}
+.review-section{padding:14px;border:1px solid #e2dccd;background:#fffefa}
+.review-section h3{margin:0 0 10px;font:700 16px/1.1 var(--serif)}
+.review-section dl{display:grid;grid-template-columns:1fr 1fr;gap:9px 15px;margin:0}
+.review-item dt{color:#746f63;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.review-item dd{margin:3px 0 0;color:#211d14;font-size:10px;line-height:1.6;overflow-wrap:anywhere;white-space:pre-wrap}
+.review-payment{padding:15px;background:#111;color:#f5f0e4}
+.review-payment .eyebrow{margin:0 0 12px;color:#d9ad4b}
+.review-payment>div{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-bottom:1px solid #3a3529;font-size:10px}
+.review-payment>div strong{color:#e6c46f;text-align:right}
+.review-payment>p:last-child{margin:12px 0 0;color:#d1ccbf;font-size:10px;line-height:1.8}
+.review-payment a{color:#e6c46f;text-decoration:underline}
+.no-registration-waivers{margin:0;padding:15px;background:#f6f4ed;color:#746f63;font-size:11px}
 .waiver-consent{display:flex!important;align-items:flex-start;gap:10px;margin:0!important;padding:12px;background:#f6f4ed}
 .waiver-consent input{flex:0 0 auto;width:auto!important;margin:2px 0 0!important;accent-color:#b98724}
 .waiver-consent span{font-size:10px!important;line-height:1.6}
 .waiver-consent a{color:#966b1e;text-decoration:underline}
-@media(max-width:620px){.admin-head{align-items:flex-start;gap:14px;flex-direction:column}.admin-top-actions{width:100%;gap:14px;flex-wrap:wrap}.admin-logout{margin-left:auto}.existing-programs-heading{align-items:flex-start;flex-direction:column;gap:8px}.program-editor{padding:14px}.program-editor-fields{grid-template-columns:1fr}.program-editor-wide{grid-column:auto}.program-optional-field{grid-column:auto}.season-options{grid-template-columns:1fr}.program-step-actions{align-items:stretch;flex-direction:column}.admin-program-card{align-items:flex-start;flex-direction:column}.admin-program-actions{gap:12px}.dynamic-program-facts{font-size:10px}.waiver-create-section{padding:12px}.waiver-editor{padding:12px}.waiver-admin-card{padding:12px}.waiver-admin-card-heading{align-items:flex-start;flex-direction:column;gap:0}}
+@media(max-width:620px){.admin-head{align-items:flex-start;gap:14px;flex-direction:column}.admin-top-actions{width:100%;gap:14px;flex-wrap:wrap}.admin-logout{margin-left:auto}.existing-programs-heading{align-items:flex-start;flex-direction:column;gap:8px}.program-editor{padding:14px}.program-editor-fields{grid-template-columns:1fr}.program-editor-wide{grid-column:auto}.program-optional-field{grid-column:auto}.season-options{grid-template-columns:1fr}.program-step-actions{align-items:stretch;flex-direction:column}.admin-program-card{align-items:flex-start;flex-direction:column}.admin-program-actions{gap:12px}.dynamic-program-facts{font-size:10px}.waiver-create-section{padding:12px}.waiver-editor{padding:12px}.waiver-admin-card{padding:12px}.waiver-admin-card-heading{align-items:flex-start;flex-direction:column;gap:0}.registration-step-actions{align-items:stretch;flex-direction:column}.registration-step-actions .button{width:100%;justify-content:space-between}.review-section dl{grid-template-columns:1fr}.review-payment>div{align-items:flex-start;flex-direction:column;gap:4px}.review-payment>div strong{text-align:left}}
