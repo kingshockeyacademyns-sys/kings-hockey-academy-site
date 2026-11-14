@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Programs & Forms Admin | Kings Hockey Academy</title>
-  <link rel="stylesheet" href="styles.css?v=admin-pages-5">
+  <link rel="stylesheet" href="styles.css?v=admin-waivers-1">
 </head>
 <body class="admin-page admin-programs-page" data-admin-page="programs">
   <header class="site-header">
@@ -36,6 +36,7 @@
     <div class="admin-top-actions">
       <a class="admin-top-link" href="admin-dashboard.html">SUBMISSIONS</a>
       <a class="admin-top-link is-current" href="admin-programs.html" aria-current="page">PROGRAMS</a>
+      <a class="admin-top-link" href="admin-waivers.html">WAIVERS</a>
       <button class="admin-logout" data-admin-logout type="button">Sign out</button>
     </div>
   </header>
@@ -68,7 +69,7 @@
             <label>Age groups<input name="age_groups" maxlength="160" placeholder="U11 and U13"></label>
             <label>Fee<input name="fee" maxlength="80" placeholder="$150"></label>
             <label class="program-editor-wide program-optional-field"><input name="jersey_size_enabled" type="checkbox" value="1"><span>Include an optional jersey size field on the registration form</span></label>
-            <section class="program-editor-wide waiver-upload-section"><div><h3>Waivers</h3><p>Attach up to 8 PDF waivers. Parents must agree to each one before sending the form. Uploaded PDFs are available on the public registration page, so only add documents intended for families.</p></div><div class="waiver-upload-list" data-admin-waiver-list></div><button class="button button-light waiver-add-button" type="button" data-add-waiver>Add a waiver</button></section>
+            <p class="program-editor-wide waiver-program-note">Active waivers from <a href="admin-waivers.html">Manage Waivers</a> are automatically included on every open registration form.</p>
             <label class="program-editor-wide">Extra questions <small>Optional. Add one question on each line, up to 12.</small><textarea name="questions" rows="3" placeholder="What position does the player play?&#10;Any important details we should know?"></textarea></label>
           </div>
           <div class="program-step-actions"><button class="button button-light" data-back-program-step type="button">BACK</button><button class="button button-gold" type="submit">PUBLISH REGISTRATION FORM <b>↗</b></button></div>
@@ -84,6 +85,6 @@
   </main>
   <script src="supabase-config.js"></script>
   <script src="js/site.js"></script>
-  <script type="module" src="js/admin.js?v=admin-pages-5"></script>
+  <script type="module" src="js/admin.js?v=admin-waivers-1"></script>
 </body>
 </html>

@@ -86,7 +86,7 @@ async function loadPublicPrograms() {
   }).join('');
 }
 
-function renderProgramDetails(program) {
+function renderProgramDetails(program, waivers) {
   document.querySelector('[data-program-title]').textContent = program.title.toUpperCase();
   document.querySelector('[data-program-season]').textContent = program.season || 'PROGRAM REGISTRATION';
   document.querySelector('[data-program-description]').textContent = program.description || 'Submit the form below and the academy will follow up with details and next steps.';
@@ -95,15 +95,11 @@ function renderProgramDetails(program) {
   const questions = Array.isArray(program.questions) ? program.questions : [];
   const additional = questions.map((question, index) => `<label>${escapeHtml(question)}<textarea name="extra_${index}" data-program-answer="${index}" rows="2" maxlength="1000"></textarea></label>`).join('');
   const jerseySize = program.jersey_size_enabled ? `<label>Jersey size (optional)<select name="jersey_size" data-program-answer="Jersey size (optional)"><option value="">Choose a size (optional)</option><option>Youth XS</option><option>Youth S</option><option>Youth M</option><option>Youth L</option><option>Youth XL</option><option>Adult XS</option><option>Adult S</option><option>Adult M</option><option>Adult L</option><option>Adult XL</option><option>Adult 2XL</option></select></label>` : '';
-  const waivers = Array.isArray(program.waivers) ? program.waivers : [];
-  const waiverFields = waivers.length ? `<fieldset class="waiver-consents"><legend>REQUIRED WAIVERS</legend><p>Please open and review each waiver, then check the box to confirm your agreement. All waivers must be approved before you can send the registration form.</p>${waivers.map(waiver => {
-    const fileUrl = client.storage.from('program-waivers').getPublicUrl(waiver.path).data.publicUrl;
-    return `<label class="waiver-consent"><input type="checkbox" name="waiver_${escapeHtml(waiver.id)}" value="1" data-waiver-consent="${escapeHtml(waiver.id)}" required><span>I have read and agree to the <a href="${escapeHtml(fileUrl)}" target="_blank" rel="noopener">${escapeHtml(waiver.title)} waiver</a>. <b>*</b></span></label>`;
-  }).join('')}</fieldset>` : '';
+  const waiverFields = waivers.length ? `<fieldset class="waiver-consents"><legend>REQUIRED WAIVERS</legend><p>Please review each waiver below and check the box to confirm your agreement. Every waiver must be approved before submitting.</p>${waivers.map(waiver => `<article class="registration-waiver"><h3>${escapeHtml(waiver.title)}</h3><div class="registration-waiver-body">${escapeHtml(waiver.body).replace(/\r?\n/g, '<br>')}</div><label class="waiver-consent"><input type="checkbox" name="waiver_${escapeHtml(waiver.id)}" value="1" data-waiver-consent="${escapeHtml(waiver.id)}" required><span>I have read and agree to the ${escapeHtml(waiver.title)}. <b>*</b></span></label></article>`).join('')}</fieldset>` : '';
   fields.innerHTML = `${jerseySize}${additional}${waiverFields}`;
 }
 
-function renderDynamicForm(programs, selectedProgramId) {
+function renderDynamicForm(programs, waivers, selectedProgramId) {
   const root = document.querySelector('[data-dynamic-form-root]');
   if (!root) return;
   const selectedProgram = programs.find(program => program.id === selectedProgramId) || programs[0];
@@ -114,7 +110,7 @@ function renderDynamicForm(programs, selectedProgramId) {
     const program = programs.find(item => item.id === select.value);
     if (!program) return;
     form.querySelector('[data-program-type]').value = program.title;
-    renderProgramDetails(program);
+    renderProgramDetails(program, waivers);
     document.querySelector('[data-program-title]').textContent = program.title.toUpperCase();
     document.querySelector('[data-program-season]').textContent = program.season || 'PROGRAM REGISTRATION';
     document.querySelector('[data-program-description]').textContent = program.description || 'Submit the form below and the academy will follow up with details and next steps.';
@@ -129,11 +125,15 @@ async function loadDynamicRegistration() {
   if (!document.querySelector('[data-dynamic-registration]')) return;
   const root = document.querySelector('[data-dynamic-form-root]');
   if (!client) { root.textContent = 'The registration form is not available right now. Please email kingshockeyacademyns@gmail.com for help.'; return; }
-  const { data, error } = await client.from('programs').select('id,title,season,description,dates,location,age_groups,fee,questions,jersey_size_enabled,waivers').eq('is_open', true).order('created_at', { ascending: false });
-  if (error || !data?.length) { root.textContent = 'No registrations are available right now. Please return to Camps & Programs later or contact the academy.'; return; }
+  const [{ data, error }, { data: waiverRows, error: waiverError }] = await Promise.all([
+    client.from('programs').select('id,title,season,description,dates,location,age_groups,fee,questions,jersey_size_enabled').eq('is_open', true).order('created_at', { ascending: false }),
+    client.from('waivers').select('id,title,body').eq('is_active', true).order('created_at', { ascending: true })
+  ]);
+  if (error || waiverError) { root.textContent = 'The registration form is being updated. Please contact the academy for help.'; return; }
+  if (!data?.length) { root.textContent = 'No registrations are available right now. Please return to Camps & Programs later or contact the academy.'; return; }
   const requestedId = new URLSearchParams(window.location.search).get('id');
   const selectedProgramId = data.some(program => program.id === requestedId) ? requestedId : data[0].id;
-  renderDynamicForm(data, selectedProgramId);
+  renderDynamicForm(data, waiverRows || [], selectedProgramId);
 }
 
 loadPublicPrograms();
