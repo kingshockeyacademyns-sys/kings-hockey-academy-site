@@ -70,15 +70,15 @@ function wireMultistepRegistrationForm(form) {
     if (activeStep === steps.length - 1) renderRegistrationReview(form);
     form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
-  form.querySelector('[data-step-next]').addEventListener('click', () => {
+  form.querySelectorAll('[data-step-next]').forEach(button => button.addEventListener('click', () => {
     const activeFields = [...steps[activeStep].querySelectorAll('input,select,textarea')];
     if (activeFields.some(field => !field.checkValidity())) {
       activeFields.find(field => !field.checkValidity())?.reportValidity();
       return;
     }
     showStep(activeStep + 1);
-  });
-  form.querySelector('[data-step-back]').addEventListener('click', () => showStep(activeStep - 1));
+  }));
+  form.querySelectorAll('[data-step-back]').forEach(button => button.addEventListener('click', () => showStep(activeStep - 1)));
   const secondGuardianFields = [...form.querySelectorAll('[data-second-guardian-field]')];
   const syncSecondGuardianRequirements = () => {
     const started = secondGuardianFields.some(field => field.value.trim());
