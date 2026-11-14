@@ -44,10 +44,12 @@ async function loadRows() {
     }).join('');
     const guardianName = [row.guardian_first, row.guardian_last].filter(Boolean).join(' ') || row.guardian_name;
     const secondGuardian = [row.second_guardian_first, row.second_guardian_last].filter(Boolean).join(' ');
-    const guardianAddress = row.guardian_address ? `<br><small>Address: ${esc(row.guardian_address)}</small>` : '';
-    const secondGuardianInfo = secondGuardian ? `<br><small>Second parent: ${esc(secondGuardian)} · ${esc(row.second_guardian_email)} · ${esc(row.second_guardian_phone)}${row.second_guardian_address ? ` · ${esc(row.second_guardian_address)}` : ''}</small>` : '';
+    const guardianAddress = [row.guardian_address, row.guardian_postal_code, row.guardian_province].filter(Boolean).length ? `<br><small>Address: ${esc([row.guardian_address, row.guardian_postal_code, row.guardian_province].filter(Boolean).join(', '))}</small>` : '';
+    const secondGuardianAddress = [row.second_guardian_address, row.second_guardian_postal_code, row.second_guardian_province].filter(Boolean).join(', ');
+    const secondGuardianInfo = secondGuardian ? `<br><small>Second parent: ${esc(secondGuardian)} · ${esc(row.second_guardian_email)} · ${esc(row.second_guardian_phone)}${secondGuardianAddress ? ` · ${esc(secondGuardianAddress)}` : ''}</small>` : '';
     const emergency = row.emergency_name ? `<br><small>Emergency contact: ${esc(row.emergency_name)} (${esc(row.emergency_relationship)}) · ${esc(row.emergency_phone)}</small>` : '';
-    const playerDetails = [row.jersey_number ? `Jersey #${row.jersey_number}` : null, row.player_address ? `Player address: ${row.player_address}` : null, row.allergies ? `Medical / allergies: ${row.allergies}` : null, row.experience, row.notes].filter(Boolean).map(item => `<small>${esc(item)}</small>`).join('<br>');
+    const playerAddress = [row.player_address, row.player_postal_code, row.player_province].filter(Boolean).join(', ');
+    const playerDetails = [row.jersey_number ? `Jersey #${row.jersey_number}` : null, playerAddress ? `Player address: ${playerAddress}` : null, row.allergies ? `Medical / allergies: ${row.allergies}` : null, row.experience, row.notes].filter(Boolean).map(item => `<small>${esc(item)}</small>`).join('<br>');
     const paymentTerms = row.payment_terms_accepted ? '<br><small>Payment terms acknowledged</small>' : '';
     return `<tr><td>${esc(new Date(row.created_at).toLocaleString())}</td><td>${esc(row.program_type)}</td><td>${esc(row.player_first)} ${esc(row.player_last)}</td><td>${esc(row.date_of_birth || row.birth_year)}</td><td>${esc(guardianName)}${guardianAddress}${secondGuardianInfo}</td><td><a href="mailto:${esc(row.email)}">${esc(row.email)}</a><br>${esc(row.phone)}${emergency}</td><td>${playerDetails}${answers}${waiverApprovals}${paymentTerms}</td><td><button class="admin-delete-button" data-delete="${esc(row.id)}" type="button">Delete</button></td></tr>`;
   }).join('');
@@ -311,7 +313,7 @@ document.querySelector('[data-admin-export]')?.addEventListener('click', async (
     return;
   }
 
-  const columns = ['id','program_id','program_type','custom_answers','waiver_consents','player_first','player_last','date_of_birth','birth_year','jersey_number','player_address','allergies','guardian_first','guardian_last','guardian_name','guardian_address','email','phone','second_guardian_first','second_guardian_last','second_guardian_email','second_guardian_phone','second_guardian_address','emergency_name','emergency_relationship','emergency_phone','payment_terms_accepted','town','experience','notes','created_at'];
+  const columns = ['id','program_id','program_type','custom_answers','waiver_consents','player_first','player_last','date_of_birth','birth_year','jersey_number','player_address','player_postal_code','player_province','allergies','guardian_first','guardian_last','guardian_name','guardian_address','guardian_postal_code','guardian_province','email','phone','second_guardian_first','second_guardian_last','second_guardian_email','second_guardian_phone','second_guardian_address','second_guardian_postal_code','second_guardian_province','emergency_name','emergency_relationship','emergency_phone','payment_terms_accepted','town','experience','notes','created_at'];
   const csv = [columns, ...data.map(row => columns.map(key => row[key] ?? ''))].map(row => row.map(value => {
     const safe = String(value).replace(/^[=+\-@]/, "'$&").replaceAll('"','""');
     return `"${safe}"`;
