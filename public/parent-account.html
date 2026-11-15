@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Family Account | Kings Hockey Academy</title>
+  <link rel="stylesheet" href="styles.css?v=parent-accounts-1">
+</head>
+<body class="parent-account-page" data-parent-account-page>
+  <header class="site-header"><div class="wrap brand-wrap"><a class="brand" href="index.html" aria-label="Kings Hockey Academy home"><span class="brand-mark"><img src="assets/kha-logo.png" alt="Kings Hockey Academy logo"></span></a></div></header>
+  <div class="menu-bar"><nav class="main-nav wrap" aria-label="Main navigation"><a href="index.html">Home</a><a href="about.html">About</a><div class="nav-dropdown"><a href="teams.html">Teams</a><button class="nav-dropdown-toggle" type="button" aria-label="Show Teams subpages" aria-expanded="false"><span aria-hidden="true">⌄</span></button><div class="nav-submenu"><a href="teams/nova-scotia-kings.html">Nova Scotia Kings</a><a href="teams/nova-scotia-vipers.html">Nova Scotia Vipers</a></div></div><a href="registration.html">Registration</a><a class="active" href="parent-account.html" aria-current="page">Login</a></nav></div>
+  <main>
+    <section class="page-hero registration-hero no-hero-logo wrap"><p class="eyebrow"><span></span> FAMILY ACCOUNT</p><h1>YOUR FAMILY.<br><em>READY TO PLAY.</em></h1><p class="lead">Save your children’s details once and securely reuse them on future registration forms.</p><span class="hero-vertical">FAMILY PORTAL</span></section>
+    <section class="parent-account-main"><div class="wrap parent-account-layout">
+      <aside class="registration-aside"><p class="eyebrow dark"><span></span> PRIVATE FAMILY PROFILES</p><h2>LESS TYPING.<br><em>MORE TIME ON ICE.</em></h2><p>Create a family account, add each child, and choose a saved profile when registering for a program.</p><div class="reg-note"><strong>Your information stays private</strong><br>Child profiles are visible only to the signed-in account that created them. You can update or delete a profile whenever you need.</div><p class="parent-admin-link"><a href="admin.html">Academy administrator? Sign in here ↗</a></p></aside>
+      <div class="parent-account-panel">
+        <div class="alert" data-parent-message hidden role="status"></div>
+        <section data-parent-auth>
+          <form class="registration-form parent-account-form" data-parent-signin>
+            <div class="form-title"><span>FAMILY SIGN IN</span><span>EXISTING ACCOUNT</span></div>
+            <label>Email address <b>*</b><input name="email" type="email" autocomplete="email" maxlength="254" required></label>
+            <label>Password <b>*</b><input name="password" type="password" autocomplete="current-password" minlength="8" required></label>
+            <button class="button button-gold" type="submit">SIGN IN <b>↗</b></button>
+            <p class="parent-account-switch">New to the family portal? <button type="button" data-show-signup>Create an account</button></p>
+          </form>
+          <form class="registration-form parent-account-form" data-parent-signup hidden>
+            <div class="form-title"><span>CREATE A FAMILY ACCOUNT</span><span>ONE ACCOUNT PER FAMILY</span></div>
+            <label>Email address <b>*</b><input name="email" type="email" autocomplete="email" maxlength="254" required></label>
+            <label>Create a password <b>*</b><input name="password" type="password" autocomplete="new-password" minlength="8" required><small>Use at least 8 characters.</small></label>
+            <label>Confirm password <b>*</b><input name="confirm_password" type="password" autocomplete="new-password" minlength="8" required></label>
+            <button class="button button-gold" type="submit">CREATE ACCOUNT <b>↗</b></button>
+            <p class="parent-account-switch">Already have an account? <button type="button" data-show-signin>Sign in</button></p>
+          </form>
+        </section>
+        <section class="parent-profile-area" data-parent-area hidden>
+          <div class="parent-profile-heading"><div><p class="eyebrow dark">SIGNED IN AS</p><strong data-parent-email></strong></div><button class="admin-logout" data-parent-signout type="button">Sign out</button></div>
+          <div class="form-title"><span>YOUR CHILDREN</span><span data-child-count>0 SAVED</span></div>
+          <p class="registration-step-intro">Add each child once. Their name, birth date, address, and medical notes will prefill future registrations.</p>
+          <div class="parent-children-list" data-parent-children><p>Loading profiles…</p></div>
+          <form class="registration-form parent-account-form child-profile-form" data-child-create>
+            <div class="form-title"><span>ADD A CHILD</span><span>* REQUIRED</span></div>
+            <div class="form-row"><label>First name <b>*</b><input name="first_name" maxlength="80" autocomplete="given-name" required></label><label>Last name <b>*</b><input name="last_name" maxlength="80" autocomplete="family-name" required></label></div>
+            <label>Date of birth <b>*</b><input name="date_of_birth" type="date" required></label>
+            <div class="address-fields"><label>Street &amp; number <b>*</b><input name="street_number" maxlength="300" autocomplete="street-address" required></label><div class="form-row"><label>Post code <b>*</b><input name="postal_code" maxlength="16" autocomplete="postal-code" required></label><label>Province <b>*</b><input name="province" maxlength="80" autocomplete="address-level1" required></label></div></div>
+            <label>Medical information / allergies<textarea name="medical_information" rows="3" maxlength="3000" placeholder="Optional. Add information the academy should know."></textarea></label>
+            <button class="button button-gold" type="submit">SAVE CHILD PROFILE <b>↗</b></button>
+          </form>
+        </section>
+      </div>
+    </div></section>
+  </main>
+  <footer class="site-footer"><div class="wrap footer-main"><div class="footer-identity"><a class="brand footer-brand" href="index.html"><span class="brand-mark"><img src="assets/kha-logo.png" alt=""></span><span class="brand-type">KINGS <small>HOCKEY ACADEMY</small></span></a><p class="footer-ownership">© <span id="year"></span> Kings Hockey Nova Scotia<br><small>Official rights holder of Kings Hockey Academy.</small></p></div><p>Develop better players.<br><strong>Build better people.</strong></p><div class="footer-contact"><span>CONTACT THE ACADEMY</span><a href="mailto:kingshockeyacademyns@gmail.com">kingshockeyacademyns@gmail.com</a><a href="tel:+17824403938">(782) 440-3938</a></div></div></footer>
+  <script>document.getElementById('year').textContent=new Date().getFullYear()</script>
+  <script src="supabase-config.js"></script><script src="js/site.js"></script><script type="module" src="js/parent-account.js?v=parent-accounts-1"></script>
+</body>
+</html>
