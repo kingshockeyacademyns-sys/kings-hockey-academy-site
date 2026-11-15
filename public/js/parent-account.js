@@ -9,10 +9,21 @@ const childrenList = document.querySelector('[data-parent-children]');
 const childCount = document.querySelector('[data-child-count]');
 const emailUpdates = document.querySelector('[data-email-updates]');
 const parentProfileForm = document.querySelector('[data-parent-profile]');
+const parentProfileSummary = document.querySelector('[data-parent-profile-summary]');
+const registrationsList = document.querySelector('[data-parent-registrations]');
 const passwordSetup = document.querySelector('[data-parent-set-password]');
 const accountContent = document.querySelector('[data-parent-account-content]');
+const allowedViews = new Set(['account', 'players', 'registrations']);
+const activeView = new URLSearchParams(window.location.search).get('view');
+const familyView = allowedViews.has(activeView) ? activeView : 'account';
 let passwordSetupRequired = /(?:^|&)type=(?:invite|recovery)(?:&|$)/.test(window.location.hash.slice(1));
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+
+document.querySelectorAll('[data-family-view]').forEach(section => { section.hidden = section.dataset.familyView !== familyView; });
+document.querySelectorAll('[data-family-view-link]').forEach(link => {
+  if (link.dataset.familyViewLink === familyView) link.setAttribute('aria-current', 'page');
+  else link.removeAttribute('aria-current');
+});
 
 function showMessage(text, kind = 'error') {
   messageBox.textContent = text;
@@ -67,6 +78,12 @@ async function loadParentProfile() {
     const input = parentProfileForm.elements.namedItem(`profile_${field}`);
     if (input) input.value = data?.[field] || '';
   });
+  if (!data) {
+    parentProfileSummary.innerHTML = '<p class="parent-empty-state">Your parent contact details have not been saved yet. Add them so they are ready when you register.</p><button class="button button-gold" data-parent-profile-edit type="button">ADD PARENT DETAILS <b>↗</b></button>';
+    return;
+  }
+  const line = (label, value) => value ? `<div><dt>${label}</dt><dd>${escapeHtml(value)}</dd></div>` : '';
+  parentProfileSummary.innerHTML = `<div class="family-profile-summary-heading"><h2>${escapeHtml(data.first_name)} ${escapeHtml(data.last_name)}</h2><button class="button button-light" data-parent-profile-edit type="button">EDIT ACCOUNT DETAILS</button></div><dl class="family-profile-details">${line('PHONE', data.phone)}${line('STREET & NUMBER', data.street_number)}${line('POST CODE', data.postal_code)}${line('PROVINCE', data.province)}${line('SECOND PARENT / GUARDIAN', [data.second_guardian_first, data.second_guardian_last].filter(Boolean).join(' '))}${line('SECOND PARENT EMAIL', data.second_guardian_email)}${line('SECOND PARENT PHONE', data.second_guardian_phone)}${line('SECOND PARENT ADDRESS', [data.second_guardian_street_number, data.second_guardian_postal_code, data.second_guardian_province].filter(Boolean).join(', '))}${line('EMERGENCY CONTACT', data.emergency_name)}${line('RELATIONSHIP', data.emergency_relationship)}${line('EMERGENCY PHONE', data.emergency_phone)}</dl>`;
 }
 
 async function saveParentProfile(event) {
@@ -88,28 +105,78 @@ async function saveParentProfile(event) {
     showMessage('Parent contact details could not be saved. Check the required fields and try again.');
     return;
   }
+  parentProfileForm.hidden = true;
+  parentProfileSummary.hidden = false;
+  await loadParentProfile();
   showMessage('Parent contact details saved for future registrations.', 'success');
 }
 
 function renderChildProfiles(children) {
   childCount.textContent = `${children.length} SAVED`;
   if (!children.length) {
-    childrenList.innerHTML = '<p class="parent-empty-state">No child profiles yet. Add your first child below.</p>';
+    childrenList.innerHTML = '<p class="parent-empty-state">No players saved yet. Choose “Add a player” to create the first profile.</p>';
     return;
   }
   childrenList.innerHTML = children.map(child => `
     <article class="parent-child-card">
-      <form class="parent-account-form" data-child-edit="${escapeHtml(child.id)}">
-        <div class="form-title"><span>${escapeHtml(child.first_name)} ${escapeHtml(child.last_name)}</span><span>SAVED PROFILE</span></div>
+      <div class="parent-player-heading"><div><p class="eyebrow dark">SAVED PLAYER</p><h2>${escapeHtml(child.first_name)} ${escapeHtml(child.last_name)}</h2></div><div class="parent-player-actions"><button class="parent-text-button" data-child-details-toggle type="button" aria-expanded="false">VIEW DETAILS</button><button class="parent-text-button" data-child-edit-toggle type="button">EDIT</button><button class="parent-delete-button" type="button" data-child-delete="${escapeHtml(child.id)}">Delete</button></div></div>
+      <dl class="parent-player-details" data-child-details hidden><div><dt>DATE OF BIRTH</dt><dd>${escapeHtml(child.date_of_birth)}</dd></div><div><dt>STREET & NUMBER</dt><dd>${escapeHtml(child.street_number)}</dd></div><div><dt>POST CODE</dt><dd>${escapeHtml(child.postal_code)}</dd></div><div><dt>PROVINCE</dt><dd>${escapeHtml(child.province)}</dd></div><div class="parent-player-medical"><dt>MEDICAL INFORMATION / ALLERGIES</dt><dd>${escapeHtml(child.medical_information || 'None provided')}</dd></div></dl>
+      <form class="parent-account-form" data-child-edit="${escapeHtml(child.id)}" hidden>
         <div class="form-row"><label>First name <b>*</b><input name="first_name" maxlength="80" value="${escapeHtml(child.first_name)}" required></label><label>Last name <b>*</b><input name="last_name" maxlength="80" value="${escapeHtml(child.last_name)}" required></label></div>
         <label>Date of birth <b>*</b><input name="date_of_birth" type="date" value="${escapeHtml(child.date_of_birth)}" required></label>
         <div class="address-fields"><label>Street &amp; number <b>*</b><input name="street_number" maxlength="300" value="${escapeHtml(child.street_number)}" required></label><div class="form-row"><label>Post code <b>*</b><input name="postal_code" maxlength="16" value="${escapeHtml(child.postal_code)}" required></label><label>Province <b>*</b><input name="province" maxlength="80" value="${escapeHtml(child.province)}" required></label></div></div>
         <label>Medical information / allergies<textarea name="medical_information" rows="3" maxlength="3000">${escapeHtml(child.medical_information)}</textarea></label>
-        <div class="parent-child-actions"><button class="button button-gold" type="submit">SAVE CHANGES <b>↗</b></button><button class="parent-delete-button" type="button" data-child-delete="${escapeHtml(child.id)}">Delete profile</button></div>
+        <div class="parent-child-actions"><button class="button button-gold" type="submit">SAVE CHANGES <b>↗</b></button><button class="parent-cancel-button" data-child-edit-cancel type="button">CANCEL</button></div>
       </form>
     </article>`).join('');
   childrenList.querySelectorAll('[data-child-edit]').forEach(form => form.addEventListener('submit', saveChildProfile));
   childrenList.querySelectorAll('[data-child-delete]').forEach(button => button.addEventListener('click', deleteChildProfile));
+  childrenList.querySelectorAll('[data-child-details-toggle]').forEach(button => button.addEventListener('click', () => {
+    const details = button.closest('.parent-child-card').querySelector('[data-child-details]');
+    details.hidden = !details.hidden;
+    button.setAttribute('aria-expanded', String(!details.hidden));
+    button.textContent = details.hidden ? 'VIEW DETAILS' : 'HIDE DETAILS';
+  }));
+  childrenList.querySelectorAll('[data-child-edit-toggle]').forEach(button => button.addEventListener('click', () => {
+    const form = button.closest('.parent-child-card').querySelector('[data-child-edit]');
+    form.hidden = false;
+    button.closest('.parent-child-card').querySelector('[data-child-details]').hidden = true;
+    button.closest('.parent-child-card').querySelector('[data-child-details-toggle]').setAttribute('aria-expanded', 'false');
+    button.closest('.parent-child-card').querySelector('[data-child-details-toggle]').textContent = 'VIEW DETAILS';
+  }));
+  childrenList.querySelectorAll('[data-child-edit-cancel]').forEach(button => button.addEventListener('click', () => { button.closest('[data-child-edit]').hidden = true; }));
+}
+
+function renderRegistrations(registrations) {
+  if (!registrations.length) {
+    registrationsList.innerHTML = '<p class="parent-empty-state">No registrations are linked to your family account yet. Sign in before submitting a registration to see it here.</p>';
+    return;
+  }
+  const players = new Map();
+  registrations.forEach(registration => {
+    const key = `${registration.player_first.toLowerCase()}|${registration.player_last.toLowerCase()}|${registration.date_of_birth || ''}`;
+    if (!players.has(key)) players.set(key, { first: registration.player_first, last: registration.player_last, registrations: [] });
+    players.get(key).registrations.push(registration);
+  });
+  registrationsList.innerHTML = [...players.values()].map(player => `<section class="parent-registration-player"><h2>${escapeHtml(player.first)} ${escapeHtml(player.last)}</h2><ul>${player.registrations.map(registration => {
+    const program = Array.isArray(registration.program) ? registration.program[0] : registration.program;
+    const title = program?.title || registration.program_type;
+    const facts = [program?.season, program?.dates, program?.location, program?.fee].filter(Boolean).map(escapeHtml).join(' · ');
+    const state = program?.is_open === false ? 'Registration closed' : 'Registration open';
+    return `<li><div><strong>${escapeHtml(title)}</strong><span class="parent-registration-state">${state}</span></div>${facts ? `<small>${facts}</small>` : ''}</li>`;
+  }).join('')}</ul></section>`).join('');
+}
+
+async function loadRegistrations(userId) {
+  registrationsList.innerHTML = '<p>Loading registrations…</p>';
+  const { data, error } = await client.from('registrations')
+    .select('id,program_id,program_type,player_first,player_last,date_of_birth,created_at,program:programs(title,season,is_open,dates,location,fee)')
+    .eq('family_user_id', userId).not('program_id', 'is', null).order('created_at', { ascending: false });
+  if (error) {
+    registrationsList.innerHTML = '<p class="parent-empty-state">Your registrations could not be loaded. Please refresh and try again.</p>';
+    return;
+  }
+  renderRegistrations(data || []);
 }
 
 async function loadChildren() {
@@ -145,7 +212,9 @@ async function syncSession(session) {
   passwordSetup.hidden = !passwordSetupRequired;
   accountContent.hidden = passwordSetupRequired;
   if (passwordSetupRequired) return;
-  await Promise.all([loadChildren(), loadEmailPreferences(), loadParentProfile()]);
+  if (familyView === 'players') await loadChildren();
+  if (familyView === 'account') await Promise.all([loadEmailPreferences(), loadParentProfile()]);
+  if (familyView === 'registrations') await loadRegistrations(session.user.id);
 }
 
 async function saveChildProfile(event) {
@@ -264,8 +333,31 @@ document.querySelector('[data-parent-signout]')?.addEventListener('click', async
 });
 
 parentProfileForm?.addEventListener('submit', saveParentProfile);
+parentProfileSummary?.addEventListener('click', event => {
+  if (!event.target.closest('[data-parent-profile-edit]')) return;
+  parentProfileSummary.hidden = true;
+  parentProfileForm.hidden = false;
+});
+document.querySelector('[data-parent-profile-cancel]')?.addEventListener('click', () => {
+  parentProfileForm.reset();
+  parentProfileForm.hidden = true;
+  parentProfileSummary.hidden = false;
+});
 
-document.querySelector('[data-child-create]')?.addEventListener('submit', async event => {
+const childCreateForm = document.querySelector('[data-child-create]');
+const childCreateToggle = document.querySelector('[data-child-create-toggle]');
+childCreateToggle?.addEventListener('click', () => {
+  childCreateForm.hidden = false;
+  childCreateToggle.hidden = true;
+  childCreateForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+document.querySelector('[data-child-create-cancel]')?.addEventListener('click', () => {
+  childCreateForm.reset();
+  childCreateForm.hidden = true;
+  childCreateToggle.hidden = false;
+});
+
+childCreateForm?.addEventListener('submit', async event => {
   event.preventDefault();
   const form = event.currentTarget;
   const values = profileValues(form);
@@ -279,6 +371,8 @@ document.querySelector('[data-child-create]')?.addEventListener('submit', async 
     return;
   }
   form.reset();
+  form.hidden = true;
+  childCreateToggle.hidden = false;
   showMessage('Child profile saved. You can select it on a future registration form.', 'success');
   await loadChildren();
 });

@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Family Account | Kings Hockey Academy</title>
-  <link rel="stylesheet" href="styles.css?v=parent-accounts-2">
+  <link rel="stylesheet" href="styles.css?v=family-portal-pages-1">
 </head>
 <body class="parent-account-page" data-parent-account-page>
   <header class="site-header"><div class="wrap brand-wrap"><a class="brand" href="index.html" aria-label="Kings Hockey Academy home"><span class="brand-mark"><img src="assets/kha-logo.png" alt="Kings Hockey Academy logo"></span></a></div></header>
   <div class="menu-bar"><nav class="main-nav wrap" aria-label="Main navigation"><a href="index.html">Home</a><a href="about.html">About</a><div class="nav-dropdown"><a href="teams.html">Teams</a><button class="nav-dropdown-toggle" type="button" aria-label="Show Teams subpages" aria-expanded="false"><span aria-hidden="true">⌄</span></button><div class="nav-submenu"><a href="teams/nova-scotia-kings.html">Nova Scotia Kings</a><a href="teams/nova-scotia-vipers.html">Nova Scotia Vipers</a></div></div><a href="registration.html">Registration</a><a class="active" href="parent-account.html" aria-current="page">Login</a></nav></div>
   <main>
-    <section class="page-hero registration-hero no-hero-logo wrap"><p class="eyebrow"><span></span> FAMILY ACCOUNT</p><h1>YOUR FAMILY.<br><em>READY TO PLAY.</em></h1><p class="lead">Save your children’s details once and securely reuse them on future registration forms.</p><span class="hero-vertical">FAMILY PORTAL</span></section>
+    <section class="page-hero registration-hero no-hero-logo wrap"><p class="eyebrow"><span></span> FAMILY ACCOUNT</p><h1>YOUR FAMILY.<br><em>READY TO PLAY.</em></h1><p class="lead">Manage your family details, saved players, and program registration history in one place.</p><span class="hero-vertical">FAMILY PORTAL</span></section>
     <section class="parent-account-main"><div class="wrap parent-account-layout">
       <aside class="registration-aside"><p class="eyebrow dark"><span></span> PRIVATE FAMILY PROFILES</p><h2>LESS TYPING.<br><em>MORE TIME ON ICE.</em></h2><p>Create a family account, add each child, and choose a saved profile when registering for a program.</p><div class="reg-note"><strong>Your information stays private</strong><br>Child profiles are visible only to the signed-in account that created them. You can update or delete a profile whenever you need.</div><p class="parent-admin-link"><a href="admin.html">Academy administrator? Sign in here ↗</a></p></aside>
       <div class="parent-account-panel">
@@ -51,29 +51,45 @@
           </form>
           <div data-parent-account-content>
           <div class="parent-profile-heading"><div><p class="eyebrow dark">SIGNED IN AS</p><strong data-parent-email></strong></div><button class="admin-logout" data-parent-signout type="button">Sign out</button></div>
-          <fieldset class="parent-email-preferences"><legend>NEWS &amp; NEW PROGRAM ANNOUNCEMENTS</legend><label><input type="checkbox" data-email-updates><span>Send me academy news and announcements about new programs.</span></label><small>Optional. You can unsubscribe from these messages at any time. Important changes to programs you’re registered in will still be sent.</small></fieldset>
-          <form class="registration-form parent-account-form parent-contact-profile-form" data-parent-profile>
-            <div class="form-title"><span>PARENT / GUARDIAN DETAILS</span><span>USED ON REGISTRATIONS</span></div>
-            <div class="form-row"><label>First name <b>*</b><input name="profile_first_name" maxlength="80" autocomplete="given-name" required></label><label>Last name <b>*</b><input name="profile_last_name" maxlength="80" autocomplete="family-name" required></label></div>
-            <label>Phone number <b>*</b><input name="profile_phone" type="tel" maxlength="40" autocomplete="tel" required></label>
-            <div class="address-fields"><label>Street &amp; number <b>*</b><input name="profile_street_number" maxlength="300" autocomplete="street-address" required></label><div class="form-row"><label>Post code <b>*</b><input name="profile_postal_code" maxlength="16" autocomplete="postal-code" required></label><label>Province <b>*</b><input name="profile_province" maxlength="80" autocomplete="address-level1" required></label></div></div>
-            <div class="account-registration-subsection"><p class="eyebrow dark">SECOND PARENT / GUARDIAN <span>(OPTIONAL)</span></p><p class="parent-account-help">If you add a second parent or guardian, complete all of their details.</p><div class="form-row"><label>First name<input name="profile_second_guardian_first" maxlength="80"></label><label>Last name<input name="profile_second_guardian_last" maxlength="80"></label></div><div class="form-row"><label>Email address<input name="profile_second_guardian_email" type="email" maxlength="254"></label><label>Phone number<input name="profile_second_guardian_phone" type="tel" maxlength="40"></label></div><div class="address-fields"><label>Street &amp; number<input name="profile_second_guardian_street_number" maxlength="300"></label><div class="form-row"><label>Post code<input name="profile_second_guardian_postal_code" maxlength="16"></label><label>Province<input name="profile_second_guardian_province" maxlength="80"></label></div></div></div>
-            <div class="form-title"><span>EMERGENCY CONTACT</span><span>* REQUIRED</span></div>
-            <div class="form-row"><label>Contact full name <b>*</b><input name="profile_emergency_name" maxlength="120" required></label><label>Relationship to player <b>*</b><input name="profile_emergency_relationship" maxlength="80" required></label></div>
-            <label>Emergency contact phone <b>*</b><input name="profile_emergency_phone" type="tel" maxlength="40" required></label>
-            <button class="button button-gold" type="submit">SAVE PARENT DETAILS <b>↗</b></button>
-          </form>
-          <div class="form-title"><span>YOUR CHILDREN</span><span data-child-count>0 SAVED</span></div>
-          <p class="registration-step-intro">Add each child once. Their name, birth date, address, and medical notes will prefill future registrations.</p>
-          <div class="parent-children-list" data-parent-children><p>Loading profiles…</p></div>
-          <form class="registration-form parent-account-form child-profile-form" data-child-create>
-            <div class="form-title"><span>ADD A CHILD</span><span>* REQUIRED</span></div>
-            <div class="form-row"><label>First name <b>*</b><input name="first_name" maxlength="80" autocomplete="given-name" required></label><label>Last name <b>*</b><input name="last_name" maxlength="80" autocomplete="family-name" required></label></div>
-            <label>Date of birth <b>*</b><input name="date_of_birth" type="date" required></label>
-            <div class="address-fields"><label>Street &amp; number <b>*</b><input name="street_number" maxlength="300" autocomplete="street-address" required></label><div class="form-row"><label>Post code <b>*</b><input name="postal_code" maxlength="16" autocomplete="postal-code" required></label><label>Province <b>*</b><input name="province" maxlength="80" autocomplete="address-level1" required></label></div></div>
-            <label>Medical information / allergies<textarea name="medical_information" rows="3" maxlength="3000" placeholder="Optional. Add information the academy should know."></textarea></label>
-            <button class="button button-gold" type="submit">SAVE CHILD PROFILE <b>↗</b></button>
-          </form>
+          <nav class="family-portal-nav" aria-label="Family account pages">
+            <a href="?view=account" data-family-view-link="account">Account</a>
+            <a href="?view=players" data-family-view-link="players">Players</a>
+            <a href="?view=registrations" data-family-view-link="registrations">Registrations</a>
+          </nav>
+          <section data-family-view="account">
+            <fieldset class="parent-email-preferences"><legend>NEWS &amp; NEW PROGRAM ANNOUNCEMENTS</legend><label><input type="checkbox" data-email-updates><span>Send me academy news and announcements about new programs.</span></label><small>Optional. You can unsubscribe from these messages at any time. Important changes to programs you’re registered in will still be sent.</small></fieldset>
+            <div class="family-profile-summary" data-parent-profile-summary><p>Loading parent details…</p></div>
+            <form class="registration-form parent-account-form parent-contact-profile-form" data-parent-profile hidden>
+              <div class="form-title"><span>PARENT / GUARDIAN DETAILS</span><span>USED ON REGISTRATIONS</span></div>
+              <div class="form-row"><label>First name <b>*</b><input name="profile_first_name" maxlength="80" autocomplete="given-name" required></label><label>Last name <b>*</b><input name="profile_last_name" maxlength="80" autocomplete="family-name" required></label></div>
+              <label>Phone number <b>*</b><input name="profile_phone" type="tel" maxlength="40" autocomplete="tel" required></label>
+              <div class="address-fields"><label>Street &amp; number <b>*</b><input name="profile_street_number" maxlength="300" autocomplete="street-address" required></label><div class="form-row"><label>Post code <b>*</b><input name="profile_postal_code" maxlength="16" autocomplete="postal-code" required></label><label>Province <b>*</b><input name="profile_province" maxlength="80" autocomplete="address-level1" required></label></div></div>
+              <div class="account-registration-subsection"><p class="eyebrow dark">SECOND PARENT / GUARDIAN <span>(OPTIONAL)</span></p><p class="parent-account-help">If you add a second parent or guardian, complete all of their details.</p><div class="form-row"><label>First name<input name="profile_second_guardian_first" maxlength="80"></label><label>Last name<input name="profile_second_guardian_last" maxlength="80"></label></div><div class="form-row"><label>Email address<input name="profile_second_guardian_email" type="email" maxlength="254"></label><label>Phone number<input name="profile_second_guardian_phone" type="tel" maxlength="40"></label></div><div class="address-fields"><label>Street &amp; number<input name="profile_second_guardian_street_number" maxlength="300"></label><div class="form-row"><label>Post code<input name="profile_second_guardian_postal_code" maxlength="16"></label><label>Province<input name="profile_second_guardian_province" maxlength="80"></label></div></div></div>
+              <div class="form-title"><span>EMERGENCY CONTACT</span><span>* REQUIRED</span></div>
+              <div class="form-row"><label>Contact full name <b>*</b><input name="profile_emergency_name" maxlength="120" required></label><label>Relationship to player <b>*</b><input name="profile_emergency_relationship" maxlength="80" required></label></div>
+              <label>Emergency contact phone <b>*</b><input name="profile_emergency_phone" type="tel" maxlength="40" required></label>
+              <div class="parent-child-actions"><button class="button button-gold" type="submit">SAVE PARENT DETAILS <b>↗</b></button><button class="parent-cancel-button" data-parent-profile-cancel type="button">CANCEL</button></div>
+            </form>
+          </section>
+          <section data-family-view="players" hidden>
+            <div class="form-title"><span>YOUR PLAYERS</span><span data-child-count>0 SAVED</span></div>
+            <p class="registration-step-intro">Your saved players can be selected on future registration forms. Open details or choose Edit to make changes.</p>
+            <div class="parent-children-list" data-parent-children><p>Loading profiles…</p></div>
+            <button class="button button-gold family-add-player" data-child-create-toggle type="button">ADD A PLAYER <b>＋</b></button>
+            <form class="registration-form parent-account-form child-profile-form" data-child-create hidden>
+              <div class="form-title"><span>ADD A PLAYER</span><span>* REQUIRED</span></div>
+              <div class="form-row"><label>First name <b>*</b><input name="first_name" maxlength="80" autocomplete="given-name" required></label><label>Last name <b>*</b><input name="last_name" maxlength="80" autocomplete="family-name" required></label></div>
+              <label>Date of birth <b>*</b><input name="date_of_birth" type="date" required></label>
+              <div class="address-fields"><label>Street &amp; number <b>*</b><input name="street_number" maxlength="300" autocomplete="street-address" required></label><div class="form-row"><label>Post code <b>*</b><input name="postal_code" maxlength="16" autocomplete="postal-code" required></label><label>Province <b>*</b><input name="province" maxlength="80" autocomplete="address-level1" required></label></div></div>
+              <label>Medical information / allergies<textarea name="medical_information" rows="3" maxlength="3000" placeholder="Optional. Add information the academy should know."></textarea></label>
+              <div class="parent-child-actions"><button class="button button-gold" type="submit">SAVE PLAYER <b>↗</b></button><button class="parent-cancel-button" data-child-create-cancel type="button">CANCEL</button></div>
+            </form>
+          </section>
+          <section data-family-view="registrations" hidden>
+            <div class="form-title"><span>PLAYER REGISTRATIONS</span><span>PROGRAM HISTORY</span></div>
+            <p class="registration-step-intro">See the programs each player is registered in, including programs that have finished. Programs removed by the academy are not shown here.</p>
+            <div class="parent-registrations-list" data-parent-registrations><p>Loading registrations…</p></div>
+          </section>
           </div>
         </section>
       </div>
@@ -81,6 +97,6 @@
   </main>
   <footer class="site-footer"><div class="wrap footer-main"><div class="footer-identity"><a class="brand footer-brand" href="index.html"><span class="brand-mark"><img src="assets/kha-logo.png" alt=""></span><span class="brand-type">KINGS <small>HOCKEY ACADEMY</small></span></a><p class="footer-ownership">© <span id="year"></span> Kings Hockey Nova Scotia<br><small>Official rights holder of Kings Hockey Academy.</small></p></div><p>Develop better players.<br><strong>Build better people.</strong></p><div class="footer-contact"><span>CONTACT THE ACADEMY</span><a href="mailto:kingshockeyacademyns@gmail.com">kingshockeyacademyns@gmail.com</a><a href="tel:+17824403938">(782) 440-3938</a></div></div></footer>
   <script>document.getElementById('year').textContent=new Date().getFullYear()</script>
-  <script src="supabase-config.js"></script><script src="js/site.js"></script><script type="module" src="js/parent-account.js?v=parent-accounts-2"></script>
+  <script src="supabase-config.js"></script><script src="js/site.js"></script><script type="module" src="js/parent-account.js?v=family-portal-pages-1"></script>
 </body>
 </html>
