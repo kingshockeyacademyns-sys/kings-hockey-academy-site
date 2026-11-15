@@ -157,7 +157,8 @@ async function loadPublicPrograms() {
   const lists = [...document.querySelectorAll('[data-season-programs]')];
   if (!lists.length) return;
   if (!client) return;
-  const { data, error } = await client.from('programs').select('id,title,season,description,dates,location,age_groups,fee,jersey_size_enabled,jersey_number_enabled').eq('is_open', true).order('created_at', { ascending: false });
+  const today = localDateString();
+  const { data, error } = await client.from('programs').select('id,title,season,description,dates,session_schedule,session_count,single_session_available,registration_closes_on,location,age_groups,fee,jersey_size_enabled,jersey_number_enabled').eq('is_open', true).or(`registration_closes_on.is.null,registration_closes_on.gte.${today}`).order('created_at', { ascending: false });
   const openPrograms = error ? [] : (data || []);
   const getSeasonGroup = program => {
     const season = String(program?.season || '').toLowerCase();
@@ -172,7 +173,7 @@ async function loadPublicPrograms() {
     const link = card.querySelector('[data-season-link]');
     if (list) {
       list.innerHTML = seasonPrograms.map(program => {
-        const details = [program.dates, program.location, program.age_groups, program.fee]
+        const details = [program.dates, program.session_schedule, program.session_count ? `${program.session_count} sessions` : '', program.single_session_available ? 'Single sessions available' : '', program.registration_closes_on ? `Registration closes ${formatProgramDate(program.registration_closes_on)}` : '', program.location, program.age_groups, program.fee]
           .filter(Boolean).map(escapeHtml).join(' · ');
         const optional = [program.jersey_size_enabled ? 'Optional jersey size' : '', program.jersey_number_enabled ? 'Optional jersey number' : '']
           .filter(Boolean).map(escapeHtml).join(' · ');
@@ -209,6 +210,28 @@ function programCost(program) {
   const numeric = raw.replace(/,/g, '').replace(/[^\d.-]/g, '');
   const parsed = Number(numeric);
   return numeric && Number.isFinite(parsed) ? parsed : null;
+}
+
+function localDateString() {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Halifax', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+  const part = type => parts.find(item => item.type === type)?.value;
+  return `${part('year')}-${part('month')}-${part('day')}`;
+}
+
+function formatProgramDate(value) {
+  if (!value) return '';
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function publicProgramFacts(program, includeFee = false) {
+  const cost = includeFee && program.fee ? formatProgramCost(program) : (includeFee ? program.fee : '');
+  return [program.dates, program.session_schedule, program.session_count ? `${program.session_count} sessions` : '', program.single_session_available ? 'Single sessions available' : '', program.registration_closes_on ? `Registration closes ${formatProgramDate(program.registration_closes_on)}` : '', program.location, program.age_groups, cost].filter(Boolean);
+}
+
+function formatProgramCost(program) {
+  const total = programCost(program);
+  return total === null ? program.fee : formatCAD(total);
 }
 
 function renderRegistrationReview(form) {
@@ -250,7 +273,7 @@ function renderRegistrationReview(form) {
   const total = program ? programCost(program) : null;
   const cost = total === null ? (program?.fee || 'Contact the academy') : formatCAD(total);
   const balance = total === null ? 'See full cost above' : formatCAD(Math.max(0, total - 100));
-  const programFacts = [program?.dates, program?.location, program?.age_groups].filter(Boolean).join(' · ');
+  const programFacts = publicProgramFacts(program || {}).join(' · ');
   review.innerHTML = `<div class="review-program"><span>SELECTED PROGRAM</span><strong>${escapeHtml(program?.title || '')}</strong><span>${escapeHtml(program?.season || '')}</span>${programFacts ? `<small>${escapeHtml(programFacts)}</small>` : ''}</div>${section('PLAYER DETAILS', playerRows)}${section('PARENT / GUARDIAN DETAILS', parentRows)}${section('EMERGENCY CONTACT', emergencyRows)}${waivers.length ? section('WAIVER APPROVALS', waivers) : ''}<section class="review-payment"><p class="eyebrow dark">PROGRAM COST & PAYMENT</p><div><span>Full program cost</span><strong>${escapeHtml(cost)}</strong></div><div><span>Deposit to reserve a spot</span><strong>${formatCAD(100)}</strong></div><div><span>Remaining balance after deposit</span><strong>${escapeHtml(balance)}</strong></div><p>Send the CAD $100 deposit by e-transfer to <a href="mailto:kingshockeyacademyns@gmail.com">kingshockeyacademyns@gmail.com</a>. The remaining balance may be paid by e-transfer or cash no later than the second session.</p></section>`;
 }
 
@@ -258,7 +281,7 @@ function renderProgramDetails(program) {
   document.querySelector('[data-program-title]').textContent = program.title.toUpperCase();
   document.querySelector('[data-program-season]').textContent = program.season || 'PROGRAM REGISTRATION';
   document.querySelector('[data-program-description]').textContent = program.description || 'Submit the form below and the academy will follow up with details and next steps.';
-  document.querySelector('[data-program-facts]').textContent = [program.dates, program.location, program.age_groups, program.fee].filter(Boolean).join(' · ');
+  document.querySelector('[data-program-facts]').textContent = publicProgramFacts(program, true).join(' · ');
   const fields = document.querySelector('[data-program-specific-fields]');
   const questions = Array.isArray(program.questions) ? program.questions : [];
   const additional = questions.map((question, index) => `<label>${escapeHtml(question)}<textarea name="extra_${index}" data-program-answer="${index}" rows="2" maxlength="1000"></textarea></label>`).join('');
@@ -320,8 +343,7 @@ function renderDynamicForm(programs, waivers, selectedProgramId, savedChildren =
     document.querySelector('[data-program-title]').textContent = program.title.toUpperCase();
     document.querySelector('[data-program-season]').textContent = program.season || 'PROGRAM REGISTRATION';
     document.querySelector('[data-program-description]').textContent = program.description || 'Submit the form below and the academy will follow up with details and next steps.';
-    const total = programCost(program);
-    document.querySelector('[data-program-facts]').textContent = [program.dates, program.location, program.age_groups, program.fee ? (total === null ? program.fee : formatCAD(total)) : null].filter(Boolean).join(' · ');
+    document.querySelector('[data-program-facts]').textContent = publicProgramFacts(program, true).join(' · ');
     if (form.querySelector('[data-registration-review]')) renderRegistrationReview(form);
   };
   select.addEventListener('change', update);
@@ -334,7 +356,7 @@ async function loadDynamicRegistration() {
   const root = document.querySelector('[data-dynamic-form-root]');
   if (!client) { root.textContent = 'The registration form is not available right now. Please email kingshockeyacademyns@gmail.com for help.'; return; }
   const [{ data, error }, { data: waiverRows, error: waiverError }] = await Promise.all([
-    client.from('programs').select('id,title,season,description,dates,location,age_groups,fee,questions,jersey_size_enabled,jersey_number_enabled').eq('is_open', true).order('created_at', { ascending: false }),
+    client.from('programs').select('id,title,season,description,dates,session_schedule,session_count,single_session_available,registration_closes_on,location,age_groups,fee,questions,jersey_size_enabled,jersey_number_enabled').eq('is_open', true).or(`registration_closes_on.is.null,registration_closes_on.gte.${localDateString()}`).order('created_at', { ascending: false }),
     client.from('waivers').select('id,title,body').eq('is_active', true).order('created_at', { ascending: true })
   ]);
   if (error || waiverError) { root.textContent = 'The registration form is being updated. Please contact the academy for help.'; return; }

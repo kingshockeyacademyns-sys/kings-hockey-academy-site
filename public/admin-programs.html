@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Programs & Forms Admin | Kings Hockey Academy</title>
-  <link rel="stylesheet" href="styles.css?v=registration-program-groups-1">
+  <link rel="stylesheet" href="styles.css?v=program-schedule-1">
 </head>
 <body class="admin-page admin-programs-page" data-admin-page="programs">
   <header class="site-header">
@@ -65,10 +65,28 @@
           <div class="program-editor-fields">
             <label>Program name <b>*</b><input name="title" maxlength="120" placeholder="Winter Skills Camp" required></label>
             <label class="program-editor-wide">Description<textarea name="description" rows="3" maxlength="1600" placeholder="Tell parents what players will work on."></textarea></label>
-            <label>Dates<input name="dates" maxlength="160" placeholder="Saturdays, January–March"></label>
+            <label>Program dates<input name="dates" maxlength="160" placeholder="January–March"></label>
+            <label>Registration closes on<input name="registration_closes_on" type="date"><small>Optional. Registration closes at the end of this date.</small></label>
+            <label class="program-editor-wide">Program schedule and time<input name="session_schedule" maxlength="160" placeholder="Saturdays, 6:30–8:40 PM"></label>
             <label>Location<input name="location" maxlength="160" placeholder="Arena or community"></label>
-            <label>Age groups<input name="age_groups" maxlength="160" placeholder="U11 and U13"></label>
+            <div class="program-editor-wide program-age-group-picker">
+              <span class="program-age-group-label">Age groups <b>*</b></span>
+              <details class="age-group-dropdown" data-age-group-dropdown>
+                <summary data-age-group-summary>Select age groups</summary>
+                <div class="age-group-options" role="group" aria-label="Available age groups">
+                  <label><input type="checkbox" name="age_groups" value="U7"><span>U7</span></label>
+                  <label><input type="checkbox" name="age_groups" value="U9"><span>U9</span></label>
+                  <label><input type="checkbox" name="age_groups" value="U11"><span>U11</span></label>
+                  <label><input type="checkbox" name="age_groups" value="U13"><span>U13</span></label>
+                  <label><input type="checkbox" name="age_groups" value="U15"><span>U15</span></label>
+                  <label><input type="checkbox" name="age_groups" value="U18"><span>U18</span></label>
+                </div>
+              </details>
+              <small data-age-group-error hidden>Select at least one age group.</small>
+            </div>
+            <label>Number of sessions<input name="session_count" type="number" min="1" max="1000" step="1" placeholder="Optional"></label>
             <label>Full program cost (CAD) <b>*</b><input name="fee" type="number" min="0" max="100000" step="0.01" placeholder="600.00" required></label>
+            <label class="program-editor-wide program-optional-field"><input name="single_session_available" type="checkbox" value="1"><span>Single-session registration is available</span></label>
             <label class="program-editor-wide program-optional-field"><input name="jersey_size_enabled" type="checkbox" value="1"><span>Include an optional jersey size field on the registration form</span></label>
             <label class="program-editor-wide program-optional-field"><input name="jersey_number_enabled" type="checkbox" value="1"><span>Include an optional player jersey number field on the registration form</span></label>
             <p class="program-editor-wide waiver-program-note">Active waivers from <a href="admin-waivers.html">Manage Waivers</a> are automatically included on every open registration form.</p>
@@ -87,6 +105,6 @@
   </main>
   <script src="supabase-config.js"></script>
   <script src="js/site.js"></script>
-  <script type="module" src="js/admin.js?v=registration-program-groups-1"></script>
+  <script type="module" src="js/admin.js?v=program-schedule-1"></script>
 </body>
 </html>

@@ -85,8 +85,8 @@ async function loadPrograms() {
     return;
   }
 
-  const openPrograms = data.filter(program => program.is_open);
-  const closedPrograms = data.filter(program => !program.is_open);
+  const openPrograms = data.filter(isProgramOpen);
+  const closedPrograms = data.filter(program => !isProgramOpen(program));
   if (!openPrograms.length) list.innerHTML = '<p class="admin-program-empty">There are no open program registrations yet. Create a form to get started.</p>';
   else {
     const cards = await Promise.all(openPrograms.map(async program => {
@@ -104,7 +104,9 @@ async function loadPrograms() {
   }
 
   document.querySelectorAll('[data-program-toggle]').forEach(button => button.addEventListener('click', async () => {
-    const { error: updateError } = await client.from('programs').update({ is_open: button.dataset.nextState === 'true' }).eq('id', button.dataset.programToggle);
+    const update = { is_open: button.dataset.nextState === 'true' };
+    if (update.is_open && button.dataset.closedByDeadline === 'true') update.registration_closes_on = null;
+    const { error: updateError } = await client.from('programs').update(update).eq('id', button.dataset.programToggle);
     if (updateError) {
       setProgramMessage('The program status could not be changed.', 'error');
       return;
@@ -154,10 +156,30 @@ async function loadWaivers() {
 }
 
 function programCard(program, submissionCount) {
-  const action = program.is_open
+  const isOpen = isProgramOpen(program);
+  const closedByDeadline = program.registration_closes_on && program.registration_closes_on < localDateString();
+  const action = isOpen
     ? `<a class="program-submissions-link" href="admin-dashboard.html?program_id=${encodeURIComponent(program.id)}">VIEW SUBMISSIONS${submissionCount === null ? '' : ` (${submissionCount})`} ↗</a>`
     : `<span class="program-closed-label">CLOSED</span>`;
-  return `<article class="admin-program-card"><div><span class="admin-program-status ${program.is_open ? 'is-open' : ''}">${program.is_open ? 'OPEN' : 'CLOSED'}</span><h3>${esc(program.title)}</h3><p>${esc(program.season || 'Program')}${program.dates ? ` · ${esc(program.dates)}` : ''}</p><p class="admin-program-meta">${[program.location, program.age_groups, program.fee ? `CAD $${program.fee}` : null].filter(Boolean).map(esc).join(' · ')}</p>${program.jersey_size_enabled ? '<small>Jersey size field included</small>' : ''}${program.jersey_number_enabled ? '<small>Jersey number field included</small>' : ''}${program.questions?.length ? `<small class="program-question-count">${program.questions.length} extra question${program.questions.length === 1 ? '' : 's'} on the form</small>` : ''}</div><div class="admin-program-actions">${action}<a href="program-registration.html?id=${encodeURIComponent(program.id)}" target="_blank" rel="noopener">Preview form ↗</a><button class="admin-delete-button" type="button" data-program-toggle="${esc(program.id)}" data-next-state="${program.is_open ? 'false' : 'true'}">${program.is_open ? 'Close registration' : 'Open registration'}</button></div></article>`;
+  const closes = program.registration_closes_on ? `Registration closes ${formatProgramDate(program.registration_closes_on)}` : '';
+  const facts = [program.dates, program.session_schedule, program.session_count ? `${program.session_count} sessions` : '', program.single_session_available ? 'Single sessions available' : '', closes, program.location, program.age_groups, program.fee ? `CAD $${program.fee}` : ''].filter(Boolean);
+  return `<article class="admin-program-card"><div><span class="admin-program-status ${isOpen ? 'is-open' : ''}">${isOpen ? 'OPEN' : 'CLOSED'}</span><h3>${esc(program.title)}</h3><p>${esc(program.season || 'Program')}</p><p class="admin-program-meta">${facts.map(esc).join(' · ')}</p>${program.jersey_size_enabled ? '<small>Jersey size field included</small>' : ''}${program.jersey_number_enabled ? '<small>Jersey number field included</small>' : ''}${program.questions?.length ? `<small class="program-question-count">${program.questions.length} extra question${program.questions.length === 1 ? '' : 's'} on the form</small>` : ''}</div><div class="admin-program-actions">${action}<a href="program-registration.html?id=${encodeURIComponent(program.id)}" target="_blank" rel="noopener">Preview form ↗</a><button class="admin-delete-button" type="button" data-program-toggle="${esc(program.id)}" data-next-state="${isOpen ? 'false' : 'true'}" data-closed-by-deadline="${closedByDeadline ? 'true' : 'false'}">${isOpen ? 'Close registration' : 'Open registration'}</button></div></article>`;
+}
+
+function localDateString() {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Halifax', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+  const part = type => parts.find(item => item.type === type)?.value;
+  return `${part('year')}-${part('month')}-${part('day')}`;
+}
+
+function formatProgramDate(value) {
+  if (!value) return '';
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function isProgramOpen(program) {
+  return Boolean(program.is_open) && (!program.registration_closes_on || program.registration_closes_on >= localDateString());
 }
 
 function setProgramMessage(text, kind = 'success') {
@@ -263,11 +285,29 @@ document.querySelector('[data-cancel-program]')?.addEventListener('click', () =>
   setProgramMessage('');
 });
 
+const ageGroupDropdown = document.querySelector('[data-age-group-dropdown]');
+const ageGroupSummary = document.querySelector('[data-age-group-summary]');
+const ageGroupError = document.querySelector('[data-age-group-error]');
+const updateAgeGroupSummary = () => {
+  const selected = [...(ageGroupDropdown?.querySelectorAll('input[name="age_groups"]:checked') || [])].map(input => input.value);
+  if (ageGroupSummary) ageGroupSummary.textContent = selected.length ? selected.join(', ') : 'Select age groups';
+  if (selected.length && ageGroupError) ageGroupError.hidden = true;
+};
+ageGroupDropdown?.querySelectorAll('input[name="age_groups"]').forEach(input => input.addEventListener('change', updateAgeGroupSummary));
+programForm?.addEventListener('reset', () => setTimeout(updateAgeGroupSummary));
+
 programForm?.addEventListener('submit', async event => {
   event.preventDefault();
   if (!client) return;
   const form = event.currentTarget;
   const values = Object.fromEntries(new FormData(form).entries());
+  const ageGroups = [...form.querySelectorAll('input[name="age_groups"]:checked')].map(input => input.value);
+  if (!ageGroups.length) {
+    if (ageGroupError) ageGroupError.hidden = false;
+    if (ageGroupDropdown) ageGroupDropdown.open = true;
+    ageGroupDropdown?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
   const questions = values.questions.split('\n').map(question => question.trim()).filter(Boolean);
   if (questions.length > 12) {
     setProgramMessage('Add no more than 12 extra questions.', 'error');
@@ -277,7 +317,10 @@ programForm?.addEventListener('submit', async event => {
     const { error } = await client.from('programs').insert({
       title: values.title.trim(), season: values.season.trim() || null, description: values.description.trim() || null,
       dates: values.dates.trim() || null, location: values.location.trim() || null,
-      age_groups: values.age_groups.trim() || null, fee: values.fee.trim() || null, questions,
+      age_groups: ageGroups.join(', '), registration_closes_on: values.registration_closes_on || null,
+      session_schedule: values.session_schedule.trim() || null,
+      session_count: values.session_count ? Number.parseInt(values.session_count, 10) : null,
+      single_session_available: values.single_session_available === '1', fee: values.fee.trim() || null, questions,
       jersey_size_enabled: values.jersey_size_enabled === '1', jersey_number_enabled: values.jersey_number_enabled === '1', is_open: true
     });
     if (error) throw error;
