@@ -8,6 +8,9 @@ const adminMain = document.querySelector('.account-admin-main');
 const list = document.querySelector('[data-account-list]');
 const search = document.querySelector('[data-account-search]');
 const programSelect = document.querySelector('[data-admin-program]');
+const campaignType = document.querySelector('[data-campaign-type]');
+const campaignProgram = document.querySelector('[data-campaign-program]');
+const campaignProgramWrap = document.querySelector('[data-campaign-program-wrap]');
 const waiverRoot = document.querySelector('[data-admin-waivers]');
 const programSpecific = document.querySelector('[data-admin-program-specific]');
 let accounts = [];
@@ -27,7 +30,7 @@ function show(box, text, kind = 'error') {
 function renderAccounts() {
   const term = String(search?.value || '').trim().toLowerCase();
   const visible = accounts.filter(account => account.email.toLowerCase().includes(term));
-  const eligible = accounts.filter(account => account.email_updates && account.email_confirmed && !account.disabled && !account.is_admin);
+  const eligible = accounts.filter(account => account.news_opt_in && account.email_confirmed && !account.disabled && !account.is_admin);
   document.querySelector('[data-account-total]').textContent = `${visible.length} of ${accounts.length} account${accounts.length === 1 ? '' : 's'}`;
   document.querySelector('[data-email-audience]').textContent = String(eligible.length);
   const statCards = document.querySelectorAll('[data-account-stats] article strong');
@@ -41,8 +44,10 @@ function renderAccounts() {
     const actionButtons = account.is_admin
       ? '<span class="account-protected-label">Protected</span>'
       : `<button type="button" class="account-action-button" data-account-status="${account.disabled ? 'enable' : 'disable'}" data-account-id="${esc(account.id)}">${account.disabled ? 'Enable' : 'Disable'}</button><button type="button" class="account-delete-button" data-account-delete="${esc(account.id)}" data-account-email="${esc(account.email)}">Delete</button>`;
-    return `<tr><td><strong>${esc(account.email || 'No email')}</strong>${account.id === adminUser?.id ? '<small>Signed in account</small>' : ''}</td><td><span class="account-status ${account.disabled ? 'is-disabled' : account.is_admin ? 'is-admin' : ''}">${status}</span></td><td>${account.child_count} saved</td><td>${account.email_updates ? 'Opted in' : 'Not opted in'}</td><td>${esc(dateText(account.created_at))}</td><td>${esc(dateText(account.last_sign_in_at))}</td><td><div class="account-row-actions">${actionButtons}</div></td></tr>`;
-  }).join('') : `<tr><td colspan="7">${accounts.length ? 'No accounts match that email.' : 'No accounts found.'}</td></tr>`;
+    const profile = account.parent_profile;
+    const contact = profile ? `<strong>${esc(profile.first_name)} ${esc(profile.last_name)}</strong><small>${esc(profile.phone)}<br>${esc([profile.street_number, profile.postal_code, profile.province].filter(Boolean).join(', '))}</small><details><summary>More details</summary><small>${profile.second_guardian_first ? `Second parent: ${esc([profile.second_guardian_first, profile.second_guardian_last].filter(Boolean).join(' '))}<br>${esc(profile.second_guardian_email)} · ${esc(profile.second_guardian_phone)}<br>${esc([profile.second_guardian_street_number, profile.second_guardian_postal_code, profile.second_guardian_province].filter(Boolean).join(', '))}<br>` : ''}Emergency contact: ${esc(profile.emergency_name)} (${esc(profile.emergency_relationship)})<br>${esc(profile.emergency_phone)}</small></details>` : '<span class="account-status is-disabled">Details missing</span>';
+    return `<tr><td><strong>${esc(account.email || 'No email')}</strong>${account.id === adminUser?.id ? '<small>Signed in account</small>' : ''}</td><td>${contact}</td><td><span class="account-status ${account.disabled ? 'is-disabled' : account.is_admin ? 'is-admin' : ''}">${status}</span></td><td>${account.child_count} saved</td><td>${account.news_opt_in ? 'Opted in' : 'Not opted in'}</td><td>${esc(dateText(account.created_at))}</td><td>${esc(dateText(account.last_sign_in_at))}</td><td><div class="account-row-actions">${actionButtons}</div></td></tr>`;
+  }).join('') : `<tr><td colspan="8">${accounts.length ? 'No accounts match that email.' : 'No accounts found.'}</td></tr>`;
   list.querySelectorAll('[data-account-status]').forEach(button => button.addEventListener('click', changeStatus));
   list.querySelectorAll('[data-account-delete]').forEach(button => button.addEventListener('click', removeAccount));
 }
@@ -50,7 +55,10 @@ function renderAccounts() {
 async function accountAction(payload) {
   const { data, error } = await client.functions.invoke('manage-family-accounts', { body: payload });
   if (error) {
-    const detail = error.context?.json?.error || data?.error;
+    let detail = data?.error;
+    if (!detail && error.context?.clone) {
+      try { detail = (await error.context.clone().json())?.error; } catch { /* Keep the readable fallback. */ }
+    }
     throw new Error(detail || 'The account action could not be completed.');
   }
   if (data?.error) throw new Error(data.error);
@@ -58,14 +66,14 @@ async function accountAction(payload) {
 }
 
 async function loadAccounts() {
-  list.innerHTML = '<tr><td colspan="7">Loading family accounts…</td></tr>';
+  list.innerHTML = '<tr><td colspan="8">Loading family accounts…</td></tr>';
   try {
     const data = await accountAction({ action: 'list' });
     accounts = data.users || [];
     renderAccounts();
     show(feedback, '');
   } catch (error) {
-    list.innerHTML = '<tr><td colspan="7">Family account details could not be loaded.</td></tr>';
+    list.innerHTML = '<tr><td colspan="8">Family account details could not be loaded.</td></tr>';
     show(feedback, error.message);
   }
 }
@@ -107,6 +115,7 @@ async function loadRegistrationOptions() {
     return;
   }
   programs = programResult.data || [];
+  if (campaignProgram) campaignProgram.innerHTML = '<option value="">Select a program</option>' + programs.map(program => `<option value="${esc(program.id)}">${esc(program.title)} — ${esc(program.season || '')}</option>`).join('');
   const available = programs.filter(program => program.is_open);
   programSelect.innerHTML = available.length ? '<option value="">Select a program</option>' + available.map(program => `<option value="${esc(program.id)}">${esc(program.title)} — ${esc(program.season || '')}</option>`).join('') : '<option value="">No open programs available</option>';
   if (waiverResult.error) {
@@ -117,6 +126,33 @@ async function loadRegistrationOptions() {
     waiverRoot.innerHTML = `<legend>WAIVERS &amp; ACKNOWLEDGEMENTS</legend>${waivers.length ? waivers.map(waiver => `<label class="admin-waiver-approval"><input type="checkbox" name="waiver_${esc(waiver.id)}" value="true" required><span><strong>${esc(waiver.title)}</strong><small>${esc(waiver.body)}</small></span></label>`).join('') : '<p>No active waivers. The parent payment acknowledgement is still required.</p>'}`;
   }
   updateProgramSummary();
+  void refreshCampaignAudience();
+}
+
+function updateCampaignMode() {
+  const announcement = campaignType?.value === 'announcement';
+  campaignProgramWrap.hidden = announcement;
+  campaignProgram.required = !announcement;
+  document.querySelector('[data-audience-label]').textContent = announcement ? 'opted-in family account(s) for academy news and new-program announcements' : 'registered email address(es) for this program';
+  document.querySelector('[data-campaign-preview-footer]').textContent = announcement
+    ? 'Optional academy news and new-program announcements. Unsubscribe link included.'
+    : 'Factual program-change notices go to addresses on registrations for the selected program.';
+  void refreshCampaignAudience();
+}
+
+async function refreshCampaignAudience() {
+  const audience = document.querySelector('[data-email-audience]');
+  const announcement = campaignType?.value === 'announcement';
+  if (announcement) {
+    audience.textContent = String(accounts.filter(a => a.news_opt_in && a.email_confirmed && !a.disabled && !a.is_admin).length);
+    return;
+  }
+  const programId = campaignProgram?.value;
+  if (!programId || !client) { audience.textContent = '—'; return; }
+  audience.textContent = '…';
+  const { data, error } = await client.functions.invoke('send-family-update', { body: { action: 'audience', message_type: 'program_update', program_id: programId } });
+  if (error || data?.error) { audience.textContent = 'Unavailable'; return; }
+  audience.textContent = String(data.count || 0);
 }
 
 function updateProgramSummary() {
@@ -211,7 +247,10 @@ document.querySelector('[data-account-invite]')?.addEventListener('submit', asyn
   const submit = form.querySelector('button[type="submit"]');
   submit.disabled = true;
   try {
-    const result = await accountAction({ action: 'invite', email: form.elements.email.value.trim() });
+    const values = new FormData(form);
+    const profileFields = ['first_name','last_name','phone','street_number','postal_code','province','second_guardian_first','second_guardian_last','second_guardian_email','second_guardian_phone','second_guardian_street_number','second_guardian_postal_code','second_guardian_province','emergency_name','emergency_relationship','emergency_phone'];
+    const profile = Object.fromEntries(profileFields.map(field => [field, String(values.get(`profile_${field}`) || '').trim()]));
+    const result = await accountAction({ action: 'invite', email: form.elements.email.value.trim(), profile });
     form.reset();
     show(feedback, `Invitation sent to ${result.email}.`, 'success');
     await loadAccounts();
@@ -227,27 +266,37 @@ document.querySelector('[data-account-campaign]')?.addEventListener('input', eve
 
 document.querySelector('[data-account-campaign]')?.addEventListener('submit', async event => {
   event.preventDefault();
-  const count = accounts.filter(a => a.email_updates && a.email_confirmed && !a.disabled && !a.is_admin).length;
-  if (!count) { show(feedback, 'No active families have opted in to academy updates yet.'); return; }
   const form = event.currentTarget;
+  const messageType = campaignType.value;
+  const countText = document.querySelector('[data-email-audience]').textContent;
+  const count = Number(countText);
+  if (!Number.isFinite(count)) { show(feedback, 'The recipient count is not available yet. Refresh the count and try again.'); return; }
+  if (!count) { show(feedback, messageType === 'program_update' ? 'No registration email addresses are listed for this program.' : 'No active families have opted in to academy news and new-program announcements yet.'); return; }
   const subject = form.elements.subject.value.trim();
-  if (!confirm(`Send “${subject}” to ${count} opted-in family account${count === 1 ? '' : 's'}? This will send an email to each recipient.`)) return;
+  const messageLabel = messageType === 'program_update' ? `registered email address${count === 1 ? '' : 'es'} for ${campaignProgram.selectedOptions[0]?.textContent || 'this program'}` : `opted-in family account${count === 1 ? '' : 's'}`;
+  if (!confirm(`Send “${subject}” to ${count} ${messageLabel}? This will send an email to each recipient.`)) return;
   const submit = form.querySelector('button[type="submit"]');
   submit.disabled = true;
-  show(feedback, 'Sending update…', 'success');
-  const { data, error } = await client.functions.invoke('send-family-update', { body: { subject, message: form.elements.message.value.trim(), mailing_address: form.elements.mailing_address.value.trim() } });
+  show(feedback, messageType === 'program_update' ? 'Sending required program notice…' : 'Sending optional academy announcement…', 'success');
+  const { data, error } = await client.functions.invoke('send-family-update', { body: { subject, message: form.elements.message.value.trim(), mailing_address: form.elements.mailing_address.value.trim(), message_type: messageType, program_id: campaignProgram.value } });
   submit.disabled = false;
   if (error || data?.error) {
-    show(feedback, error?.context?.json?.error || data?.error || 'The email could not be sent.');
+    let detail = data?.error;
+    if (!detail && error?.context?.clone) {
+      try { detail = (await error.context.clone().json())?.error; } catch { /* Keep the readable fallback. */ }
+    }
+    show(feedback, detail || 'The email could not be sent.');
     return;
   }
   form.reset();
   form.dispatchEvent(new Event('input', { bubbles: true }));
-  show(feedback, data.failed ? `Sent to ${data.accepted}; ${data.failed} could not be sent. Check the email service before retrying.` : `Update accepted for delivery to ${data.accepted} opted-in family account${data.accepted === 1 ? '' : 's'}.`, data.failed ? 'error' : 'success');
+  show(feedback, data.failed ? `Sent to ${data.accepted}; ${data.failed} could not be sent. Check the email service before retrying.` : messageType === 'program_update' ? `Required program notice accepted for delivery to ${data.accepted} registration address${data.accepted === 1 ? '' : 'es'}.` : `Academy news accepted for delivery to ${data.accepted} opted-in family account${data.accepted === 1 ? '' : 's'}.`, data.failed ? 'error' : 'success');
 });
 
 document.querySelector('[data-admin-registration]')?.addEventListener('submit', addRegistration);
 programSelect?.addEventListener('change', updateProgramSummary);
+campaignType?.addEventListener('change', updateCampaignMode);
+campaignProgram?.addEventListener('change', () => { void refreshCampaignAudience(); });
 search?.addEventListener('input', renderAccounts);
 document.querySelector('[data-account-refresh]')?.addEventListener('click', () => { void loadAccounts(); });
 document.querySelector('[data-account-signout]')?.addEventListener('click', async () => { await client.auth.signOut(); window.location.replace('admin.html'); });
@@ -263,6 +312,7 @@ async function initialize() {
   adminMain.hidden = false;
   document.querySelector('[data-account-admin-email]').textContent = adminUser.email || '';
   await Promise.all([loadAccounts(), loadRegistrationOptions()]);
+  updateCampaignMode();
   client.auth.onAuthStateChange(event => { if (event === 'SIGNED_OUT') window.location.replace('admin.html'); });
 }
 

@@ -18,7 +18,7 @@ Deno.serve(async request => {
   }
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(token)) return page('This unsubscribe link is invalid or expired.', 400);
   if (request.method === 'GET') {
-    return new Response(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Email preferences | Kings Hockey Academy</title><body style="font:16px Arial,sans-serif;max-width:620px;margin:12vh auto;padding:24px;color:#201d19"><h1>Kings Hockey Academy</h1><p>Stop receiving academy program updates at this email address?</p><form method="post"><input type="hidden" name="token" value="${token}"><button style="padding:12px 18px;background:#111;color:#fff;border:0;cursor:pointer" type="submit">Unsubscribe from updates</button></form></body></html>`, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+    return new Response(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Email preferences | Kings Hockey Academy</title><body style="font:16px Arial,sans-serif;max-width:620px;margin:12vh auto;padding:24px;color:#201d19"><h1>Kings Hockey Academy</h1><p>Stop receiving academy news and new-program announcements at this email address?</p><form method="post"><input type="hidden" name="token" value="${token}"><button style="padding:12px 18px;background:#111;color:#fff;border:0;cursor:pointer" type="submit">Unsubscribe from news and announcements</button></form></body></html>`, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
   }
   const projectUrl = Deno.env.get('SUPABASE_URL');
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -30,5 +30,5 @@ Deno.serve(async request => {
     return page('Email preferences are temporarily unavailable. Please try again later.', 503);
   }
   if (!data) return page('This unsubscribe link is invalid or has already been used.', 404);
-  return page('You have been unsubscribed from academy program updates. You may still receive messages about registrations you have submitted.');
+  return page('You have been unsubscribed from academy news and new-program announcements. Required messages about registrations you have submitted will still be sent.');
 });

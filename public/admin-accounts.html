@@ -20,31 +20,42 @@
     <h1>FAMILY<br><em>ACCOUNTS</em></h1>
     <p data-account-admin-email></p>
     <p class="admin-program-intro">Review family accounts, control sign-in access, invite a new family, and add a player to a program registration.</p>
-    <div class="account-stats" data-account-stats><article><strong>—</strong><span>ACCOUNTS</span></article><article><strong>—</strong><span>ACTIVE FAMILIES</span></article><article><strong>—</strong><span>EMAIL UPDATE SUBSCRIBERS</span></article></div>
+    <div class="account-stats" data-account-stats><article><strong>—</strong><span>ACCOUNTS</span></article><article><strong>—</strong><span>ACTIVE FAMILIES</span></article><article><strong>—</strong><span>NEWS &amp; ANNOUNCEMENT SUBSCRIBERS</span></article></div>
     <div class="alert" data-account-feedback hidden role="status"></div>
 
     <section class="account-admin-section" aria-labelledby="invite-account-heading">
       <div class="account-admin-section-heading"><div><p class="eyebrow red">NEW FAMILY</p><h2 id="invite-account-heading">INVITE AN ACCOUNT</h2></div></div>
-      <p class="account-admin-note">An invitation email lets the parent set their own password. The new account will not be opted in to academy updates unless the parent chooses that in their account settings.</p>
-      <form class="account-invite-form" data-account-invite><label>Email address <b>*</b><input name="email" type="email" maxlength="254" autocomplete="email" required></label><button class="button button-gold" type="submit">SEND FAMILY INVITATION <b>↗</b></button></form>
+      <p class="account-admin-note">Enter the parent’s contact and emergency details now. The invitation lets them set their own password and update their information later. News and new-program announcements remain optional.</p>
+      <form class="account-invite-form" data-account-invite>
+        <label>Parent / guardian email <b>*</b><input name="email" type="email" maxlength="254" autocomplete="email" required></label>
+        <div class="form-row"><label>First name <b>*</b><input name="profile_first_name" maxlength="80" required></label><label>Last name <b>*</b><input name="profile_last_name" maxlength="80" required></label></div>
+        <label>Phone number <b>*</b><input name="profile_phone" type="tel" maxlength="40" required></label>
+        <div class="address-fields"><label>Street &amp; number <b>*</b><input name="profile_street_number" maxlength="300" required></label><div class="form-row"><label>Post code <b>*</b><input name="profile_postal_code" maxlength="16" required></label><label>Province <b>*</b><input name="profile_province" maxlength="80" required></label></div></div>
+        <div class="account-registration-subsection"><p class="eyebrow dark">SECOND PARENT / GUARDIAN <span>(OPTIONAL)</span></p><p class="account-admin-note">Leave all fields empty if there is no second parent or guardian.</p><div class="form-row"><label>First name<input name="profile_second_guardian_first" maxlength="80"></label><label>Last name<input name="profile_second_guardian_last" maxlength="80"></label></div><div class="form-row"><label>Email address<input name="profile_second_guardian_email" type="email" maxlength="254"></label><label>Phone number<input name="profile_second_guardian_phone" type="tel" maxlength="40"></label></div><div class="address-fields"><label>Street &amp; number<input name="profile_second_guardian_street_number" maxlength="300"></label><div class="form-row"><label>Post code<input name="profile_second_guardian_postal_code" maxlength="16"></label><label>Province<input name="profile_second_guardian_province" maxlength="80"></label></div></div></div>
+        <div class="form-row"><label>Emergency contact name <b>*</b><input name="profile_emergency_name" maxlength="120" required></label><label>Relationship to player <b>*</b><input name="profile_emergency_relationship" maxlength="80" required></label></div>
+        <label>Emergency contact phone <b>*</b><input name="profile_emergency_phone" type="tel" maxlength="40" required></label>
+        <button class="button button-gold" type="submit">SEND FAMILY INVITATION <b>↗</b></button>
+      </form>
     </section>
 
     <section class="account-admin-section" aria-labelledby="all-accounts-heading">
       <div class="account-admin-section-heading"><div><p class="eyebrow red">ACCESS &amp; STATUS</p><h2 id="all-accounts-heading">ALL ACCOUNTS</h2></div><button class="button button-light" data-account-refresh type="button">REFRESH</button></div>
       <div class="account-search"><label>Find an account<input type="search" data-account-search placeholder="Search by email"></label><span data-account-total>Loading accounts…</span></div>
-      <div class="account-table-wrap"><table class="account-table"><thead><tr><th>Email</th><th>Status</th><th>Saved players</th><th>Academy updates</th><th>Created</th><th>Last sign-in</th><th>Actions</th></tr></thead><tbody data-account-list><tr><td colspan="7">Loading family accounts…</td></tr></tbody></table></div>
+      <div class="account-table-wrap"><table class="account-table"><thead><tr><th>Email</th><th>Parent contact details</th><th>Status</th><th>Saved players</th><th>News &amp; announcements</th><th>Created</th><th>Last sign-in</th><th>Actions</th></tr></thead><tbody data-account-list><tr><td colspan="8">Loading family accounts…</td></tr></tbody></table></div>
       <p class="account-admin-note">Disabling an account blocks sign-in but keeps its saved profiles and registration history. Deleting an account permanently removes its saved child profiles; registration submissions remain in the submissions area.</p>
     </section>
 
     <section class="account-admin-section" aria-labelledby="family-email-heading">
       <div class="account-admin-section-heading"><div><p class="eyebrow red">PROGRAM ANNOUNCEMENTS</p><h2 id="family-email-heading">EMAIL FAMILIES</h2></div></div>
-      <p class="account-admin-note">Campaigns go only to active, email-confirmed families who opted in to academy updates. Existing families are excluded until they opt in. Each email includes an unsubscribe link.</p>
-      <p class="account-audience-count"><strong data-email-audience>—</strong> opted-in family account(s) will receive this message.</p>
+      <p class="account-admin-note">Send a factual change notice to families registered in a specific program, or send optional academy news and new-program announcements to families who opted in. Keep registered-program notices focused on dates, location, schedule, safety, or other changes affecting that program.</p>
       <form class="account-campaign-form" data-account-campaign>
+        <label>Message type <b>*</b><select name="message_type" data-campaign-type><option value="program_update">Required notice for a registered program</option><option value="announcement">Optional academy news or new program announcement</option></select></label>
+        <label data-campaign-program-wrap>Program <b>*</b><select name="program_id" data-campaign-program required><option value="">Loading programs…</option></select></label>
+        <p class="account-audience-count"><strong data-email-audience>—</strong> <span data-audience-label>registered email address(es) for this program</span></p>
         <label>Email subject <b>*</b><input name="subject" maxlength="160" required placeholder="New winter skills camp dates"></label>
         <label>Message <b>*</b><textarea name="message" rows="8" maxlength="8000" required placeholder="Write the program update for opted-in families…"></textarea></label>
         <label>Academy mailing address <b>*</b><textarea name="mailing_address" rows="2" maxlength="300" required placeholder="Enter the academy mailing address to include in every email"></textarea></label>
-        <div class="account-campaign-preview"><span>EMAIL PREVIEW</span><strong data-campaign-preview-subject>Your subject will appear here</strong><p data-campaign-preview-body>Your message will appear here.</p><small>Kings Hockey Academy · unsubscribe link included</small></div>
+        <div class="account-campaign-preview"><span>EMAIL PREVIEW</span><strong data-campaign-preview-subject>Your subject will appear here</strong><p data-campaign-preview-body>Your message will appear here.</p><small data-campaign-preview-footer>Program change notices go to families registered in the selected program.</small></div>
         <button class="button button-gold" type="submit">REVIEW &amp; SEND UPDATE <b>↗</b></button>
       </form>
     </section>

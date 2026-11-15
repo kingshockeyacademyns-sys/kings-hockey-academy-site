@@ -8,6 +8,7 @@ const messageBox = document.querySelector('[data-parent-message]');
 const childrenList = document.querySelector('[data-parent-children]');
 const childCount = document.querySelector('[data-child-count]');
 const emailUpdates = document.querySelector('[data-email-updates]');
+const parentProfileForm = document.querySelector('[data-parent-profile]');
 const passwordSetup = document.querySelector('[data-parent-set-password]');
 const accountContent = document.querySelector('[data-parent-account-content]');
 let passwordSetupRequired = /(?:^|&)type=(?:invite|recovery)(?:&|$)/.test(window.location.hash.slice(1));
@@ -44,6 +45,50 @@ function profileValues(form) {
     province: String(values.get('province') || '').trim(),
     medical_information: String(values.get('medical_information') || '').trim()
   };
+}
+
+const parentProfileFields = ['first_name','last_name','phone','street_number','postal_code','province','second_guardian_first','second_guardian_last','second_guardian_email','second_guardian_phone','second_guardian_street_number','second_guardian_postal_code','second_guardian_province','emergency_name','emergency_relationship','emergency_phone'];
+
+function parentProfileValues(form) {
+  const values = new FormData(form);
+  return Object.fromEntries(parentProfileFields.map(field => [`profile_${field}`, String(values.get(`profile_${field}`) || '').trim()]));
+}
+
+async function loadParentProfile() {
+  const { data: sessionData } = await client.auth.getSession();
+  const userId = sessionData.session?.user?.id;
+  if (!userId || !parentProfileForm) return;
+  const { data, error } = await client.from('parent_profiles').select('*').eq('user_id', userId).maybeSingle();
+  if (error) {
+    showMessage('Parent contact details could not be loaded. Please refresh and try again.');
+    return;
+  }
+  parentProfileFields.forEach(field => {
+    const input = parentProfileForm.elements.namedItem(`profile_${field}`);
+    if (input) input.value = data?.[field] || '';
+  });
+}
+
+async function saveParentProfile(event) {
+  event.preventDefault();
+  const values = parentProfileValues(event.currentTarget);
+  const secondFields = parentProfileFields.filter(field => field.startsWith('second_guardian_'));
+  const secondValues = secondFields.map(field => values[`profile_${field}`]);
+  if (secondValues.some(Boolean) && secondValues.some(value => !value)) {
+    showMessage('Complete all second parent / guardian fields, or leave them all blank.');
+    return;
+  }
+  const { data: sessionData } = await client.auth.getSession();
+  const userId = sessionData.session?.user?.id;
+  if (!userId) { showMessage('Sign in again to save parent details.'); return; }
+  const record = Object.fromEntries(parentProfileFields.map(field => [field, values[`profile_${field}`] || null]));
+  Object.assign(record, { user_id: userId, updated_at: new Date().toISOString() });
+  const { error } = await client.from('parent_profiles').upsert(record, { onConflict: 'user_id' });
+  if (error) {
+    showMessage('Parent contact details could not be saved. Check the required fields and try again.');
+    return;
+  }
+  showMessage('Parent contact details saved for future registrations.', 'success');
 }
 
 function renderChildProfiles(children) {
@@ -100,7 +145,7 @@ async function syncSession(session) {
   passwordSetup.hidden = !passwordSetupRequired;
   accountContent.hidden = passwordSetupRequired;
   if (passwordSetupRequired) return;
-  await Promise.all([loadChildren(), loadEmailPreferences()]);
+  await Promise.all([loadChildren(), loadEmailPreferences(), loadParentProfile()]);
 }
 
 async function saveChildProfile(event) {
@@ -153,7 +198,12 @@ document.querySelector('[data-parent-signup]')?.addEventListener('submit', async
   if (password !== String(values.get('confirm_password'))) { showMessage('The passwords do not match.'); return; }
   const email = String(values.get('email') || '').trim();
   const redirectTo = new URL('parent-account.html', window.location.href).toString();
-  const { data, error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo, data: { marketing_opt_in: values.get('marketing_opt_in') === 'true' } } });
+  const profileFields = parentProfileFields.map(field => [`profile_${field}`, String(values.get(`profile_${field}`) || '').trim()]);
+  const profile = Object.fromEntries(profileFields);
+  const secondFields = parentProfileFields.filter(field => field.startsWith('second_guardian_'));
+  const secondValues = secondFields.map(field => profile[`profile_${field}`]);
+  if (secondValues.some(Boolean) && secondValues.some(value => !value)) { showMessage('Complete all second parent / guardian fields, or leave them all blank.'); return; }
+  const { data, error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo, data: { marketing_opt_in: values.get('marketing_opt_in') === 'true', ...profile } } });
   if (error) { showMessage(error.message || 'Your family account could not be created. Please try again.'); return; }
   if (data.session) {
     showMessage('Your family account is ready. Add your children’s profiles below.', 'success');
@@ -203,7 +253,7 @@ emailUpdates?.addEventListener('change', async () => {
     await loadEmailPreferences();
     return;
   }
-  showMessage(optedIn ? 'You are signed up for academy program updates.' : 'You will not receive academy program updates.', 'success');
+  showMessage(optedIn ? 'You are signed up for academy news and new-program announcements.' : 'You will not receive academy news or new-program announcements. Required updates about your registrations will still be sent.', 'success');
 });
 
 document.querySelector('[data-parent-signout]')?.addEventListener('click', async () => {
@@ -212,6 +262,8 @@ document.querySelector('[data-parent-signout]')?.addEventListener('click', async
   await syncSession(null);
   showMessage('You have been signed out.', 'success');
 });
+
+parentProfileForm?.addEventListener('submit', saveParentProfile);
 
 document.querySelector('[data-child-create]')?.addEventListener('submit', async event => {
   event.preventDefault();

@@ -1,16 +1,16 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const origin = Deno.env.get('SITE_ORIGIN');
+const origin = Deno.env.get('SITE_ORIGIN') || 'https://kingshockeyacademyns-sys.github.io';
 const corsHeaders = {
-  'Access-Control-Allow-Origin': origin ?? 'null',
+  'Access-Control-Allow-Origin': origin,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Content-Type': 'application/json',
 };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: corsHeaders });
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 Deno.serve(async request => {
-  if (!origin) return json({ error: 'Email updates are not configured.' }, 503);
   if (request.headers.get('Origin') !== origin) return json({ error: 'Origin not allowed.' }, 403);
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (request.method !== 'POST') return json({ error: 'Method not allowed.' }, 405);
@@ -32,46 +32,83 @@ Deno.serve(async request => {
 
   try {
     const body = await request.json();
+    const action = String(body?.action ?? 'send');
+    const messageType = String(body?.message_type ?? 'announcement');
+    if (!['program_update', 'announcement'].includes(messageType)) return json({ error: 'Choose a valid message type.' }, 400);
     const subject = String(body?.subject ?? '').trim().replace(/[\r\n]+/g, ' ');
     const message = String(body?.message ?? '').trim();
     const mailingAddress = String(body?.mailing_address ?? '').trim();
-    if (subject.length < 3 || subject.length > 160 || !message || message.length > 8000 || mailingAddress.length < 8 || mailingAddress.length > 300) return json({ error: 'Enter a subject, message, and academy mailing address.' }, 400);
+    const programId = String(body?.program_id ?? '');
+    if (action === 'send' && (subject.length < 3 || subject.length > 160 || !message || message.length > 8000 || mailingAddress.length < 8 || mailingAddress.length > 300)) return json({ error: 'Enter a subject, message, and academy mailing address.' }, 400);
+
     const service = createClient(url, serviceKey, { auth: { persistSession: false } });
-    const { data: preferences, error: prefError } = await service.from('parent_email_preferences').select('user_id,unsubscribe_token').eq('marketing_opt_in', true);
-    if (prefError) throw prefError;
-    if (!preferences?.length) return json({ error: 'No family accounts have opted in to academy updates yet.' }, 409);
+    let recipients: Array<{ email: string; unsubscribe?: string }> = [];
+    let programTitle = '';
 
-    const { data: admins, error: adminsError } = await caller.rpc('kha_admin_account_ids');
-    if (adminsError) throw adminsError;
-    const adminIds = new Set((admins || []).map((id: string) => id));
-    const userEmails = new Map<string, string>();
-    for (let page = 1; page <= 20; page += 1) {
-      const { data, error } = await service.auth.admin.listUsers({ page, perPage: 50 });
-      if (error) throw error;
-      (data.users || []).forEach(user => {
-        if (user.email && user.email_confirmed_at && !user.banned_until && !adminIds.has(user.id)) userEmails.set(user.id, user.email);
+    if (messageType === 'program_update') {
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(programId)) return json({ error: 'Choose a program.' }, 400);
+      const [{ data: program, error: programError }, { data: registrations, error: registrationError, count }] = await Promise.all([
+        service.from('programs').select('title').eq('id', programId).maybeSingle(),
+        service.from('registrations').select('email,second_guardian_email', { count: 'exact' }).eq('program_id', programId).range(0, 999),
+      ]);
+      if (programError) throw programError;
+      if (registrationError) throw registrationError;
+      if (!program) return json({ error: 'That program could not be found.' }, 404);
+      programTitle = program.title;
+      if ((count || 0) > 1000) return json({ error: 'This program has more than 1,000 registered email addresses. Narrow the recipient list before sending.' }, 413);
+      const unique = new Set<string>();
+      (registrations || []).flatMap(row => [row.email, row.second_guardian_email]).forEach(value => {
+        const email = String(value || '').trim().toLowerCase();
+        if (emailPattern.test(email)) unique.add(email);
       });
-      if (data.users.length < 50) break;
+      recipients = [...unique].map(email => ({ email }));
+    } else {
+      const [{ data: preferences, error: prefError }, { data: admins, error: adminsError }] = await Promise.all([
+        service.from('parent_email_preferences').select('user_id,unsubscribe_token').eq('marketing_opt_in', true),
+        caller.rpc('kha_admin_account_ids'),
+      ]);
+      if (prefError) throw prefError;
+      if (adminsError) throw adminsError;
+      const adminIds = new Set((admins || []).map((id: string) => id));
+      const optedIn = new Map((preferences || []).map(item => [item.user_id, item.unsubscribe_token]));
+      const userEmails = new Map<string, string>();
+      for (let page = 1; page <= 20; page += 1) {
+        const { data, error } = await service.auth.admin.listUsers({ page, perPage: 50 });
+        if (error) throw error;
+        (data.users || []).forEach(user => {
+          if (user.email && user.email_confirmed_at && !user.banned_until && !adminIds.has(user.id) && optedIn.has(user.id)) userEmails.set(user.id, user.email);
+        });
+        if (data.users.length < 50) break;
+      }
+      recipients = [...userEmails.entries()].flatMap(([userId, email]) => {
+        const unsubscribeToken = optedIn.get(userId);
+        if (!unsubscribeToken) return [];
+        const unsubscribe = `${url}/functions/v1/unsubscribe-family-updates?token=${encodeURIComponent(unsubscribeToken)}`;
+        return [{ email, unsubscribe }];
+      });
     }
-    const recipients = preferences.flatMap(item => {
-      const email = userEmails.get(item.user_id);
-      if (!email) return [];
-      const unsubscribe = `${url}/functions/v1/unsubscribe-family-updates?token=${encodeURIComponent(item.unsubscribe_token)}`;
-      return [{ email, unsubscribe }];
-    });
-    if (!recipients.length) return json({ error: 'No confirmed, active family accounts have opted in to academy updates.' }, 409);
-    if (recipients.length > 1000) return json({ error: 'This campaign exceeds the 1,000-recipient limit.' }, 413);
 
-    const messages = recipients.map(recipient => ({
-      from: `Kings Hockey Academy <${from}>`,
-      to: [recipient.email],
-      subject,
-      text: `${message}\n\nKings Hockey Academy\nkingshockeyacademyns@gmail.com\n${mailingAddress}\n\nTo stop receiving academy program updates, unsubscribe here: ${recipient.unsubscribe}`,
-      headers: {
+    if (action === 'audience') return json({ count: recipients.length, message_type: messageType, program_title: programTitle });
+    if (action !== 'send') return json({ error: 'Unsupported message action.' }, 400);
+    if (!recipients.length) return json({ error: messageType === 'program_update' ? 'There are no valid parent email addresses on registrations for this program.' : 'No active families have opted in to academy news and new-program announcements.' }, 409);
+    if (recipients.length > 1000) return json({ error: 'This message exceeds the 1,000-recipient limit.' }, 413);
+
+    const messages = recipients.map(recipient => {
+      const footer = messageType === 'program_update'
+        ? `This factual program notice is being sent because this email address is on a registration for ${programTitle}.`
+        : `To stop receiving academy news and new-program announcements, unsubscribe here: ${recipient.unsubscribe}`;
+      const headers = recipient.unsubscribe ? {
         'List-Unsubscribe': `<${recipient.unsubscribe}>`,
         'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-      },
-    }));
+      } : undefined;
+      return {
+        from: `Kings Hockey Academy <${from}>`,
+        to: [recipient.email],
+        subject,
+        text: `${message}\n\n${footer}\n\nKings Hockey Academy\nkingshockeyacademyns@gmail.com\n${mailingAddress}${recipient.unsubscribe ? `\n\n${recipient.unsubscribe}` : ''}`,
+        ...(headers ? { headers } : {}),
+      };
+    });
     let accepted = 0;
     let failed = 0;
     for (let offset = 0; offset < messages.length; offset += 100) {
@@ -87,9 +124,9 @@ Deno.serve(async request => {
         console.error('Academy update batch rejected:', sent.status);
       }
     }
-    return json({ ok: failed === 0, accepted, failed });
+    return json({ ok: failed === 0, accepted, failed, message_type: messageType });
   } catch (error) {
     console.error('Family update email failed:', error);
-    return json({ error: 'The email campaign could not be sent. Check the email service and try again.' }, 500);
+    return json({ error: 'The email could not be sent. Check the email service and try again.' }, 500);
   }
 });

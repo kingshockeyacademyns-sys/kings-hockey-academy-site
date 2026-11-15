@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const origin = Deno.env.get('SITE_ORIGIN');
+const origin = Deno.env.get('SITE_ORIGIN') || 'https://kingshockeyacademyns-sys.github.io';
 const corsHeaders = {
   'Access-Control-Allow-Origin': origin ?? 'null',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -11,7 +11,6 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 Deno.serve(async request => {
-  if (!origin) return json({ error: 'Account management is not configured.' }, 503);
   if (request.headers.get('Origin') !== origin) return json({ error: 'Origin not allowed.' }, 403);
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (request.method !== 'POST') return json({ error: 'Method not allowed.' }, 405);
@@ -52,6 +51,11 @@ Deno.serve(async request => {
       const { data: preferences, error: preferenceError } = await service.from('parent_email_preferences').select('user_id,marketing_opt_in');
       if (preferenceError) throw preferenceError;
       const optedIn = new Set((preferences || []).filter(item => item.marketing_opt_in).map(item => item.user_id));
+      const { data: profiles, error: profileError } = await service.from('parent_profiles')
+        .select('user_id,first_name,last_name,phone,street_number,postal_code,province,second_guardian_first,second_guardian_last,second_guardian_email,second_guardian_phone,second_guardian_street_number,second_guardian_postal_code,second_guardian_province,emergency_name,emergency_relationship,emergency_phone')
+        .in('user_id', ids);
+      if (profileError) throw profileError;
+      const parentProfiles = new Map((profiles || []).map(profile => [profile.user_id, profile]));
       const now = Date.now();
       return json({ users: users.map(user => ({
         id: user.id,
@@ -62,15 +66,29 @@ Deno.serve(async request => {
         disabled: Boolean(user.banned_until && new Date(user.banned_until).getTime() > now),
         is_admin: adminIds.has(String(user.id)),
         child_count: counts.get(String(user.id)) || 0,
-        email_updates: optedIn.has(String(user.id)),
+        news_opt_in: optedIn.has(String(user.id)),
+        parent_profile: parentProfiles.get(String(user.id)) || null,
       })) });
     }
 
     if (action === 'invite') {
       const email = String(body?.email ?? '').trim().toLowerCase();
       if (!emailPattern.test(email) || email.length > 254) return json({ error: 'Enter a valid email address.' }, 400);
+      const profile = body?.profile;
+      const requiredFields = ['first_name','last_name','phone','street_number','postal_code','province','emergency_name','emergency_relationship','emergency_phone'];
+      if (!profile || requiredFields.some(field => !String(profile[field] ?? '').trim())) return json({ error: 'Complete all required parent, address, and emergency-contact details.' }, 400);
+      for (const [field, max] of Object.entries({ first_name: 80, last_name: 80, phone: 40, street_number: 300, postal_code: 16, province: 80, emergency_name: 120, emergency_relationship: 80, emergency_phone: 40 })) {
+        if (String(profile[field]).trim().length > max) return json({ error: `The ${field.replaceAll('_', ' ')} field is too long.` }, 400);
+      }
+      const secondGuardianFields = ['second_guardian_first','second_guardian_last','second_guardian_email','second_guardian_phone','second_guardian_street_number','second_guardian_postal_code','second_guardian_province'];
+      const secondGuardian = Object.fromEntries(secondGuardianFields.map(field => [field, String(profile[field] ?? '').trim()]));
+      if (Object.values(secondGuardian).some(Boolean) && secondGuardianFields.some(field => !secondGuardian[field])) return json({ error: 'Complete every second parent / guardian field, or leave them all blank.' }, 400);
+      if (secondGuardian.second_guardian_email && !emailPattern.test(secondGuardian.second_guardian_email)) return json({ error: 'Enter a valid second parent / guardian email.' }, 400);
+      if (Object.entries(secondGuardian).some(([field, value]) => value.length > (field.includes('email') ? 254 : field.includes('street') ? 300 : field.includes('postal') ? 16 : field.includes('phone') ? 40 : 80))) return json({ error: 'One or more second parent / guardian details are too long.' }, 400);
       const siteBase = `${origin.replace(/\/$/, '')}/kings-hockey-academy-site`;
-      const { data, error } = await service.auth.admin.inviteUserByEmail(email, { redirectTo: `${siteBase}/parent-account.html` });
+      const metadata = Object.fromEntries(requiredFields.map(field => [`profile_${field}`, String(profile[field]).trim()]));
+      Object.entries(secondGuardian).forEach(([field, value]) => { metadata[`profile_${field}`] = value; });
+      const { data, error } = await service.auth.admin.inviteUserByEmail(email, { redirectTo: `${siteBase}/parent-account.html`, data: metadata });
       if (error) {
         if (/already|registered|exists/i.test(error.message)) return json({ error: 'An account already exists for that email.' }, 409);
         throw error;
