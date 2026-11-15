@@ -7,6 +7,10 @@ const accountArea = document.querySelector('[data-parent-area]');
 const messageBox = document.querySelector('[data-parent-message]');
 const childrenList = document.querySelector('[data-parent-children]');
 const childCount = document.querySelector('[data-child-count]');
+const emailUpdates = document.querySelector('[data-email-updates]');
+const passwordSetup = document.querySelector('[data-parent-set-password]');
+const accountContent = document.querySelector('[data-parent-account-content]');
+let passwordSetupRequired = /(?:^|&)type=(?:invite|recovery)(?:&|$)/.test(window.location.hash.slice(1));
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
 function showMessage(text, kind = 'error') {
@@ -74,6 +78,17 @@ async function loadChildren() {
   renderChildProfiles(data || []);
 }
 
+async function loadEmailPreferences() {
+  const { data, error } = await client.from('parent_email_preferences').select('marketing_opt_in').maybeSingle();
+  if (error) {
+    emailUpdates.checked = false;
+    emailUpdates.disabled = true;
+    return;
+  }
+  emailUpdates.checked = data?.marketing_opt_in === true;
+  emailUpdates.disabled = false;
+}
+
 async function syncSession(session) {
   authArea.hidden = Boolean(session);
   accountArea.hidden = !session;
@@ -82,7 +97,10 @@ async function syncSession(session) {
     return;
   }
   document.querySelector('[data-parent-email]').textContent = session.user.email || '';
-  await loadChildren();
+  passwordSetup.hidden = !passwordSetupRequired;
+  accountContent.hidden = passwordSetupRequired;
+  if (passwordSetupRequired) return;
+  await Promise.all([loadChildren(), loadEmailPreferences()]);
 }
 
 async function saveChildProfile(event) {
@@ -135,7 +153,7 @@ document.querySelector('[data-parent-signup]')?.addEventListener('submit', async
   if (password !== String(values.get('confirm_password'))) { showMessage('The passwords do not match.'); return; }
   const email = String(values.get('email') || '').trim();
   const redirectTo = new URL('parent-account.html', window.location.href).toString();
-  const { data, error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } });
+  const { data, error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo, data: { marketing_opt_in: values.get('marketing_opt_in') === 'true' } } });
   if (error) { showMessage(error.message || 'Your family account could not be created. Please try again.'); return; }
   if (data.session) {
     showMessage('Your family account is ready. Add your children’s profiles below.', 'success');
@@ -145,6 +163,47 @@ document.querySelector('[data-parent-signup]')?.addEventListener('submit', async
     showAuthMode('signin');
     showMessage('Check your email for a confirmation link. After confirming, return here to add your children’s profiles.', 'success');
   }
+});
+
+document.querySelector('[data-parent-set-password]')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const values = new FormData(event.currentTarget);
+  const password = String(values.get('password'));
+  if (password !== String(values.get('confirm_password'))) { showMessage('The passwords do not match.'); return; }
+  const { error } = await client.auth.updateUser({ password });
+  if (error) { showMessage('Your password could not be saved. Please try again.'); return; }
+  passwordSetupRequired = false;
+  history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+  event.currentTarget.reset();
+  showMessage('Your family account is ready. Add your children’s profiles below.', 'success');
+  const { data } = await client.auth.getSession();
+  await syncSession(data.session);
+});
+
+emailUpdates?.addEventListener('change', async () => {
+  const { data: sessionData } = await client.auth.getSession();
+  const userId = sessionData.session?.user?.id;
+  if (!userId) { emailUpdates.checked = false; return; }
+  emailUpdates.disabled = true;
+  const { data: existing, error: readError } = await client.from('parent_email_preferences').select('user_id,consented_at').eq('user_id', userId).maybeSingle();
+  if (readError) {
+    emailUpdates.disabled = false;
+    showMessage('Your email preference could not be saved. Please try again.');
+    await loadEmailPreferences();
+    return;
+  }
+  const optedIn = emailUpdates.checked;
+  const preference = { user_id: userId, marketing_opt_in: optedIn, updated_at: new Date().toISOString(), consented_at: optedIn ? new Date().toISOString() : existing?.consented_at || null };
+  const result = existing
+    ? await client.from('parent_email_preferences').update(preference).eq('user_id', userId)
+    : await client.from('parent_email_preferences').insert(preference);
+  emailUpdates.disabled = false;
+  if (result.error) {
+    showMessage('Your email preference could not be saved. Please try again.');
+    await loadEmailPreferences();
+    return;
+  }
+  showMessage(optedIn ? 'You are signed up for academy program updates.' : 'You will not receive academy program updates.', 'success');
 });
 
 document.querySelector('[data-parent-signout]')?.addEventListener('click', async () => {
@@ -175,7 +234,10 @@ document.querySelector('[data-child-create]')?.addEventListener('submit', async 
 if (!client) {
   showMessage('Family accounts are not connected yet. Please contact the academy.');
 } else {
-  client.auth.onAuthStateChange((_event, session) => setTimeout(() => { void syncSession(session); }, 0));
+  client.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY') passwordSetupRequired = true;
+    setTimeout(() => { void syncSession(session); }, 0);
+  });
   client.auth.getSession().then(({ data, error }) => {
     if (error) showMessage('Your sign-in could not be checked. Reload the page and try again.');
     else void syncSession(data.session);

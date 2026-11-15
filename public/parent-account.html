@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Family Account | Kings Hockey Academy</title>
-  <link rel="stylesheet" href="styles.css?v=parent-accounts-1">
+  <link rel="stylesheet" href="styles.css?v=parent-accounts-2">
 </head>
 <body class="parent-account-page" data-parent-account-page>
   <header class="site-header"><div class="wrap brand-wrap"><a class="brand" href="index.html" aria-label="Kings Hockey Academy home"><span class="brand-mark"><img src="assets/kha-logo.png" alt="Kings Hockey Academy logo"></span></a></div></header>
@@ -28,12 +28,22 @@
             <label>Email address <b>*</b><input name="email" type="email" autocomplete="email" maxlength="254" required></label>
             <label>Create a password <b>*</b><input name="password" type="password" autocomplete="new-password" minlength="8" required><small>Use at least 8 characters.</small></label>
             <label>Confirm password <b>*</b><input name="confirm_password" type="password" autocomplete="new-password" minlength="8" required></label>
+            <label class="parent-marketing-consent"><input name="marketing_opt_in" type="checkbox" value="true"><span>I agree to receive academy news, new program announcements, and registration updates by email from Kings Hockey Academy. This is optional and I can unsubscribe or change this preference at any time.</span></label>
             <button class="button button-gold" type="submit">CREATE ACCOUNT <b>↗</b></button>
             <p class="parent-account-switch">Already have an account? <button type="button" data-show-signin>Sign in</button></p>
           </form>
         </section>
         <section class="parent-profile-area" data-parent-area hidden>
+          <form class="registration-form parent-account-form password-setup-form" data-parent-set-password hidden>
+            <div class="form-title"><span>SET YOUR PASSWORD</span><span>FAMILY ACCOUNT</span></div>
+            <p class="registration-step-intro">Choose a password to finish setting up your invited family account.</p>
+            <label>New password <b>*</b><input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
+            <label>Confirm new password <b>*</b><input name="confirm_password" type="password" autocomplete="new-password" minlength="8" required></label>
+            <button class="button button-gold" type="submit">SAVE PASSWORD <b>↗</b></button>
+          </form>
+          <div data-parent-account-content>
           <div class="parent-profile-heading"><div><p class="eyebrow dark">SIGNED IN AS</p><strong data-parent-email></strong></div><button class="admin-logout" data-parent-signout type="button">Sign out</button></div>
+          <fieldset class="parent-email-preferences"><legend>ACADEMY EMAIL UPDATES</legend><label><input type="checkbox" data-email-updates><span>I agree to receive academy news, new program announcements, and registration updates by email from Kings Hockey Academy.</span></label><small>Optional. You can withdraw consent or change this setting at any time.</small></fieldset>
           <div class="form-title"><span>YOUR CHILDREN</span><span data-child-count>0 SAVED</span></div>
           <p class="registration-step-intro">Add each child once. Their name, birth date, address, and medical notes will prefill future registrations.</p>
           <div class="parent-children-list" data-parent-children><p>Loading profiles…</p></div>
@@ -45,12 +55,13 @@
             <label>Medical information / allergies<textarea name="medical_information" rows="3" maxlength="3000" placeholder="Optional. Add information the academy should know."></textarea></label>
             <button class="button button-gold" type="submit">SAVE CHILD PROFILE <b>↗</b></button>
           </form>
+          </div>
         </section>
       </div>
     </div></section>
   </main>
   <footer class="site-footer"><div class="wrap footer-main"><div class="footer-identity"><a class="brand footer-brand" href="index.html"><span class="brand-mark"><img src="assets/kha-logo.png" alt=""></span><span class="brand-type">KINGS <small>HOCKEY ACADEMY</small></span></a><p class="footer-ownership">© <span id="year"></span> Kings Hockey Nova Scotia<br><small>Official rights holder of Kings Hockey Academy.</small></p></div><p>Develop better players.<br><strong>Build better people.</strong></p><div class="footer-contact"><span>CONTACT THE ACADEMY</span><a href="mailto:kingshockeyacademyns@gmail.com">kingshockeyacademyns@gmail.com</a><a href="tel:+17824403938">(782) 440-3938</a></div></div></footer>
   <script>document.getElementById('year').textContent=new Date().getFullYear()</script>
-  <script src="supabase-config.js"></script><script src="js/site.js"></script><script type="module" src="js/parent-account.js?v=parent-accounts-1"></script>
+  <script src="supabase-config.js"></script><script src="js/site.js"></script><script type="module" src="js/parent-account.js?v=parent-accounts-2"></script>
 </body>
 </html>
