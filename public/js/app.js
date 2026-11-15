@@ -44,8 +44,13 @@ function wireRegistrationForm(form) {
         submission.waiver_consents = Object.fromEntries([...form.querySelectorAll('[data-waiver-consent]')].map(input => [input.dataset.waiverConsent, input.checked]));
       }
       ({ error } = await client.from('registrations').insert(submission));
-    } catch { error = true; }
-    if (error) { message(form, 'We couldn’t save your form just now. Please email kingshockeyacademyns@gmail.com for help.', 'error'); return; }
+    } catch (caughtError) { error = caughtError; }
+    if (error) {
+      console.error('Registration submission failed:', error);
+      const reference = typeof error === 'object' && error?.code ? ` Reference: ${error.code}.` : '';
+      message(form, `We couldn’t save your form just now. Please email kingshockeyacademyns@gmail.com for help.${reference}`, 'error');
+      return;
+    }
     form.reset();
     message(form, 'Thanks — your registration inquiry has been received. We’ll be in touch soon.', 'success');
   });
@@ -134,8 +139,13 @@ function wireMultistepRegistrationForm(form) {
         waiver_consents: Object.fromEntries([...form.querySelectorAll('[data-waiver-consent]')].map(input => [input.dataset.waiverConsent, input.checked]))
       };
       ({ error } = await client.from('registrations').insert(submission));
-    } catch { error = true; }
-    if (error) { message(form, 'We couldn’t save your form just now. Please email kingshockeyacademyns@gmail.com for help.', 'error'); return; }
+    } catch (caughtError) { error = caughtError; }
+    if (error) {
+      console.error('Registration submission failed:', error);
+      const reference = typeof error === 'object' && error?.code ? ` Reference: ${error.code}.` : '';
+      message(form, `We couldn’t save your form just now. Please email kingshockeyacademyns@gmail.com for help.${reference}`, 'error');
+      return;
+    }
     resetForm();
     message(form, 'Registration request received. Your spot is confirmed once the CAD $100 deposit is received by e-transfer.', 'success');
   });
