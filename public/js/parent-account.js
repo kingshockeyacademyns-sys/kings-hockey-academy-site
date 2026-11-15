@@ -161,7 +161,11 @@ function renderRegistrations(registrations) {
   registrationsList.innerHTML = [...players.values()].map(player => `<section class="parent-registration-player"><h2>${escapeHtml(player.first)} ${escapeHtml(player.last)}</h2><ul>${player.registrations.map(registration => {
     const program = Array.isArray(registration.program) ? registration.program[0] : registration.program;
     const title = program?.title || registration.program_type;
-    const facts = [program?.season, program?.dates, program?.session_schedule, program?.session_count ? `${program.session_count} sessions` : '', program?.single_session_available ? 'Single sessions available' : '', program?.location, program?.age_groups, program?.fee].filter(Boolean).map(escapeHtml).join(' · ');
+    const sessionPrice = program?.single_session_available && Number(program?.session_count) > 0 && Number.isFinite(Number(String(program?.fee ?? '').replace(/,/g, '')))
+      ? new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(Math.round((Number(String(program.fee).replace(/,/g, '')) / Number(program.session_count) + Number.EPSILON) * 100) / 100)
+      : null;
+    const startDate = program?.program_start_date ? `Starts ${new Date(`${program.program_start_date}T00:00:00`).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}` : '';
+    const facts = [program?.season, program?.dates, startDate, program?.session_schedule, program?.session_count ? `${program.session_count} sessions` : '', program?.single_session_available ? `Single sessions available${sessionPrice ? ` · ${sessionPrice} per session` : ' · Contact the academy for the per-session price'}` : '', program?.location, program?.age_groups, program?.fee].filter(Boolean).map(escapeHtml).join(' · ');
     const todayParts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Halifax', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
     const todayText = `${todayParts.find(part => part.type === 'year')?.value}-${todayParts.find(part => part.type === 'month')?.value}-${todayParts.find(part => part.type === 'day')?.value}`;
     const state = program?.is_open === false || (program?.registration_closes_on && program.registration_closes_on < todayText) ? 'Registration closed' : 'Registration open';
@@ -172,7 +176,7 @@ function renderRegistrations(registrations) {
 async function loadRegistrations(userId) {
   registrationsList.innerHTML = '<p>Loading registrations…</p>';
   const { data, error } = await client.from('registrations')
-    .select('id,program_id,program_type,player_first,player_last,date_of_birth,created_at,program:programs(title,season,is_open,dates,session_schedule,session_count,single_session_available,registration_closes_on,location,age_groups,fee)')
+    .select('id,program_id,program_type,player_first,player_last,date_of_birth,created_at,program:programs(title,season,is_open,dates,program_start_date,session_schedule,session_count,single_session_available,registration_closes_on,location,age_groups,fee)')
     .eq('family_user_id', userId).not('program_id', 'is', null).order('created_at', { ascending: false });
   if (error) {
     registrationsList.innerHTML = '<p class="parent-empty-state">Your registrations could not be loaded. Please refresh and try again.</p>';

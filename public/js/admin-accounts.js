@@ -106,7 +106,7 @@ async function removeAccount(event) {
 
 async function loadRegistrationOptions() {
   const [programResult, waiverResult] = await Promise.all([
-    client.from('programs').select('id,title,season,fee,questions,jersey_size_enabled,jersey_number_enabled,is_open').order('created_at', { ascending: false }),
+    client.from('programs').select('id,title,season,fee,session_count,single_session_available,questions,jersey_size_enabled,jersey_number_enabled,is_open').order('created_at', { ascending: false }),
     client.from('waivers').select('id,title,body').eq('is_active', true).order('created_at', { ascending: true }),
   ]);
   if (programResult.error) {
@@ -165,8 +165,13 @@ function updateProgramSummary() {
     const extras = questions.map((question, index) => `<label>${esc(question)}<textarea name="admin_question_${index}" rows="2" maxlength="1000"></textarea></label>`).join('');
     programSpecific.innerHTML = `${jerseySize}${extras}`;
   }
+  const sessionCount = Number(program?.session_count);
+  const fullCost = Number(String(program?.fee ?? '').replace(/,/g, ''));
+  const singleSessionPrice = program?.single_session_available && Number.isInteger(sessionCount) && sessionCount > 0 && Number.isFinite(fullCost)
+    ? Math.round((fullCost / sessionCount + Number.EPSILON) * 100) / 100
+    : null;
   document.querySelector('[data-admin-payment-note]').textContent = program
-    ? `Full program cost: CAD $${Number(program.fee || 0).toFixed(2)}. A CAD $100 deposit is due by e-transfer to kingshockeyacademyns@gmail.com; the remaining balance may be paid by e-transfer or cash no later than the second session.`
+    ? `Full program cost: CAD $${fullCost.toFixed(2)}.${program.single_session_available && singleSessionPrice === null ? ' Single-session pricing needs a session count before this registration can be confirmed.' : singleSessionPrice === null ? ' A CAD $100 minimum payment is due by e-transfer' : ` Single-session price and minimum payment: CAD $${singleSessionPrice.toFixed(2)}`}; remaining balance may be paid by e-transfer or cash no later than the second session. E-transfer: kingshockeyacademyns@gmail.com.`
     : 'Select a program to show its fee and payment summary.';
 }
 

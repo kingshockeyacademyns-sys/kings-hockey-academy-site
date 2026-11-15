@@ -161,8 +161,10 @@ function programCard(program, submissionCount) {
   const action = isOpen
     ? `<a class="program-submissions-link" href="admin-dashboard.html?program_id=${encodeURIComponent(program.id)}">VIEW SUBMISSIONS${submissionCount === null ? '' : ` (${submissionCount})`} ↗</a>`
     : `<span class="program-closed-label">CLOSED</span>`;
+  const startDate = program.program_start_date ? `Starts ${formatProgramDate(program.program_start_date)}` : '';
   const closes = program.registration_closes_on ? `Registration closes ${formatProgramDate(program.registration_closes_on)}` : '';
-  const facts = [program.dates, program.session_schedule, program.session_count ? `${program.session_count} sessions` : '', program.single_session_available ? 'Single sessions available' : '', closes, program.location, program.age_groups, program.fee ? `CAD $${program.fee}` : ''].filter(Boolean);
+  const perSession = singleSessionPrice(program);
+  const facts = [program.dates, startDate, closes, program.session_schedule, program.session_count ? `${program.session_count} sessions` : '', program.single_session_available ? `Single sessions available${perSession === null ? ' · Add session count to calculate price' : ` · ${formatCAD(perSession)} per session`}` : '', program.location, program.age_groups, program.fee ? `Full program CAD $${Number(program.fee).toFixed(2)}` : ''].filter(Boolean);
   return `<article class="admin-program-card"><div><span class="admin-program-status ${isOpen ? 'is-open' : ''}">${isOpen ? 'OPEN' : 'CLOSED'}</span><h3>${esc(program.title)}</h3><p>${esc(program.season || 'Program')}</p><p class="admin-program-meta">${facts.map(esc).join(' · ')}</p>${program.jersey_size_enabled ? '<small>Jersey size field included</small>' : ''}${program.jersey_number_enabled ? '<small>Jersey number field included</small>' : ''}${program.questions?.length ? `<small class="program-question-count">${program.questions.length} extra question${program.questions.length === 1 ? '' : 's'} on the form</small>` : ''}</div><div class="admin-program-actions">${action}<a href="program-registration.html?id=${encodeURIComponent(program.id)}" target="_blank" rel="noopener">Preview form ↗</a><button class="admin-delete-button" type="button" data-program-toggle="${esc(program.id)}" data-next-state="${isOpen ? 'false' : 'true'}" data-closed-by-deadline="${closedByDeadline ? 'true' : 'false'}">${isOpen ? 'Close registration' : 'Open registration'}</button></div></article>`;
 }
 
@@ -176,6 +178,18 @@ function formatProgramDate(value) {
   if (!value) return '';
   const [year, month, day] = value.split('-').map(Number);
   return new Date(year, month - 1, day).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function formatCAD(value) {
+  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(value);
+}
+
+function singleSessionPrice(program) {
+  const fee = Number(String(program?.fee ?? '').replace(/,/g, ''));
+  const count = Number(program?.session_count);
+  return program?.single_session_available && Number.isFinite(fee) && Number.isFinite(count) && count > 0
+    ? Math.round((fee / count + Number.EPSILON) * 100) / 100
+    : null;
 }
 
 function isProgramOpen(program) {
@@ -296,6 +310,32 @@ const updateAgeGroupSummary = () => {
 ageGroupDropdown?.querySelectorAll('input[name="age_groups"]').forEach(input => input.addEventListener('change', updateAgeGroupSummary));
 programForm?.addEventListener('reset', () => setTimeout(updateAgeGroupSummary));
 
+const singleSessionToggle = programForm?.querySelector('[name="single_session_available"]');
+const sessionCountInput = programForm?.querySelector('[name="session_count"]');
+const programFeeInput = programForm?.querySelector('[name="fee"]');
+const sessionCountHelp = programForm?.querySelector('[data-session-count-help]');
+const sessionPricePreview = programForm?.querySelector('[data-session-price-preview]');
+const updateSessionPricePreview = () => {
+  const enabled = Boolean(singleSessionToggle?.checked);
+  if (sessionCountInput) sessionCountInput.required = enabled;
+  if (sessionCountHelp) sessionCountHelp.textContent = enabled ? 'Required when single-session registration is available.' : 'Optional.';
+  const fee = Number(programFeeInput?.value);
+  const count = Number(sessionCountInput?.value);
+  if (!sessionPricePreview) return;
+  if (!enabled) {
+    sessionPricePreview.textContent = 'Minimum payment to reserve a spot is CAD $100.';
+  } else if (Number.isFinite(fee) && fee >= 0 && Number.isInteger(count) && count > 0) {
+    const price = Math.round((fee / count + Number.EPSILON) * 100) / 100;
+    sessionPricePreview.textContent = `Single-session price and minimum payment: ${formatCAD(price)} (${formatCAD(fee)} ÷ ${count} sessions).`;
+  } else {
+    sessionPricePreview.textContent = 'Enter the session count and full program cost to calculate the single-session price.';
+  }
+};
+[singleSessionToggle, sessionCountInput, programFeeInput].forEach(input => input?.addEventListener('input', updateSessionPricePreview));
+singleSessionToggle?.addEventListener('change', updateSessionPricePreview);
+programForm?.addEventListener('reset', () => setTimeout(updateSessionPricePreview));
+updateSessionPricePreview();
+
 programForm?.addEventListener('submit', async event => {
   event.preventDefault();
   if (!client) return;
@@ -308,6 +348,12 @@ programForm?.addEventListener('submit', async event => {
     ageGroupDropdown?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
+  if (singleSessionToggle?.checked && (!sessionCountInput?.value || Number(sessionCountInput.value) < 1)) {
+    sessionCountInput?.setCustomValidity('Enter the total number of sessions to calculate the single-session price.');
+    sessionCountInput?.reportValidity();
+    return;
+  }
+  sessionCountInput?.setCustomValidity('');
   const questions = values.questions.split('\n').map(question => question.trim()).filter(Boolean);
   if (questions.length > 12) {
     setProgramMessage('Add no more than 12 extra questions.', 'error');
@@ -317,7 +363,8 @@ programForm?.addEventListener('submit', async event => {
     const { error } = await client.from('programs').insert({
       title: values.title.trim(), season: values.season.trim() || null, description: values.description.trim() || null,
       dates: values.dates.trim() || null, location: values.location.trim() || null,
-      age_groups: ageGroups.join(', '), registration_closes_on: values.registration_closes_on || null,
+      age_groups: ageGroups.join(', '), program_start_date: values.program_start_date || null,
+      registration_closes_on: values.registration_closes_on || null,
       session_schedule: values.session_schedule.trim() || null,
       session_count: values.session_count ? Number.parseInt(values.session_count, 10) : null,
       single_session_available: values.single_session_available === '1', fee: values.fee.trim() || null, questions,

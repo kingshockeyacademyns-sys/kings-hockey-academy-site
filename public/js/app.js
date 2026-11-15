@@ -147,7 +147,7 @@ function wireMultistepRegistrationForm(form) {
       return;
     }
     resetForm();
-    message(form, 'Registration request received. Your spot is confirmed once the CAD $100 deposit is received by e-transfer.', 'success');
+    message(form, 'Registration request received. Your spot is confirmed once the minimum payment shown in your review is received by e-transfer.', 'success');
   });
 }
 
@@ -158,7 +158,7 @@ async function loadPublicPrograms() {
   if (!lists.length) return;
   if (!client) return;
   const today = localDateString();
-  const { data, error } = await client.from('programs').select('id,title,season,description,dates,session_schedule,session_count,single_session_available,registration_closes_on,location,age_groups,fee,jersey_size_enabled,jersey_number_enabled').eq('is_open', true).or(`registration_closes_on.is.null,registration_closes_on.gte.${today}`).order('created_at', { ascending: false });
+  const { data, error } = await client.from('programs').select('id,title,season,description,dates,program_start_date,session_schedule,session_count,single_session_available,registration_closes_on,location,age_groups,fee,jersey_size_enabled,jersey_number_enabled').eq('is_open', true).or(`registration_closes_on.is.null,registration_closes_on.gte.${today}`).order('created_at', { ascending: false });
   const openPrograms = error ? [] : (data || []);
   const getSeasonGroup = program => {
     const season = String(program?.season || '').toLowerCase();
@@ -173,7 +173,8 @@ async function loadPublicPrograms() {
     const link = card.querySelector('[data-season-link]');
     if (list) {
       list.innerHTML = seasonPrograms.map(program => {
-        const details = [program.dates, program.session_schedule, program.session_count ? `${program.session_count} sessions` : '', program.single_session_available ? 'Single sessions available' : '', program.registration_closes_on ? `Registration closes ${formatProgramDate(program.registration_closes_on)}` : '', program.location, program.age_groups, program.fee]
+        const sessionPrice = singleSessionPrice(program);
+        const details = [program.dates, program.program_start_date ? `Starts ${formatProgramDate(program.program_start_date)}` : '', program.session_schedule, program.session_count ? `${program.session_count} sessions` : '', program.single_session_available ? `Single sessions available${sessionPrice === null ? ' · Contact the academy for per-session pricing' : ` · ${formatCAD(sessionPrice)} per session`}` : '', program.registration_closes_on ? `Registration closes ${formatProgramDate(program.registration_closes_on)}` : '', program.location, program.age_groups, program.fee ? `Full program ${formatProgramCost(program)}` : '']
           .filter(Boolean).map(escapeHtml).join(' · ');
         const optional = [program.jersey_size_enabled ? 'Optional jersey size' : '', program.jersey_number_enabled ? 'Optional jersey number' : '']
           .filter(Boolean).map(escapeHtml).join(' · ');
@@ -226,12 +227,25 @@ function formatProgramDate(value) {
 
 function publicProgramFacts(program, includeFee = false) {
   const cost = includeFee && program.fee ? formatProgramCost(program) : (includeFee ? program.fee : '');
-  return [program.dates, program.session_schedule, program.session_count ? `${program.session_count} sessions` : '', program.single_session_available ? 'Single sessions available' : '', program.registration_closes_on ? `Registration closes ${formatProgramDate(program.registration_closes_on)}` : '', program.location, program.age_groups, cost].filter(Boolean);
+  const sessionPrice = singleSessionPrice(program);
+  return [program.dates, program.program_start_date ? `Starts ${formatProgramDate(program.program_start_date)}` : '', program.session_schedule, program.session_count ? `${program.session_count} sessions` : '', program.single_session_available ? `Single sessions available${sessionPrice === null ? ' · Contact the academy for the per-session price' : ` · ${formatCAD(sessionPrice)} per session`}` : '', program.registration_closes_on ? `Registration closes ${formatProgramDate(program.registration_closes_on)}` : '', program.location, program.age_groups, cost ? `Full program ${cost}` : ''].filter(Boolean);
 }
 
 function formatProgramCost(program) {
   const total = programCost(program);
   return total === null ? program.fee : formatCAD(total);
+}
+
+function singleSessionPrice(program) {
+  const total = programCost(program);
+  const sessions = Number(program?.session_count);
+  return program?.single_session_available && total !== null && Number.isInteger(sessions) && sessions > 0
+    ? Math.round((total / sessions + Number.EPSILON) * 100) / 100
+    : null;
+}
+
+function minimumProgramPayment(program) {
+  return program?.single_session_available ? singleSessionPrice(program) : 100;
 }
 
 function renderRegistrationReview(form) {
@@ -272,9 +286,16 @@ function renderRegistrationReview(form) {
   });
   const total = program ? programCost(program) : null;
   const cost = total === null ? (program?.fee || 'Contact the academy') : formatCAD(total);
-  const balance = total === null ? 'See full cost above' : formatCAD(Math.max(0, total - 100));
+  const minimumPayment = minimumProgramPayment(program || {});
+  const balance = total === null || minimumPayment === null ? 'Contact the academy to confirm' : formatCAD(Math.max(0, total - minimumPayment));
+  const paymentCopy = minimumPayment === null
+    ? 'Contact the academy to confirm the required minimum payment'
+    : minimumPayment === 100
+    ? 'Send the CAD $100 deposit by e-transfer'
+    : `Send a minimum payment of ${formatCAD(minimumPayment)} by e-transfer`;
   const programFacts = publicProgramFacts(program || {}).join(' · ');
-  review.innerHTML = `<div class="review-program"><span>SELECTED PROGRAM</span><strong>${escapeHtml(program?.title || '')}</strong><span>${escapeHtml(program?.season || '')}</span>${programFacts ? `<small>${escapeHtml(programFacts)}</small>` : ''}</div>${section('PLAYER DETAILS', playerRows)}${section('PARENT / GUARDIAN DETAILS', parentRows)}${section('EMERGENCY CONTACT', emergencyRows)}${waivers.length ? section('WAIVER APPROVALS', waivers) : ''}<section class="review-payment"><p class="eyebrow dark">PROGRAM COST & PAYMENT</p><div><span>Full program cost</span><strong>${escapeHtml(cost)}</strong></div><div><span>Deposit to reserve a spot</span><strong>${formatCAD(100)}</strong></div><div><span>Remaining balance after deposit</span><strong>${escapeHtml(balance)}</strong></div><p>Send the CAD $100 deposit by e-transfer to <a href="mailto:kingshockeyacademyns@gmail.com">kingshockeyacademyns@gmail.com</a>. The remaining balance may be paid by e-transfer or cash no later than the second session.</p></section>`;
+  const minimumPaymentText = minimumPayment === null ? 'Contact the academy' : formatCAD(minimumPayment);
+  review.innerHTML = `<div class="review-program"><span>SELECTED PROGRAM</span><strong>${escapeHtml(program?.title || '')}</strong><span>${escapeHtml(program?.season || '')}</span>${programFacts ? `<small>${escapeHtml(programFacts)}</small>` : ''}</div>${section('PLAYER DETAILS', playerRows)}${section('PARENT / GUARDIAN DETAILS', parentRows)}${section('EMERGENCY CONTACT', emergencyRows)}${waivers.length ? section('WAIVER APPROVALS', waivers) : ''}<section class="review-payment"><p class="eyebrow dark">PROGRAM COST & PAYMENT</p><div><span>Full program cost</span><strong>${escapeHtml(cost)}</strong></div><div><span>Minimum payment to reserve a spot</span><strong>${escapeHtml(minimumPaymentText)}</strong></div><div><span>Remaining balance after minimum payment</span><strong>${escapeHtml(balance)}</strong></div><p>${paymentCopy} to <a href="mailto:kingshockeyacademyns@gmail.com">kingshockeyacademyns@gmail.com</a>. The remaining balance may be paid by e-transfer or cash no later than the second session.</p></section>`;
 }
 
 function renderProgramDetails(program) {
@@ -305,6 +326,8 @@ function renderDynamicForm(programs, waivers, selectedProgramId, savedChildren =
   root.innerHTML = `<div class="alert" data-form-message hidden role="status"></div><form data-registration-form data-multistep-registration class="registration-form"><div class="trap" aria-hidden="true"><label>Leave this field empty<input name="website" tabindex="-1" autocomplete="off"></label></div><div class="registration-step-label" data-registration-step-label>STEP 1 OF 4 · PLAYER DETAILS</div><input type="hidden" name="program_type" data-program-type><section data-registration-step data-step-name="PLAYER DETAILS"><div class="form-title"><span>PLAYER DETAILS</span><span>* REQUIRED</span></div><label>I'm interested in <b>*</b><select name="program_id" data-program-select required>${programs.map(program => `<option value="${escapeHtml(program.id)}" ${program.id === selectedProgram.id ? 'selected' : ''}>${escapeHtml(program.title)}${program.season ? ` — ${escapeHtml(program.season)}` : ''}</option>`).join('')}</select></label><div class="saved-child-picker" data-saved-child-picker></div><div class="form-row"><label>Player first name <b>*</b><input name="player_first" maxlength="80" autocomplete="given-name" required></label><label>Player last name <b>*</b><input name="player_last" maxlength="80" autocomplete="family-name" required></label></div><label>Date of birth <b>*</b><input name="date_of_birth" type="date" min="${dateInputValue(minDob)}" max="${dateInputValue(today)}" required></label><div class="address-fields"><label>Street &amp; number <b>*</b><input name="player_address" maxlength="300" autocomplete="street-address" required></label><div class="form-row"><label>Post code <b>*</b><input name="player_postal_code" maxlength="16" autocomplete="postal-code" required></label><label>Province <b>*</b><input name="player_province" maxlength="80" autocomplete="address-level1" required></label></div></div><label>Medical information / allergies<textarea name="allergies" rows="3" maxlength="3000" placeholder="List allergies or other medical information the academy should know."></textarea></label><div class="program-specific-fields" data-program-specific-fields></div><div class="form-row"><label>Playing experience<select name="experience"><option value="">Choose one (optional)</option><option>New to hockey</option><option>Learn to skate / play</option><option>Recreational</option><option>Competitive</option></select></label><label>Anything else you’d like us to know?<textarea name="notes" rows="2" maxlength="3000"></textarea></label></div><div class="registration-step-actions"><span>Player and program information</span><button class="button button-gold" data-step-next type="button">CONTINUE TO PARENT DETAILS <b>↗</b></button></div></section><section data-registration-step data-step-name="PARENT & EMERGENCY CONTACTS" hidden><div class="form-title"><span>PARENT / GUARDIAN DETAILS</span><span>* REQUIRED</span></div><div class="form-row"><label>Parent / guardian first name <b>*</b><input name="guardian_first" maxlength="59" autocomplete="given-name" required></label><label>Parent / guardian last name <b>*</b><input name="guardian_last" maxlength="59" autocomplete="family-name" required></label></div><div class="form-row"><label>Email address <b>*</b><input name="email" type="email" maxlength="254" autocomplete="email" required></label><label>Phone number <b>*</b><input name="phone" type="tel" maxlength="40" autocomplete="tel" required></label></div><div class="address-fields"><label>Street &amp; number <b>*</b><input name="guardian_address" maxlength="300" autocomplete="street-address" required></label><div class="form-row"><label>Post code <b>*</b><input name="guardian_postal_code" maxlength="16" autocomplete="postal-code" required></label><label>Province <b>*</b><input name="guardian_province" maxlength="80" autocomplete="address-level1" required></label></div></div><div class="second-guardian-fields" data-second-guardian-fields><p class="eyebrow dark">SECOND PARENT / GUARDIAN <span>(OPTIONAL)</span></p><p class="registration-step-intro">Leave these fields blank if there is no second parent or guardian to include.</p><div class="form-row"><label>First name<input name="second_guardian_first" maxlength="80" data-second-guardian-field></label><label>Last name<input name="second_guardian_last" maxlength="80" data-second-guardian-field></label></div><div class="form-row"><label>Email address<input name="second_guardian_email" type="email" maxlength="254" data-second-guardian-field></label><label>Phone number<input name="second_guardian_phone" type="tel" maxlength="40" data-second-guardian-field></label></div><div class="address-fields"><label>Street &amp; number<input name="second_guardian_address" maxlength="300" autocomplete="street-address" data-second-guardian-field></label><div class="form-row"><label>Post code<input name="second_guardian_postal_code" maxlength="16" autocomplete="postal-code" data-second-guardian-field></label><label>Province<input name="second_guardian_province" maxlength="80" autocomplete="address-level1" data-second-guardian-field></label></div></div></div><div class="emergency-contact-fields"><p class="eyebrow dark">EMERGENCY CONTACT</p><div class="form-row"><label>Contact full name <b>*</b><input name="emergency_name" maxlength="120" required></label><label>Relationship to player <b>*</b><input name="emergency_relationship" maxlength="80" placeholder="e.g. Grandparent" required></label></div><label>Emergency contact phone <b>*</b><input name="emergency_phone" type="tel" maxlength="40" required></label></div><div class="registration-step-actions"><button class="button button-light" data-step-back type="button">BACK</button><button class="button button-gold" data-step-next type="button">CONTINUE TO WAIVERS <b>↗</b></button></div></section><section data-registration-step data-step-name="LIABILITY WAIVERS" hidden><div class="form-title"><span>LIABILITY WAIVERS</span><span>* REQUIRED</span></div><p class="registration-step-intro">Read each waiver in full. Check the box under each one to confirm you agree.</p><div data-waiver-fields></div><div class="registration-step-actions"><button class="button button-light" data-step-back type="button">BACK</button><button class="button button-gold" data-step-next type="button">CONTINUE TO FINAL REVIEW <b>↗</b></button></div></section><section data-registration-step data-step-name="FINAL REVIEW & PAYMENT" hidden><div class="form-title"><span>FINAL REVIEW</span><span>CHECK BEFORE SENDING</span></div><div data-registration-review></div><label class="consent"><input type="checkbox" name="consent" value="1" required><span>I am the parent/guardian or adult participant. I agree Kings Hockey Academy may use these details to manage this registration and send necessary program information, including changes to dates, times, location, or safety. This does not sign me up for academy news or new-program announcements. <b>*</b></span></label><label class="consent"><input type="checkbox" name="payment_terms_accepted" value="1" required><span>I understand the CAD $100 deposit and remaining payment terms shown above. <b>*</b></span></label><div class="registration-step-actions"><button class="button button-light" data-step-back type="button">BACK</button><button class="button button-gold" data-step-submit type="submit">SEND REGISTRATION REQUEST <b>↗</b></button></div><small class="form-security">Your information is sent securely to Kings Hockey Academy for registration follow-up.</small></section></form>`;
   const form = root.querySelector('[data-registration-form]');
   form._selectedProgram = selectedProgram;
+  const paymentConsent = form.querySelector('[name="payment_terms_accepted"]')?.closest('label')?.querySelector('span');
+  if (paymentConsent) paymentConsent.textContent = 'I understand the minimum payment and remaining payment terms shown above. *';
   const select = form.querySelector('[data-program-select]');
   const savedChildPicker = form.querySelector('[data-saved-child-picker]');
   if (signedIn && savedChildren.length) {
@@ -344,6 +367,12 @@ function renderDynamicForm(programs, waivers, selectedProgramId, savedChildren =
     document.querySelector('[data-program-season]').textContent = program.season || 'PROGRAM REGISTRATION';
     document.querySelector('[data-program-description]').textContent = program.description || 'Submit the form below and the academy will follow up with details and next steps.';
     document.querySelector('[data-program-facts]').textContent = publicProgramFacts(program, true).join(' · ');
+    const note = document.querySelector('.reg-note');
+    if (note) {
+      const minimumPayment = minimumProgramPayment(program);
+      const minimumText = minimumPayment === null ? 'confirmed minimum payment' : minimumPayment === 100 ? 'CAD $100' : formatCAD(minimumPayment);
+      note.innerHTML = `<strong>Please note</strong><br>Sending this form does not confirm your place. To secure a spot, send the minimum payment of ${escapeHtml(minimumText)} by e-transfer to kingshockeyacademyns@gmail.com. The remaining balance may be paid by e-transfer or cash no later than the second session.`;
+    }
     if (form.querySelector('[data-registration-review]')) renderRegistrationReview(form);
   };
   select.addEventListener('change', update);
@@ -356,7 +385,7 @@ async function loadDynamicRegistration() {
   const root = document.querySelector('[data-dynamic-form-root]');
   if (!client) { root.textContent = 'The registration form is not available right now. Please email kingshockeyacademyns@gmail.com for help.'; return; }
   const [{ data, error }, { data: waiverRows, error: waiverError }] = await Promise.all([
-    client.from('programs').select('id,title,season,description,dates,session_schedule,session_count,single_session_available,registration_closes_on,location,age_groups,fee,questions,jersey_size_enabled,jersey_number_enabled').eq('is_open', true).or(`registration_closes_on.is.null,registration_closes_on.gte.${localDateString()}`).order('created_at', { ascending: false }),
+    client.from('programs').select('id,title,season,description,dates,program_start_date,session_schedule,session_count,single_session_available,registration_closes_on,location,age_groups,fee,questions,jersey_size_enabled,jersey_number_enabled').eq('is_open', true).or(`registration_closes_on.is.null,registration_closes_on.gte.${localDateString()}`).order('created_at', { ascending: false }),
     client.from('waivers').select('id,title,body').eq('is_active', true).order('created_at', { ascending: true })
   ]);
   if (error || waiverError) { root.textContent = 'The registration form is being updated. Please contact the academy for help.'; return; }
