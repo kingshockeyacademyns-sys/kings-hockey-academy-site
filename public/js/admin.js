@@ -19,7 +19,9 @@ const setMessage = text => {
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 async function loadRows() {
-  let query = client.from('registrations').select('*, programs(title, season, questions, waivers)').order('created_at', { ascending: false });
+  let query = client.from('registrations')
+    .select('id,program_id,program_type,player_first,player_last,date_of_birth,birth_year,guardian_first,guardian_last,guardian_name,email,created_at,programs(title,season)')
+    .order('created_at', { ascending: false });
   if (submissionProgramId) query = query.eq('program_id', submissionProgramId);
   const { data, error } = await query;
   if (error) {
@@ -27,44 +29,36 @@ async function loadRows() {
     return;
   }
 
-  const { data: waiverRecords } = await client.from('waivers').select('id,title');
-  const waiverTitles = new Map((waiverRecords || []).map(waiver => [waiver.id, waiver.title]));
   setMessage('');
   const renderRow = row => {
-    const questions = row.programs?.questions || [];
-    const answers = Object.entries(row.custom_answers || {}).map(([index, answer]) => {
-      const question = /^\d+$/.test(index) ? (questions[Number(index)] || `Extra question ${Number(index) + 1}`) : index;
-      return `<br><small><strong>${esc(question)}</strong>: ${esc(answer)}</small>`;
-    }).join('');
-    const waiverApprovals = Object.entries(row.waiver_consents || {}).filter(([, approved]) => approved).map(([id]) => {
-      const waiver = row.programs?.waivers?.find(item => item.id === id);
-      const title = waiverTitles.get(id) || waiver?.title;
-      return title ? `<br><small><strong>Agreed:</strong> ${esc(title)} waiver</small>` : '';
-    }).join('');
-    const guardianName = [row.guardian_first, row.guardian_last].filter(Boolean).join(' ') || row.guardian_name;
-    const secondGuardian = [row.second_guardian_first, row.second_guardian_last].filter(Boolean).join(' ');
-    const guardianAddress = [row.guardian_address, row.guardian_postal_code, row.guardian_province].filter(Boolean).length ? `<br><small>Address: ${esc([row.guardian_address, row.guardian_postal_code, row.guardian_province].filter(Boolean).join(', '))}</small>` : '';
-    const secondGuardianAddress = [row.second_guardian_address, row.second_guardian_postal_code, row.second_guardian_province].filter(Boolean).join(', ');
-    const secondGuardianInfo = secondGuardian ? `<br><small>Second parent: ${esc(secondGuardian)} · ${esc(row.second_guardian_email)} · ${esc(row.second_guardian_phone)}${secondGuardianAddress ? ` · ${esc(secondGuardianAddress)}` : ''}</small>` : '';
-    const emergency = row.emergency_name ? `<br><small>Emergency contact: ${esc(row.emergency_name)} (${esc(row.emergency_relationship)}) · ${esc(row.emergency_phone)}</small>` : '';
-    const playerAddress = [row.player_address, row.player_postal_code, row.player_province].filter(Boolean).join(', ');
-    const playerDetails = [row.jersey_number ? `Jersey #${row.jersey_number}` : null, playerAddress ? `Player address: ${playerAddress}` : null, row.allergies ? `Medical / allergies: ${row.allergies}` : null, row.experience, row.notes].filter(Boolean).map(item => `<small>${esc(item)}</small>`).join('<br>');
-    const paymentTerms = row.payment_terms_accepted ? '<br><small>Payment terms acknowledged</small>' : '';
-    return `<tr><td>${esc(new Date(row.created_at).toLocaleString())}</td><td>${esc(row.program_type)}</td><td>${esc(row.player_first)} ${esc(row.player_last)}</td><td>${esc(row.date_of_birth || row.birth_year)}</td><td>${esc(guardianName)}${guardianAddress}${secondGuardianInfo}</td><td><a href="mailto:${esc(row.email)}">${esc(row.email)}</a><br>${esc(row.phone)}${emergency}</td><td>${playerDetails}${answers}${waiverApprovals}${paymentTerms}</td><td><button class="admin-delete-button" data-delete="${esc(row.id)}" type="button">Delete</button></td></tr>`;
+    const guardianName = [row.guardian_first, row.guardian_last].filter(Boolean).join(' ') || row.guardian_name || '';
+    return `<tr><td>${esc(new Date(row.created_at).toLocaleString())}</td><td>${esc(`${row.player_first || ''} ${row.player_last || ''}`.trim())}</td><td>${esc(row.date_of_birth || row.birth_year || '')}</td><td>${esc(guardianName)}</td><td><a href="mailto:${esc(row.email)}">${esc(row.email)}</a></td><td><button class="admin-delete-button" data-delete="${esc(row.id)}" type="button">Delete</button></td></tr>`;
   };
   document.querySelector('[data-registration-count]').textContent = `${data.length} submission${data.length === 1 ? '' : 's'} received`;
-  const groups = new Map();
+  const seasonNames = new Map([
+    ['fall-winter', 'FALL / WINTER'],
+    ['spring-summer', 'SPRING / SUMMER'],
+    ['other', 'OTHER SUBMISSIONS']
+  ]);
+  const seasonGroups = new Map([...seasonNames.keys()].map(key => [key, new Map()]));
   data.forEach(row => {
+    const seasonText = `${row.programs?.season || ''} ${row.program_type || ''}`.toLowerCase();
+    const season = /fall|winter/.test(seasonText) ? 'fall-winter' : /spring|summer/.test(seasonText) ? 'spring-summer' : 'other';
+    const programs = seasonGroups.get(season);
     const key = row.program_id || `legacy:${row.program_type || 'other'}`;
-    if (!groups.has(key)) groups.set(key, { title: row.programs?.title || row.program_type || 'Other submissions', season: row.programs?.season || '', rows: [] });
-    groups.get(key).rows.push(row);
+    if (!programs.has(key)) programs.set(key, { title: row.programs?.title || row.program_type || 'Other submissions', rows: [] });
+    programs.get(key).rows.push(row);
   });
   const groupRoot = document.querySelector('[data-registration-groups]');
-  groupRoot.innerHTML = groups.size ? [...groups.values()].map(group => `
-    <section class="submission-group">
-      <div class="submission-group-heading"><div><p class="eyebrow red">PROGRAM SUBMISSIONS</p><h2>${esc(group.title)}</h2>${group.season ? `<small>${esc(group.season)}</small>` : ''}</div><span>${group.rows.length} submission${group.rows.length === 1 ? '' : 's'}</span></div>
-      <div class="table-wrap"><table><thead><tr><th>Received</th><th>Program</th><th>Player</th><th>Date of birth</th><th>Parent / guardian</th><th>Contact</th><th>Player & medical details</th><th>Action</th></tr></thead><tbody>${group.rows.map(renderRow).join('')}</tbody></table></div>
-    </section>`).join('') : '<p class="empty">No registration submissions have been received yet.</p>';
+  groupRoot.innerHTML = [...seasonGroups.entries()].filter(([key, programs]) => key !== 'other' || programs.size).map(([season, programs]) => {
+    const count = [...programs.values()].reduce((total, program) => total + program.rows.length, 0);
+    const content = programs.size ? [...programs.values()].map(program => `
+      <section class="submission-program">
+        <div class="submission-group-heading"><div><p class="eyebrow red">PROGRAM SUBMISSIONS</p><h3>${esc(program.title)}</h3></div><span>${program.rows.length} submission${program.rows.length === 1 ? '' : 's'}</span></div>
+        <div class="table-wrap"><table><thead><tr><th>Received</th><th>Player</th><th>Date of birth</th><th>Parent / guardian name</th><th>Contact email</th><th>Action</th></tr></thead><tbody>${program.rows.map(renderRow).join('')}</tbody></table></div>
+      </section>`).join('') : '<p class="empty">No submissions in this season yet.</p>';
+    return `<section class="submission-season"><div class="submission-season-heading"><h2>${seasonNames.get(season)}</h2><span>${count} submission${count === 1 ? '' : 's'}</span></div>${content}</section>`;
+  }).join('') || '<p class="empty">No registration submissions have been received yet.</p>';
   groupRoot.querySelectorAll('[data-delete]').forEach(button => button.addEventListener('click', async () => {
     if (!confirm('Delete this registration inquiry? This cannot be undone.')) return;
     const { error: deleteError } = await client.from('registrations').delete().eq('id', button.dataset.delete);

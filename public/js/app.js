@@ -93,6 +93,7 @@ function wireMultistepRegistrationForm(form) {
     field.addEventListener('input', syncSecondGuardianRequirements);
     field.addEventListener('change', syncSecondGuardianRequirements);
   });
+  syncSecondGuardianRequirements();
   form.querySelectorAll('input,select,textarea').forEach(field => field.addEventListener('input', () => {
     if (activeStep === steps.length - 1) renderRegistrationReview(form);
   }));
@@ -316,7 +317,7 @@ function renderWaiverFields(waivers) {
   fields.innerHTML = waivers.length ? `<fieldset class="waiver-consents"><legend>REQUIRED WAIVERS</legend><p>Please review each waiver and check the box to confirm your agreement. You must approve every active waiver to continue.</p>${waivers.map(waiver => `<article class="registration-waiver"><h3>${escapeHtml(waiver.title)}</h3><div class="registration-waiver-body">${escapeHtml(waiver.body).replace(/\r?\n/g, '<br>')}</div><label class="waiver-consent"><input type="checkbox" name="waiver_${escapeHtml(waiver.id)}" value="1" data-waiver-consent="${escapeHtml(waiver.id)}" required><span>I have read and agree to the ${escapeHtml(waiver.title)}. <b>*</b></span></label></article>`).join('')}</fieldset>` : '<p class="no-registration-waivers">There are no additional liability waivers for this program.</p>';
 }
 
-function renderDynamicForm(programs, waivers, selectedProgramId, savedChildren = [], signedIn = false) {
+function renderDynamicForm(programs, waivers, selectedProgramId, savedChildren = [], savedParent = null, signedIn = false) {
   const root = document.querySelector('[data-dynamic-form-root]');
   if (!root) return;
   const selectedProgram = programs.find(program => program.id === selectedProgramId) || programs[0];
@@ -326,8 +327,41 @@ function renderDynamicForm(programs, waivers, selectedProgramId, savedChildren =
   root.innerHTML = `<div class="alert" data-form-message hidden role="status"></div><form data-registration-form data-multistep-registration class="registration-form"><div class="trap" aria-hidden="true"><label>Leave this field empty<input name="website" tabindex="-1" autocomplete="off"></label></div><div class="registration-step-label" data-registration-step-label>STEP 1 OF 4 · PLAYER DETAILS</div><input type="hidden" name="program_type" data-program-type><section data-registration-step data-step-name="PLAYER DETAILS"><div class="form-title"><span>PLAYER DETAILS</span><span>* REQUIRED</span></div><label>I'm interested in <b>*</b><select name="program_id" data-program-select required>${programs.map(program => `<option value="${escapeHtml(program.id)}" ${program.id === selectedProgram.id ? 'selected' : ''}>${escapeHtml(program.title)}${program.season ? ` — ${escapeHtml(program.season)}` : ''}</option>`).join('')}</select></label><div class="saved-child-picker" data-saved-child-picker></div><div class="form-row"><label>Player first name <b>*</b><input name="player_first" maxlength="80" autocomplete="given-name" required></label><label>Player last name <b>*</b><input name="player_last" maxlength="80" autocomplete="family-name" required></label></div><label>Date of birth <b>*</b><input name="date_of_birth" type="date" min="${dateInputValue(minDob)}" max="${dateInputValue(today)}" required></label><div class="address-fields"><label>Street &amp; number <b>*</b><input name="player_address" maxlength="300" autocomplete="street-address" required></label><div class="form-row"><label>Post code <b>*</b><input name="player_postal_code" maxlength="16" autocomplete="postal-code" required></label><label>Province <b>*</b><input name="player_province" maxlength="80" autocomplete="address-level1" required></label></div></div><label>Medical information / allergies<textarea name="allergies" rows="3" maxlength="3000" placeholder="List allergies or other medical information the academy should know."></textarea></label><div class="program-specific-fields" data-program-specific-fields></div><div class="form-row"><label>Playing experience<select name="experience"><option value="">Choose one (optional)</option><option>New to hockey</option><option>Learn to skate / play</option><option>Recreational</option><option>Competitive</option></select></label><label>Anything else you’d like us to know?<textarea name="notes" rows="2" maxlength="3000"></textarea></label></div><div class="registration-step-actions"><span>Player and program information</span><button class="button button-gold" data-step-next type="button">CONTINUE TO PARENT DETAILS <b>↗</b></button></div></section><section data-registration-step data-step-name="PARENT & EMERGENCY CONTACTS" hidden><div class="form-title"><span>PARENT / GUARDIAN DETAILS</span><span>* REQUIRED</span></div><div class="form-row"><label>Parent / guardian first name <b>*</b><input name="guardian_first" maxlength="59" autocomplete="given-name" required></label><label>Parent / guardian last name <b>*</b><input name="guardian_last" maxlength="59" autocomplete="family-name" required></label></div><div class="form-row"><label>Email address <b>*</b><input name="email" type="email" maxlength="254" autocomplete="email" required></label><label>Phone number <b>*</b><input name="phone" type="tel" maxlength="40" autocomplete="tel" required></label></div><div class="address-fields"><label>Street &amp; number <b>*</b><input name="guardian_address" maxlength="300" autocomplete="street-address" required></label><div class="form-row"><label>Post code <b>*</b><input name="guardian_postal_code" maxlength="16" autocomplete="postal-code" required></label><label>Province <b>*</b><input name="guardian_province" maxlength="80" autocomplete="address-level1" required></label></div></div><div class="second-guardian-fields" data-second-guardian-fields><p class="eyebrow dark">SECOND PARENT / GUARDIAN <span>(OPTIONAL)</span></p><p class="registration-step-intro">Leave these fields blank if there is no second parent or guardian to include.</p><div class="form-row"><label>First name<input name="second_guardian_first" maxlength="80" data-second-guardian-field></label><label>Last name<input name="second_guardian_last" maxlength="80" data-second-guardian-field></label></div><div class="form-row"><label>Email address<input name="second_guardian_email" type="email" maxlength="254" data-second-guardian-field></label><label>Phone number<input name="second_guardian_phone" type="tel" maxlength="40" data-second-guardian-field></label></div><div class="address-fields"><label>Street &amp; number<input name="second_guardian_address" maxlength="300" autocomplete="street-address" data-second-guardian-field></label><div class="form-row"><label>Post code<input name="second_guardian_postal_code" maxlength="16" autocomplete="postal-code" data-second-guardian-field></label><label>Province<input name="second_guardian_province" maxlength="80" autocomplete="address-level1" data-second-guardian-field></label></div></div></div><div class="emergency-contact-fields"><p class="eyebrow dark">EMERGENCY CONTACT</p><div class="form-row"><label>Contact full name <b>*</b><input name="emergency_name" maxlength="120" required></label><label>Relationship to player <b>*</b><input name="emergency_relationship" maxlength="80" placeholder="e.g. Grandparent" required></label></div><label>Emergency contact phone <b>*</b><input name="emergency_phone" type="tel" maxlength="40" required></label></div><div class="registration-step-actions"><button class="button button-light" data-step-back type="button">BACK</button><button class="button button-gold" data-step-next type="button">CONTINUE TO WAIVERS <b>↗</b></button></div></section><section data-registration-step data-step-name="LIABILITY WAIVERS" hidden><div class="form-title"><span>LIABILITY WAIVERS</span><span>* REQUIRED</span></div><p class="registration-step-intro">Read each waiver in full. Check the box under each one to confirm you agree.</p><div data-waiver-fields></div><div class="registration-step-actions"><button class="button button-light" data-step-back type="button">BACK</button><button class="button button-gold" data-step-next type="button">CONTINUE TO FINAL REVIEW <b>↗</b></button></div></section><section data-registration-step data-step-name="FINAL REVIEW & PAYMENT" hidden><div class="form-title"><span>FINAL REVIEW</span><span>CHECK BEFORE SENDING</span></div><div data-registration-review></div><label class="consent"><input type="checkbox" name="consent" value="1" required><span>I am the parent/guardian or adult participant. I agree Kings Hockey Academy may use these details to manage this registration and send necessary program information, including changes to dates, times, location, or safety. This does not sign me up for academy news or new-program announcements. <b>*</b></span></label><label class="consent"><input type="checkbox" name="payment_terms_accepted" value="1" required><span>I understand the CAD $100 deposit and remaining payment terms shown above. <b>*</b></span></label><div class="registration-step-actions"><button class="button button-light" data-step-back type="button">BACK</button><button class="button button-gold" data-step-submit type="submit">SEND REGISTRATION REQUEST <b>↗</b></button></div><small class="form-security">Your information is sent securely to Kings Hockey Academy for registration follow-up.</small></section></form>`;
   const form = root.querySelector('[data-registration-form]');
   form._selectedProgram = selectedProgram;
+  if (savedParent) {
+    const parentFields = {
+      guardian_first: savedParent.first_name,
+      guardian_last: savedParent.last_name,
+      email: savedParent.email,
+      phone: savedParent.phone,
+      guardian_address: savedParent.street_number,
+      guardian_postal_code: savedParent.postal_code,
+      guardian_province: savedParent.province,
+      second_guardian_first: savedParent.second_guardian_first,
+      second_guardian_last: savedParent.second_guardian_last,
+      second_guardian_email: savedParent.second_guardian_email,
+      second_guardian_phone: savedParent.second_guardian_phone,
+      second_guardian_address: savedParent.second_guardian_street_number,
+      second_guardian_postal_code: savedParent.second_guardian_postal_code,
+      second_guardian_province: savedParent.second_guardian_province,
+      emergency_name: savedParent.emergency_name,
+      emergency_relationship: savedParent.emergency_relationship,
+      emergency_phone: savedParent.emergency_phone
+    };
+    Object.entries(parentFields).forEach(([name, value]) => {
+      const input = form.elements[name];
+      if (input && !input.value) input.value = value || '';
+    });
+  }
   const paymentConsent = form.querySelector('[name="payment_terms_accepted"]')?.closest('label')?.querySelector('span');
   if (paymentConsent) paymentConsent.textContent = 'I understand the minimum payment and remaining payment terms shown above. *';
+  if (savedParent?.first_name) {
+    const parentStep = form.querySelector('[data-step-name="PARENT & EMERGENCY CONTACTS"]');
+    const parentTitle = parentStep?.querySelector('.form-title');
+    const accountNotice = document.createElement('p');
+    accountNotice.className = 'registration-step-intro';
+    accountNotice.textContent = 'Your parent and emergency contact details have been filled from your family account. Please check that they are current.';
+    parentTitle?.after(accountNotice);
+  }
   const select = form.querySelector('[data-program-select]');
   const savedChildPicker = form.querySelector('[data-saved-child-picker]');
   if (signedIn && savedChildren.length) {
@@ -392,9 +426,14 @@ async function loadDynamicRegistration() {
   if (!data?.length) { root.textContent = 'No registrations are available right now. Please return to Camps & Programs later or contact the academy.'; return; }
   const { data: { session } } = await client.auth.getSession();
   let savedChildren = [];
+  let savedParent = null;
   if (session) {
-    const { data: childRows } = await client.from('parent_children').select('id,first_name,last_name,date_of_birth,street_number,postal_code,province,medical_information').order('created_at', { ascending: true });
+    const [{ data: childRows }, { data: parentRow }] = await Promise.all([
+      client.from('parent_children').select('id,first_name,last_name,date_of_birth,street_number,postal_code,province,medical_information').order('created_at', { ascending: true }),
+      client.from('parent_profiles').select('first_name,last_name,phone,street_number,postal_code,province,second_guardian_first,second_guardian_last,second_guardian_email,second_guardian_phone,second_guardian_street_number,second_guardian_postal_code,second_guardian_province,emergency_name,emergency_relationship,emergency_phone').maybeSingle()
+    ]);
     savedChildren = childRows || [];
+    savedParent = parentRow ? { ...parentRow, email: session.user.email || '' } : { email: session.user.email || '' };
   }
   const getSeasonGroup = program => {
     const season = String(program?.season || '').toLowerCase();
@@ -415,7 +454,7 @@ async function loadDynamicRegistration() {
     return;
   }
   const selectedProgramId = seasonPrograms.some(program => program.id === requestedId) ? requestedId : seasonPrograms[0].id;
-  renderDynamicForm(seasonPrograms, waiverRows || [], selectedProgramId, savedChildren, Boolean(session));
+  renderDynamicForm(seasonPrograms, waiverRows || [], selectedProgramId, savedChildren, savedParent, Boolean(session));
 }
 
 loadPublicPrograms();

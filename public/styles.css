@@ -112,7 +112,7 @@
 .program-wizard-heading .admin-logout{color:#675e4b}
 .submission-filter-note{padding:10px 12px;background:#f3f0e7;border-left:2px solid var(--gold)}
 .submission-filter-note a{color:#966b1e;font-weight:700}
-.submission-group{margin-top:38px}.submission-group-heading{display:flex;justify-content:space-between;align-items:end;gap:20px;padding-bottom:14px;border-bottom:1px solid #ddd7c9}.submission-group-heading .eyebrow{margin:0 0 7px}.submission-group-heading h2{font:700 30px/.98 var(--serif);margin:0;color:var(--black)}.submission-group-heading small{display:block;margin-top:5px;color:#687574;font-size:10px}.submission-group-heading>span{font-size:11px;color:#687574;white-space:nowrap}
+.submission-season{margin-top:32px;padding-top:22px;border-top:1px solid #ddd7c9}.submission-season:first-child{margin-top:22px;padding-top:0;border-top:0}.submission-season-heading{display:flex;align-items:end;justify-content:space-between;gap:18px;padding-bottom:13px;border-bottom:2px solid var(--gold)}.submission-season-heading h2{margin:0;font:700 27px/1 var(--serif);letter-spacing:.01em}.submission-season-heading span,.submission-group-heading>span{color:#687574;font-size:10px;white-space:nowrap}.submission-program{margin-top:22px}.submission-group-heading{display:flex;justify-content:space-between;align-items:end;gap:20px;padding-bottom:11px;border-bottom:1px solid #ddd7c9}.submission-group-heading .eyebrow{margin:0 0 7px}.submission-group-heading h3{font:700 21px/1.05 var(--serif);margin:0;color:var(--black)}
 .admin-program-meta{color:#746f63;font-size:9px!important}
 .admin-program-card .program-question-count,.admin-program-card small{display:block;margin-top:5px}
 .program-submissions-link{font-weight:700!important;color:#966b1e!important}
