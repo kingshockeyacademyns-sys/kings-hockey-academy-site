@@ -154,9 +154,9 @@ function wireMultistepRegistrationForm(form) {
 document.querySelectorAll('[data-registration-form]').forEach(wireRegistrationForm);
 
 async function loadPublicPrograms() {
-  const list = document.querySelector('[data-dynamic-programs]');
-  if (!list) return;
-  if (!client) { list.hidden = true; return; }
+  const lists = [...document.querySelectorAll('[data-season-programs]')];
+  if (!lists.length) return;
+  if (!client) return;
   const { data, error } = await client.from('programs').select('id,title,season,description,dates,location,age_groups,fee,jersey_size_enabled,jersey_number_enabled').eq('is_open', true).order('created_at', { ascending: false });
   const openPrograms = error ? [] : (data || []);
   const getSeasonGroup = program => {
@@ -167,10 +167,22 @@ async function loadPublicPrograms() {
   };
   document.querySelectorAll('[data-season-card]').forEach(card => {
     const key = card.dataset.seasonCard;
-    const program = openPrograms.find(item => getSeasonGroup(item) === key);
+    const seasonPrograms = openPrograms.filter(item => getSeasonGroup(item) === key);
+    const list = card.querySelector('[data-season-programs]');
     const link = card.querySelector('[data-season-link]');
+    if (list) {
+      list.innerHTML = seasonPrograms.map(program => {
+        const details = [program.dates, program.location, program.age_groups, program.fee]
+          .filter(Boolean).map(escapeHtml).join(' · ');
+        const optional = [program.jersey_size_enabled ? 'Optional jersey size' : '', program.jersey_number_enabled ? 'Optional jersey number' : '']
+          .filter(Boolean).map(escapeHtml).join(' · ');
+        const summary = [details, optional].filter(Boolean).join(' · ');
+        return `<li><strong>${escapeHtml(program.title)}</strong>${program.description ? `<span>${escapeHtml(program.description)}</span>` : ''}${summary ? `<small>${summary}</small>` : ''}</li>`;
+      }).join('');
+      list.hidden = !seasonPrograms.length;
+    }
     if (!link) return;
-    if (!program) {
+    if (!seasonPrograms.length) {
       const button = document.createElement('button');
       button.className = 'button button-light';
       button.type = 'button';
@@ -186,11 +198,6 @@ async function loadPublicPrograms() {
     button.innerHTML = `${seasonLabel} <b>↗</b>`;
     link.replaceWith(button);
   });
-  if (!openPrograms.length) { list.hidden = true; return; }
-  list.innerHTML = openPrograms.map((program, index) => {
-    const details = [program.dates, program.location, program.age_groups, program.fee, program.jersey_size_enabled ? 'Optional jersey size' : null, program.jersey_number_enabled ? 'Optional jersey number' : null].filter(Boolean).map(escapeHtml).join(' · ');
-    return `<article class="program-card ${index % 2 ? 'program-card-blue' : 'program-card-gold'}"><span class="number">${escapeHtml(program.season || 'NOW REGISTERING')}</span><div class="path-icon">✳</div><h3>${escapeHtml(program.title)}</h3><p>${escapeHtml(program.description || 'Registration is open. Submit the form and the academy will follow up.')}</p>${details ? `<p class="dynamic-program-card-details">${details}</p>` : ''}<a class="button button-gold" href="program-registration.html?id=${encodeURIComponent(program.id)}">REGISTER <b>↗</b></a></article>`;
-  }).join('');
 }
 
 function formatCAD(value) {
