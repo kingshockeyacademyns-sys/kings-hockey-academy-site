@@ -159,12 +159,15 @@ async function loadPublicPrograms() {
   if (!client) { list.hidden = true; return; }
   const { data, error } = await client.from('programs').select('id,title,season,description,dates,location,age_groups,fee,jersey_size_enabled,jersey_number_enabled').eq('is_open', true).order('created_at', { ascending: false });
   const openPrograms = error ? [] : (data || []);
+  const getSeasonGroup = program => {
+    const season = String(program?.season || '').toLowerCase();
+    if (/fall|winter/.test(season)) return 'fall-winter';
+    if (/spring|summer/.test(season)) return 'spring-summer';
+    return 'other';
+  };
   document.querySelectorAll('[data-season-card]').forEach(card => {
     const key = card.dataset.seasonCard;
-    const program = openPrograms.find(item => {
-      const season = String(item.season || '').toLowerCase();
-      return key === 'fall-winter' ? /fall|winter/.test(season) : /spring|summer/.test(season);
-    });
+    const program = openPrograms.find(item => getSeasonGroup(item) === key);
     const link = card.querySelector('[data-season-link]');
     if (!link) return;
     if (!program) {
@@ -179,7 +182,7 @@ async function loadPublicPrograms() {
     const seasonLabel = key === 'fall-winter' ? 'REGISTER FOR A FALL OR WINTER CAMP' : 'REGISTER FOR A SPRING OR SUMMER CAMP';
     const button = document.createElement('a');
     button.className = 'button button-gold';
-    button.href = `program-registration.html?id=${encodeURIComponent(program.id)}`;
+    button.href = `program-registration.html?season=${encodeURIComponent(key)}`;
     button.innerHTML = `${seasonLabel} <b>↗</b>`;
     link.replaceWith(button);
   });
@@ -302,9 +305,26 @@ async function loadDynamicRegistration() {
   ]);
   if (error || waiverError) { root.textContent = 'The registration form is being updated. Please contact the academy for help.'; return; }
   if (!data?.length) { root.textContent = 'No registrations are available right now. Please return to Camps & Programs later or contact the academy.'; return; }
-  const requestedId = new URLSearchParams(window.location.search).get('id');
-  const selectedProgramId = data.some(program => program.id === requestedId) ? requestedId : data[0].id;
-  renderDynamicForm(data, waiverRows || [], selectedProgramId);
+  const getSeasonGroup = program => {
+    const season = String(program?.season || '').toLowerCase();
+    if (/fall|winter/.test(season)) return 'fall-winter';
+    if (/spring|summer/.test(season)) return 'spring-summer';
+    return 'other';
+  };
+  const params = new URLSearchParams(window.location.search);
+  const requestedId = params.get('id');
+  const requestedProgram = data.find(program => program.id === requestedId);
+  const requestedSeason = params.get('season');
+  const seasonGroup = ['fall-winter', 'spring-summer'].includes(requestedSeason)
+    ? requestedSeason
+    : getSeasonGroup(requestedProgram || data[0]);
+  const seasonPrograms = data.filter(program => getSeasonGroup(program) === seasonGroup);
+  if (!seasonPrograms.length) {
+    root.textContent = `There are no ${seasonGroup === 'fall-winter' ? 'fall or winter' : 'spring or summer'} registrations available right now. Please return to Camps & Programs later or contact the academy.`;
+    return;
+  }
+  const selectedProgramId = seasonPrograms.some(program => program.id === requestedId) ? requestedId : seasonPrograms[0].id;
+  renderDynamicForm(seasonPrograms, waiverRows || [], selectedProgramId);
 }
 
 loadPublicPrograms();

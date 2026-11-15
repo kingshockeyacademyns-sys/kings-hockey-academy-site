@@ -19,7 +19,7 @@ const setMessage = text => {
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 async function loadRows() {
-  let query = client.from('registrations').select('*, programs(title, questions, waivers)').order('created_at', { ascending: false });
+  let query = client.from('registrations').select('*, programs(title, season, questions, waivers)').order('created_at', { ascending: false });
   if (submissionProgramId) query = query.eq('program_id', submissionProgramId);
   const { data, error } = await query;
   if (error) {
@@ -30,8 +30,7 @@ async function loadRows() {
   const { data: waiverRecords } = await client.from('waivers').select('id,title');
   const waiverTitles = new Map((waiverRecords || []).map(waiver => [waiver.id, waiver.title]));
   setMessage('');
-  const tbody = document.querySelector('[data-registration-rows]');
-  tbody.innerHTML = data.map(row => {
+  const renderRow = row => {
     const questions = row.programs?.questions || [];
     const answers = Object.entries(row.custom_answers || {}).map(([index, answer]) => {
       const question = /^\d+$/.test(index) ? (questions[Number(index)] || `Extra question ${Number(index) + 1}`) : index;
@@ -52,9 +51,21 @@ async function loadRows() {
     const playerDetails = [row.jersey_number ? `Jersey #${row.jersey_number}` : null, playerAddress ? `Player address: ${playerAddress}` : null, row.allergies ? `Medical / allergies: ${row.allergies}` : null, row.experience, row.notes].filter(Boolean).map(item => `<small>${esc(item)}</small>`).join('<br>');
     const paymentTerms = row.payment_terms_accepted ? '<br><small>Payment terms acknowledged</small>' : '';
     return `<tr><td>${esc(new Date(row.created_at).toLocaleString())}</td><td>${esc(row.program_type)}</td><td>${esc(row.player_first)} ${esc(row.player_last)}</td><td>${esc(row.date_of_birth || row.birth_year)}</td><td>${esc(guardianName)}${guardianAddress}${secondGuardianInfo}</td><td><a href="mailto:${esc(row.email)}">${esc(row.email)}</a><br>${esc(row.phone)}${emergency}</td><td>${playerDetails}${answers}${waiverApprovals}${paymentTerms}</td><td><button class="admin-delete-button" data-delete="${esc(row.id)}" type="button">Delete</button></td></tr>`;
-  }).join('');
+  };
   document.querySelector('[data-registration-count]').textContent = `${data.length} submission${data.length === 1 ? '' : 's'} received`;
-  tbody.querySelectorAll('[data-delete]').forEach(button => button.addEventListener('click', async () => {
+  const groups = new Map();
+  data.forEach(row => {
+    const key = row.program_id || `legacy:${row.program_type || 'other'}`;
+    if (!groups.has(key)) groups.set(key, { title: row.programs?.title || row.program_type || 'Other submissions', season: row.programs?.season || '', rows: [] });
+    groups.get(key).rows.push(row);
+  });
+  const groupRoot = document.querySelector('[data-registration-groups]');
+  groupRoot.innerHTML = groups.size ? [...groups.values()].map(group => `
+    <section class="submission-group">
+      <div class="submission-group-heading"><div><p class="eyebrow red">PROGRAM SUBMISSIONS</p><h2>${esc(group.title)}</h2>${group.season ? `<small>${esc(group.season)}</small>` : ''}</div><span>${group.rows.length} submission${group.rows.length === 1 ? '' : 's'}</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Received</th><th>Program</th><th>Player</th><th>Date of birth</th><th>Parent / guardian</th><th>Contact</th><th>Player & medical details</th><th>Action</th></tr></thead><tbody>${group.rows.map(renderRow).join('')}</tbody></table></div>
+    </section>`).join('') : '<p class="empty">No registration submissions have been received yet.</p>';
+  groupRoot.querySelectorAll('[data-delete]').forEach(button => button.addEventListener('click', async () => {
     if (!confirm('Delete this registration inquiry? This cannot be undone.')) return;
     const { error: deleteError } = await client.from('registrations').delete().eq('id', button.dataset.delete);
     if (deleteError) {

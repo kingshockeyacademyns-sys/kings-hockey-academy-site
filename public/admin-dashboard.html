@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Registration Admin | Kings Hockey Academy</title>
-  <link rel="stylesheet" href="styles.css?v=registration-addresses-1">
+  <link rel="stylesheet" href="styles.css?v=registration-program-groups-1">
 </head>
 <body class="admin-page admin-dashboard-page" data-admin-page="dashboard">
   <header class="site-header">
@@ -47,16 +47,11 @@
     <p data-admin-email></p>
     <p class="submission-filter-note" data-registration-filter hidden>Showing submissions for <strong data-registration-filter-name></strong> · <a href="admin-dashboard.html">View all submissions</a></p>
     <p data-registration-count>Loading…</p>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Received</th><th>Program</th><th>Player</th><th>Date of birth</th><th>Parent / guardian</th><th>Contact</th><th>Player & medical details</th><th>Action</th></tr></thead>
-        <tbody data-registration-rows></tbody>
-      </table>
-    </div>
+    <div class="submission-groups" data-registration-groups></div>
     <p class="admin-privacy">Registration inquiries can include information about minors. Keep this account private and delete records when they are no longer needed.</p>
   </main>
   <script src="supabase-config.js"></script>
   <script src="js/site.js"></script>
-  <script type="module" src="js/admin.js?v=registration-addresses-1"></script>
+  <script type="module" src="js/admin.js?v=registration-program-groups-1"></script>
 </body>
 </html>
