@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { ageGroupForBirthDate } from './age-groups.js';
 
 const configured = window.KHA_SUPABASE_URL?.startsWith('https://') && window.KHA_SUPABASE_PUBLISHABLE_KEY && !window.KHA_SUPABASE_PUBLISHABLE_KEY.includes('PASTE_');
 const client = configured ? createClient(window.KHA_SUPABASE_URL, window.KHA_SUPABASE_PUBLISHABLE_KEY) : null;
@@ -32,7 +33,8 @@ async function loadRows() {
   setMessage('');
   const renderRow = row => {
     const guardianName = [row.guardian_first, row.guardian_last].filter(Boolean).join(' ') || row.guardian_name || '';
-    return `<tr><td>${esc(new Date(row.created_at).toLocaleString())}</td><td>${esc(`${row.player_first || ''} ${row.player_last || ''}`.trim())}</td><td>${esc(row.date_of_birth || row.birth_year || '')}</td><td>${esc(guardianName)}</td><td><a href="mailto:${esc(row.email)}">${esc(row.email)}</a></td><td><button class="admin-delete-button" data-delete="${esc(row.id)}" type="button">Delete</button></td></tr>`;
+    const ageGroup = row.date_of_birth ? ageGroupForBirthDate(row.date_of_birth) : (row.birth_year ? 'Full DOB needed' : '—');
+    return `<tr><td>${esc(new Date(row.created_at).toLocaleString())}</td><td>${esc(`${row.player_first || ''} ${row.player_last || ''}`.trim())}</td><td>${esc(row.date_of_birth || row.birth_year || '')}</td><td>${esc(ageGroup || '—')}</td><td>${esc(guardianName)}</td><td><a href="mailto:${esc(row.email)}">${esc(row.email)}</a></td><td><button class="admin-delete-button" data-delete="${esc(row.id)}" type="button">Delete</button></td></tr>`;
   };
   document.querySelector('[data-registration-count]').textContent = `${data.length} submission${data.length === 1 ? '' : 's'} received`;
   const seasonNames = new Map([
@@ -55,7 +57,7 @@ async function loadRows() {
     const content = programs.size ? [...programs.values()].map(program => `
       <section class="submission-program">
         <div class="submission-group-heading"><div><p class="eyebrow red">PROGRAM SUBMISSIONS</p><h3>${esc(program.title)}</h3></div><span>${program.rows.length} submission${program.rows.length === 1 ? '' : 's'}</span></div>
-        <div class="table-wrap"><table><thead><tr><th>Received</th><th>Player</th><th>Date of birth</th><th>Parent / guardian name</th><th>Contact email</th><th>Action</th></tr></thead><tbody>${program.rows.map(renderRow).join('')}</tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Received</th><th>Player</th><th>Date of birth</th><th>Age group<br><small>July 31 cutoff</small></th><th>Parent / guardian name</th><th>Contact email</th><th>Action</th></tr></thead><tbody>${program.rows.map(renderRow).join('')}</tbody></table></div>
       </section>`).join('') : '<p class="empty">No submissions in this season yet.</p>';
     return `<section class="submission-season"><div class="submission-season-heading"><h2>${seasonNames.get(season)}</h2><span>${count} submission${count === 1 ? '' : 's'}</span></div>${content}</section>`;
   }).join('') || '<p class="empty">No registration submissions have been received yet.</p>';
@@ -408,8 +410,8 @@ document.querySelector('[data-admin-export]')?.addEventListener('click', async (
     return;
   }
 
-  const columns = ['id','program_id','program_type','custom_answers','waiver_consents','player_first','player_last','date_of_birth','birth_year','jersey_number','player_address','player_postal_code','player_province','allergies','guardian_first','guardian_last','guardian_name','guardian_address','guardian_postal_code','guardian_province','email','phone','second_guardian_first','second_guardian_last','second_guardian_email','second_guardian_phone','second_guardian_address','second_guardian_postal_code','second_guardian_province','emergency_name','emergency_relationship','emergency_phone','payment_terms_accepted','town','experience','notes','created_at'];
-  const csv = [columns, ...data.map(row => columns.map(key => row[key] ?? ''))].map(row => row.map(value => {
+  const columns = ['id','program_id','program_type','custom_answers','waiver_consents','player_first','player_last','date_of_birth','current_age_group','birth_year','jersey_number','player_address','player_postal_code','player_province','allergies','guardian_first','guardian_last','guardian_name','guardian_address','guardian_postal_code','guardian_province','email','phone','second_guardian_first','second_guardian_last','second_guardian_email','second_guardian_phone','second_guardian_address','second_guardian_postal_code','second_guardian_province','emergency_name','emergency_relationship','emergency_phone','payment_terms_accepted','town','experience','notes','created_at'];
+  const csv = [columns, ...data.map(row => columns.map(key => key === 'current_age_group' ? (ageGroupForBirthDate(row.date_of_birth) || '') : row[key] ?? ''))].map(row => row.map(value => {
     const safe = String(value).replace(/^[=+\-@]/, "'$&").replaceAll('"','""');
     return `"${safe}"`;
   }).join(',')).join('\r\n');

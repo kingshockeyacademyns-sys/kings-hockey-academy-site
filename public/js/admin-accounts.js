@@ -13,12 +13,16 @@ const campaignProgram = document.querySelector('[data-campaign-program]');
 const campaignProgramWrap = document.querySelector('[data-campaign-program-wrap]');
 const waiverRoot = document.querySelector('[data-admin-waivers]');
 const programSpecific = document.querySelector('[data-admin-program-specific]');
+const teamAccessList = document.querySelector('[data-team-access-list]');
+const teamAccessAccount = document.querySelector('[data-team-access-account]');
 let accounts = [];
 let programs = [];
 let waivers = [];
+let teamAccess = [];
 let adminUser = null;
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dateText = value => value ? new Date(value).toLocaleDateString() : 'Never';
+const teamNames = { 'nova-scotia-kings': 'Nova Scotia Kings', 'nova-scotia-vipers': 'Nova Scotia Vipers', 'quebec-predators': 'Quebec Predators', 'montreal-sentinels': 'Montreal Sentinels' };
 
 function show(box, text, kind = 'error') {
   if (!box) return;
@@ -71,12 +75,69 @@ async function loadAccounts() {
     const data = await accountAction({ action: 'list' });
     accounts = data.users || [];
     renderAccounts();
+    renderTeamAccessAccounts();
+    await loadTeamAccess();
     show(feedback, '');
   } catch (error) {
     list.innerHTML = '<tr><td colspan="8">Family account details could not be loaded.</td></tr>';
     show(feedback, error.message);
   }
 }
+
+function renderTeamAccessAccounts() {
+  const eligible = accounts.filter(account => !account.is_admin && !account.disabled && account.email_confirmed);
+  teamAccessAccount.innerHTML = '<option value="">Select a confirmed family account</option>' + eligible.map(account => `<option value="${esc(account.id)}">${esc(account.email)}</option>`).join('');
+  teamAccessAccount.disabled = !eligible.length;
+}
+
+async function loadTeamAccess() {
+  if (!teamAccessList) return;
+  teamAccessList.innerHTML = '<tr><td colspan="5">Loading team access…</td></tr>';
+  const { data, error } = await client.from('team_age_group_access').select('id,parent_id,team_slug,age_group,granted_at').order('granted_at', { ascending: false });
+  if (error) {
+    teamAccess = [];
+    teamAccessList.innerHTML = '<tr><td colspan="5">Team access could not be loaded. Apply the team access database setup first.</td></tr>';
+    return;
+  }
+  teamAccess = data || [];
+  const emails = new Map(accounts.map(account => [account.id, account.email]));
+  teamAccessList.innerHTML = teamAccess.length ? teamAccess.map(grant => `<tr><td>${esc(emails.get(grant.parent_id) || 'Family account')}</td><td>${esc(teamNames[grant.team_slug] || grant.team_slug)}</td><td>${esc(grant.age_group)}</td><td>${esc(dateText(grant.granted_at))}</td><td><button type="button" class="account-delete-button" data-team-access-revoke="${esc(grant.id)}">Revoke</button></td></tr>`).join('') : '<tr><td colspan="5">No team age-group access has been granted yet.</td></tr>';
+  teamAccessList.querySelectorAll('[data-team-access-revoke]').forEach(button => button.addEventListener('click', revokeTeamAccess));
+}
+
+async function revokeTeamAccess(event) {
+  const button = event.currentTarget;
+  const grant = teamAccess.find(item => item.id === button.dataset.teamAccessRevoke);
+  if (!grant || !confirm(`Revoke ${grant.age_group} access for ${teamNames[grant.team_slug] || grant.team_slug}?`)) return;
+  button.disabled = true;
+  const { error } = await client.from('team_age_group_access').delete().eq('id', grant.id);
+  if (error) {
+    show(feedback, 'The team age-group access could not be revoked.');
+    button.disabled = false;
+    return;
+  }
+  show(feedback, 'Team age-group access revoked.', 'success');
+  await loadTeamAccess();
+}
+
+document.querySelector('[data-team-access-form]')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const values = new FormData(form);
+  const parentId = String(values.get('parent_id') || '');
+  const account = accounts.find(item => item.id === parentId && !item.is_admin && !item.disabled && item.email_confirmed);
+  if (!account) { show(feedback, 'Choose an active, confirmed family account.'); return; }
+  const submit = form.querySelector('[type="submit"]');
+  submit.disabled = true;
+  const { error } = await client.from('team_age_group_access').insert({ parent_id: parentId, team_slug: String(values.get('team_slug')), age_group: String(values.get('age_group')) });
+  submit.disabled = false;
+  if (error) {
+    show(feedback, error.code === '23505' ? 'This family already has access to that team age group.' : 'Access could not be granted. Apply the team access database setup first.');
+    return;
+  }
+  show(feedback, `Access granted to ${account.email}.`, 'success');
+  await loadTeamAccess();
+});
 
 async function changeStatus(event) {
   const button = event.currentTarget;
@@ -304,6 +365,7 @@ campaignType?.addEventListener('change', updateCampaignMode);
 campaignProgram?.addEventListener('change', () => { void refreshCampaignAudience(); });
 search?.addEventListener('input', renderAccounts);
 document.querySelector('[data-account-refresh]')?.addEventListener('click', () => { void loadAccounts(); });
+document.querySelector('[data-team-access-refresh]')?.addEventListener('click', () => { void loadTeamAccess(); });
 document.querySelector('[data-account-signout]')?.addEventListener('click', async () => { await client.auth.signOut(); window.location.replace('admin.html'); });
 
 async function initialize() {

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Family Accounts Admin | Kings Hockey Academy</title>
-  <link rel="stylesheet" href="styles.css?v=program-pricing-1">
+  <link rel="stylesheet" href="styles.css?v=team-access-1">
 </head>
 <body class="admin-page admin-programs-page" data-admin-accounts>
   <header class="site-header"><div class="wrap brand-wrap"><a class="brand" href="index.html" aria-label="Kings Hockey Academy home"><span class="brand-mark"><img src="assets/kha-logo.png" alt="Kings Hockey Academy logo"></span></a></div></header>
@@ -43,6 +43,18 @@
       <div class="account-search"><label>Find an account<input type="search" data-account-search placeholder="Search by email"></label><span data-account-total>Loading accounts…</span></div>
       <div class="account-table-wrap"><table class="account-table"><thead><tr><th>Email</th><th>Parent contact details</th><th>Status</th><th>Saved players</th><th>News &amp; announcements</th><th>Created</th><th>Last sign-in</th><th>Actions</th></tr></thead><tbody data-account-list><tr><td colspan="8">Loading family accounts…</td></tr></tbody></table></div>
       <p class="account-admin-note">Disabling an account blocks sign-in but keeps its saved profiles and registration history. Deleting an account permanently removes its saved child profiles; registration submissions remain in the submissions area.</p>
+    </section>
+
+    <section class="account-admin-section" aria-labelledby="team-access-heading">
+      <div class="account-admin-section-heading"><div><p class="eyebrow red">TEAM PORTAL ACCESS</p><h2 id="team-access-heading">AGE GROUP PERMISSIONS</h2></div><button class="button button-light" data-team-access-refresh type="button">REFRESH</button></div>
+      <p class="account-admin-note">Grant or revoke a family account’s access to a specific team and age group. Only approved family accounts can open that age-group page.</p>
+      <form class="team-access-form" data-team-access-form>
+        <label>Family account <b>*</b><select name="parent_id" data-team-access-account required><option value="">Loading family accounts…</option></select></label>
+        <label>Team <b>*</b><select name="team_slug" required><option value="nova-scotia-kings">Nova Scotia Kings</option><option value="nova-scotia-vipers">Nova Scotia Vipers</option><option value="quebec-predators">Quebec Predators</option><option value="montreal-sentinels">Montreal Sentinels</option></select></label>
+        <label>Age group <b>*</b><select name="age_group" required><option>U9</option><option>U11</option><option>U13</option><option>U15</option></select></label>
+        <button class="button button-gold" type="submit">GRANT ACCESS <b>↗</b></button>
+      </form>
+      <div class="account-table-wrap team-access-table-wrap"><table class="account-table"><thead><tr><th>Family account</th><th>Team</th><th>Age group</th><th>Granted</th><th>Action</th></tr></thead><tbody data-team-access-list><tr><td colspan="5">Loading team access…</td></tr></tbody></table></div>
     </section>
 
     <section class="account-admin-section" aria-labelledby="family-email-heading">
@@ -87,6 +99,6 @@
     </section>
     <p class="admin-privacy">Family accounts can include personal information and details about minors. Keep access limited to trusted administrators.</p>
   </main>
-  <script src="supabase-config.js"></script><script src="js/site.js"></script><script type="module" src="js/admin-accounts.js?v=program-pricing-1"></script>
+  <script src="supabase-config.js"></script><script src="js/site.js"></script><script type="module" src="js/admin-accounts.js?v=team-access-1"></script>
 </body>
 </html>

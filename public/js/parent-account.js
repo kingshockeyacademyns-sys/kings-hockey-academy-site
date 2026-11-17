@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { ageGroupForBirthDate, ageGroupMessage } from './age-groups.js';
 
 const configured = window.KHA_SUPABASE_URL?.startsWith('https://') && window.KHA_SUPABASE_PUBLISHABLE_KEY && !window.KHA_SUPABASE_PUBLISHABLE_KEY.includes('PASTE_');
 const client = configured ? createClient(window.KHA_SUPABASE_URL, window.KHA_SUPABASE_PUBLISHABLE_KEY) : null;
@@ -119,17 +120,25 @@ function renderChildProfiles(children) {
   }
   childrenList.innerHTML = children.map(child => `
     <article class="parent-child-card">
-      <div class="parent-player-heading"><div><p class="eyebrow dark">SAVED PLAYER</p><h2>${escapeHtml(child.first_name)} ${escapeHtml(child.last_name)}</h2></div><div class="parent-player-actions"><button class="parent-text-button" data-child-details-toggle type="button" aria-expanded="false">VIEW DETAILS</button><button class="parent-text-button" data-child-edit-toggle type="button">EDIT</button><button class="parent-delete-button" type="button" data-child-delete="${escapeHtml(child.id)}">Delete</button></div></div>
-      <dl class="parent-player-details" data-child-details hidden><div><dt>DATE OF BIRTH</dt><dd>${escapeHtml(child.date_of_birth)}</dd></div><div><dt>STREET & NUMBER</dt><dd>${escapeHtml(child.street_number)}</dd></div><div><dt>POST CODE</dt><dd>${escapeHtml(child.postal_code)}</dd></div><div><dt>PROVINCE</dt><dd>${escapeHtml(child.province)}</dd></div><div class="parent-player-medical"><dt>MEDICAL INFORMATION / ALLERGIES</dt><dd>${escapeHtml(child.medical_information || 'None provided')}</dd></div></dl>
+      <div class="parent-player-heading"><div><p class="eyebrow dark">SAVED PLAYER</p><h2>${escapeHtml(child.first_name)} ${escapeHtml(child.last_name)}</h2><p class="parent-age-group-label">AGE GROUP <strong>${escapeHtml(ageGroupForBirthDate(child.date_of_birth) || 'Not available')}</strong></p></div><div class="parent-player-actions"><button class="parent-text-button" data-child-details-toggle type="button" aria-expanded="false">VIEW DETAILS</button><button class="parent-text-button" data-child-edit-toggle type="button">EDIT</button><button class="parent-delete-button" type="button" data-child-delete="${escapeHtml(child.id)}">Delete</button></div></div>
+      <dl class="parent-player-details" data-child-details hidden><div><dt>DATE OF BIRTH</dt><dd>${escapeHtml(child.date_of_birth)}</dd></div><div><dt>AGE GROUP</dt><dd>${escapeHtml(ageGroupForBirthDate(child.date_of_birth) || 'Not available')}</dd></div><div><dt>STREET & NUMBER</dt><dd>${escapeHtml(child.street_number)}</dd></div><div><dt>POST CODE</dt><dd>${escapeHtml(child.postal_code)}</dd></div><div><dt>PROVINCE</dt><dd>${escapeHtml(child.province)}</dd></div><div class="parent-player-medical"><dt>MEDICAL INFORMATION / ALLERGIES</dt><dd>${escapeHtml(child.medical_information || 'None provided')}</dd></div></dl>
       <form class="parent-account-form" data-child-edit="${escapeHtml(child.id)}" hidden>
         <div class="form-row"><label>First name <b>*</b><input name="first_name" maxlength="80" value="${escapeHtml(child.first_name)}" required></label><label>Last name <b>*</b><input name="last_name" maxlength="80" value="${escapeHtml(child.last_name)}" required></label></div>
         <label>Date of birth <b>*</b><input name="date_of_birth" type="date" value="${escapeHtml(child.date_of_birth)}" required></label>
+        <p class="age-group-preview" data-age-group-preview>${ageGroupMessage(child.date_of_birth)}</p>
         <div class="address-fields"><label>Street &amp; number <b>*</b><input name="street_number" maxlength="300" value="${escapeHtml(child.street_number)}" required></label><div class="form-row"><label>Post code <b>*</b><input name="postal_code" maxlength="16" value="${escapeHtml(child.postal_code)}" required></label><label>Province <b>*</b><input name="province" maxlength="80" value="${escapeHtml(child.province)}" required></label></div></div>
         <label>Medical information / allergies<textarea name="medical_information" rows="3" maxlength="3000">${escapeHtml(child.medical_information)}</textarea></label>
         <div class="parent-child-actions"><button class="button button-gold" type="submit">SAVE CHANGES <b>↗</b></button><button class="parent-cancel-button" data-child-edit-cancel type="button">CANCEL</button></div>
       </form>
     </article>`).join('');
-  childrenList.querySelectorAll('[data-child-edit]').forEach(form => form.addEventListener('submit', saveChildProfile));
+  childrenList.querySelectorAll('[data-child-edit]').forEach(form => {
+    form.addEventListener('submit', saveChildProfile);
+    const dateInput = form.elements.namedItem('date_of_birth');
+    const preview = form.querySelector('[data-age-group-preview]');
+    const updateAgeGroup = () => { preview.innerHTML = ageGroupMessage(dateInput.value); };
+    dateInput.addEventListener('input', updateAgeGroup);
+    dateInput.addEventListener('change', updateAgeGroup);
+  });
   childrenList.querySelectorAll('[data-child-delete]').forEach(button => button.addEventListener('click', deleteChildProfile));
   childrenList.querySelectorAll('[data-child-details-toggle]').forEach(button => button.addEventListener('click', () => {
     const details = button.closest('.parent-child-card').querySelector('[data-child-details]');
@@ -158,7 +167,7 @@ function renderRegistrations(registrations) {
     if (!players.has(key)) players.set(key, { first: registration.player_first, last: registration.player_last, registrations: [] });
     players.get(key).registrations.push(registration);
   });
-  registrationsList.innerHTML = [...players.values()].map(player => `<section class="parent-registration-player"><h2>${escapeHtml(player.first)} ${escapeHtml(player.last)}</h2><ul>${player.registrations.map(registration => {
+  registrationsList.innerHTML = [...players.values()].map(player => `<section class="parent-registration-player"><h2>${escapeHtml(player.first)} ${escapeHtml(player.last)}</h2><p class="parent-age-group-label">AGE GROUP <strong>${escapeHtml(ageGroupForBirthDate(player.registrations[0]?.date_of_birth) || 'Not available')}</strong></p><ul>${player.registrations.map(registration => {
     const program = Array.isArray(registration.program) ? registration.program[0] : registration.program;
     const title = program?.title || registration.program_type;
     const sessionPrice = program?.single_session_available && Number(program?.session_count) > 0 && Number.isFinite(Number(String(program?.fee ?? '').replace(/,/g, '')))
@@ -352,6 +361,11 @@ document.querySelector('[data-parent-profile-cancel]')?.addEventListener('click'
 
 const childCreateForm = document.querySelector('[data-child-create]');
 const childCreateToggle = document.querySelector('[data-child-create-toggle]');
+const childCreateDate = childCreateForm?.elements.namedItem('date_of_birth');
+const childCreateAgeGroup = childCreateForm?.querySelector('[data-age-group-preview]');
+const updateNewChildAgeGroup = () => { if (childCreateAgeGroup) childCreateAgeGroup.innerHTML = ageGroupMessage(childCreateDate?.value); };
+childCreateDate?.addEventListener('input', updateNewChildAgeGroup);
+childCreateDate?.addEventListener('change', updateNewChildAgeGroup);
 childCreateToggle?.addEventListener('click', () => {
   childCreateForm.hidden = false;
   childCreateToggle.hidden = true;
@@ -359,6 +373,7 @@ childCreateToggle?.addEventListener('click', () => {
 });
 document.querySelector('[data-child-create-cancel]')?.addEventListener('click', () => {
   childCreateForm.reset();
+  updateNewChildAgeGroup();
   childCreateForm.hidden = true;
   childCreateToggle.hidden = false;
 });
@@ -377,6 +392,7 @@ childCreateForm?.addEventListener('submit', async event => {
     return;
   }
   form.reset();
+  updateNewChildAgeGroup();
   form.hidden = true;
   childCreateToggle.hidden = false;
   showMessage('Child profile saved. You can select it on a future registration form.', 'success');
