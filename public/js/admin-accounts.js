@@ -14,7 +14,14 @@ const campaignProgram = document.querySelector('[data-campaign-program]');
 const campaignProgramWrap = document.querySelector('[data-campaign-program-wrap]');
 const programSpecific = document.querySelector('[data-admin-program-specific]');
 const teamAccessList = document.querySelector('[data-team-access-list]');
-const teamAccessAccount = document.querySelector('[data-team-access-account]');
+const teamPlayerSearch = document.querySelector('[data-team-player-search]');
+const teamPlayerResults = document.querySelector('[data-team-player-results]');
+const teamPlayerSearchStatus = document.querySelector('[data-team-player-search-status]');
+const teamSelectedPlayerPanel = document.querySelector('[data-team-selected-player]');
+const teamAccessPlayerId = document.querySelector('[data-team-access-player-id]');
+const teamPlayerAgeGroup = document.querySelector('[data-team-player-age-group]');
+const teamPlayerAgeGroupValue = document.querySelector('[data-team-player-age-group-value]');
+const teamRosterSubmit = document.querySelector('[data-team-roster-submit]');
 const playerSearch = document.querySelector('[data-player-search]');
 const playerSearchResults = document.querySelector('[data-player-search-results]');
 const selectedPlayerPanel = document.querySelector('[data-selected-player]');
@@ -34,6 +41,9 @@ let teamAccess = [];
 let matchingPlayers = [];
 let selectedPlayer = null;
 let playerSearchTimer = null;
+let teamPlayerSearchTimer = null;
+let teamMatchingPlayers = [];
+let selectedRosterPlayer = null;
 let adminUser = null;
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dateText = value => value ? new Date(value).toLocaleDateString() : 'Never';
@@ -91,7 +101,6 @@ async function loadAccounts() {
     const data = await accountAction({ action: 'list' });
     accounts = data.users || [];
     renderAccounts();
-    renderTeamAccessAccounts();
     await loadTeamAccess();
     show(feedback, '');
   } catch (error) {
@@ -100,31 +109,25 @@ async function loadAccounts() {
   }
 }
 
-function renderTeamAccessAccounts() {
-  const eligible = accounts.filter(account => !account.is_admin && !account.disabled && account.email_confirmed);
-  teamAccessAccount.innerHTML = '<option value="">Select a confirmed family account</option>' + eligible.map(account => `<option value="${esc(account.id)}">${esc(account.email)}</option>`).join('');
-  teamAccessAccount.disabled = !eligible.length;
-}
-
 async function loadTeamAccess() {
   if (!teamAccessList) return;
-  teamAccessList.innerHTML = '<tr><td colspan="5">Loading team access…</td></tr>';
-  const { data, error } = await client.from('team_age_group_access').select('id,parent_id,team_slug,age_group,granted_at').order('granted_at', { ascending: false });
-  if (error) {
+  teamAccessList.innerHTML = '<tr><td colspan="6">Loading team rosters…</td></tr>';
+  try {
+    const result = await accountAction({ action: 'list_team_rosters' });
+    teamAccess = result.roster || [];
+  } catch (error) {
     teamAccess = [];
-    teamAccessList.innerHTML = '<tr><td colspan="5">Team access could not be loaded. Apply the team access database setup first.</td></tr>';
+    teamAccessList.innerHTML = '<tr><td colspan="6">Team rosters could not be loaded. Apply the player roster database update first.</td></tr>';
     return;
   }
-  teamAccess = data || [];
-  const emails = new Map(accounts.map(account => [account.id, account.email]));
-  teamAccessList.innerHTML = teamAccess.length ? teamAccess.map(grant => `<tr><td>${esc(emails.get(grant.parent_id) || 'Family account')}</td><td>${esc(teamNames[grant.team_slug] || grant.team_slug)}</td><td>${esc(grant.age_group)}</td><td>${esc(dateText(grant.granted_at))}</td><td><button type="button" class="account-delete-button" data-team-access-revoke="${esc(grant.id)}">Revoke</button></td></tr>`).join('') : '<tr><td colspan="5">No team age-group access has been granted yet.</td></tr>';
+  teamAccessList.innerHTML = teamAccess.length ? teamAccess.map(grant => `<tr><td><strong>${esc(grant.player ? `${grant.player.first_name} ${grant.player.last_name}` : 'Saved player')}</strong></td><td>${esc(grant.parent_email || 'Family account')}</td><td>${esc(teamNames[grant.team_slug] || grant.team_slug)}</td><td>${esc(ageGroupForBirthDate(grant.player?.date_of_birth) || grant.age_group)}</td><td>${esc(dateText(grant.granted_at))}</td><td><button type="button" class="account-delete-button" data-team-access-revoke="${esc(grant.id)}">Remove</button></td></tr>`).join('') : '<tr><td colspan="6">No players have been added to a team roster yet.</td></tr>';
   teamAccessList.querySelectorAll('[data-team-access-revoke]').forEach(button => button.addEventListener('click', revokeTeamAccess));
 }
 
 async function revokeTeamAccess(event) {
   const button = event.currentTarget;
   const grant = teamAccess.find(item => item.id === button.dataset.teamAccessRevoke);
-  if (!grant || !confirm(`Revoke ${grant.age_group} access for ${teamNames[grant.team_slug] || grant.team_slug}?`)) return;
+  if (!grant || !confirm(`Remove ${grant.player?.first_name || 'this player'} from the ${teamNames[grant.team_slug] || grant.team_slug} ${grant.age_group} roster?`)) return;
   button.disabled = true;
   const { error } = await client.from('team_age_group_access').delete().eq('id', grant.id);
   if (error) {
@@ -132,26 +135,74 @@ async function revokeTeamAccess(event) {
     button.disabled = false;
     return;
   }
-  show(feedback, 'Team age-group access revoked.', 'success');
+  show(feedback, 'Player removed from the team roster.', 'success');
   await loadTeamAccess();
+}
+
+function renderTeamPlayerResults(players) {
+  teamMatchingPlayers = players;
+  if (!players.length) {
+    teamPlayerResults.innerHTML = '<tr><td colspan="5">No saved players matched that search.</td></tr>';
+    return;
+  }
+  teamPlayerResults.innerHTML = players.map((player, index) => `<tr><td><strong>${esc(player.first_name)} ${esc(player.last_name)}</strong></td><td>${esc(player.date_of_birth || 'Missing')}</td><td>${esc(ageGroupForBirthDate(player.date_of_birth) || 'Not available')}</td><td>${esc(player.parent_name || player.parent_email || 'Family account')}</td><td><button type="button" class="account-action-button" data-select-roster-player="${index}">Select</button></td></tr>`).join('');
+  teamPlayerResults.querySelectorAll('[data-select-roster-player]').forEach(button => button.addEventListener('click', () => selectRosterPlayer(Number(button.dataset.selectRosterPlayer))));
+}
+
+function selectRosterPlayer(index) {
+  selectedRosterPlayer = teamMatchingPlayers[index] || null;
+  if (!selectedRosterPlayer) return;
+  const group = ageGroupForBirthDate(selectedRosterPlayer.date_of_birth);
+  teamAccessPlayerId.value = selectedRosterPlayer.id;
+  teamPlayerAgeGroup.textContent = group || 'Unavailable';
+  teamPlayerAgeGroupValue.value = group || '';
+  teamRosterSubmit.disabled = !['U9', 'U11', 'U13', 'U15'].includes(group) || !selectedRosterPlayer.parent_id;
+  teamSelectedPlayerPanel.innerHTML = `<div><p class="eyebrow dark">SELECTED PLAYER</p><strong>${esc(selectedRosterPlayer.first_name)} ${esc(selectedRosterPlayer.last_name)}</strong><span>${esc(group || 'Age group unavailable')} · ${esc(selectedRosterPlayer.parent_name || selectedRosterPlayer.parent_email)}</span></div><button type="button" class="parent-text-button" data-clear-roster-player>CHANGE PLAYER</button>`;
+  teamSelectedPlayerPanel.hidden = false;
+  teamSelectedPlayerPanel.querySelector('[data-clear-roster-player]').addEventListener('click', clearRosterPlayer);
+  teamPlayerSearchStatus.textContent = `Selected ${selectedRosterPlayer.first_name} ${selectedRosterPlayer.last_name}.`;
+}
+
+function clearRosterPlayer() {
+  selectedRosterPlayer = null;
+  teamAccessPlayerId.value = '';
+  teamPlayerAgeGroup.textContent = 'Choose a player';
+  teamPlayerAgeGroupValue.value = '';
+  teamRosterSubmit.disabled = true;
+  teamSelectedPlayerPanel.hidden = true;
+  teamSelectedPlayerPanel.innerHTML = '';
+}
+
+async function searchTeamPlayers() {
+  const query = teamPlayerSearch.value.trim();
+  if (query.length < 2) {
+    teamMatchingPlayers = [];
+    teamPlayerResults.innerHTML = '<tr><td colspan="5">Search for an existing player.</td></tr>';
+    teamPlayerSearchStatus.textContent = 'Enter at least two letters to search.';
+    return;
+  }
+  teamPlayerSearchStatus.textContent = 'Searching saved players…';
+  teamPlayerResults.innerHTML = '<tr><td colspan="5">Searching…</td></tr>';
+  try {
+    const result = await accountAction({ action: 'search_players', query });
+    renderTeamPlayerResults(result.players || []);
+    teamPlayerSearchStatus.textContent = `${(result.players || []).length} matching saved player${(result.players || []).length === 1 ? '' : 's'}.`;
+  } catch (error) {
+    teamPlayerResults.innerHTML = '<tr><td colspan="5">Saved players could not be searched.</td></tr>';
+    teamPlayerSearchStatus.textContent = error.message;
+  }
 }
 
 document.querySelector('[data-team-access-form]')?.addEventListener('submit', async event => {
   event.preventDefault();
-  const form = event.currentTarget;
-  const values = new FormData(form);
-  const parentId = String(values.get('parent_id') || '');
-  const account = accounts.find(item => item.id === parentId && !item.is_admin && !item.disabled && item.email_confirmed);
-  if (!account) { show(feedback, 'Choose an active, confirmed family account.'); return; }
-  const submit = form.querySelector('[type="submit"]');
-  submit.disabled = true;
-  const { error } = await client.from('team_age_group_access').insert({ parent_id: parentId, team_slug: String(values.get('team_slug')), age_group: String(values.get('age_group')) });
-  submit.disabled = false;
+  if (!selectedRosterPlayer || !teamPlayerAgeGroupValue.value) { show(feedback, 'Search for and select an existing player first.'); return; }
+  const values = new FormData(event.currentTarget);
+  const { error } = await client.from('team_age_group_access').insert({ parent_id: selectedRosterPlayer.parent_id, player_id: selectedRosterPlayer.id, team_slug: String(values.get('team_slug')), age_group: teamPlayerAgeGroupValue.value });
   if (error) {
-    show(feedback, error.code === '23505' ? 'This family already has access to that team age group.' : 'Access could not be granted. Apply the team access database setup first.');
+    show(feedback, error.code === '23505' ? 'This player is already on that team roster.' : 'The player could not be added. Apply the player roster database update first.');
     return;
   }
-  show(feedback, `Access granted to ${account.email}.`, 'success');
+  show(feedback, `${selectedRosterPlayer.first_name} ${selectedRosterPlayer.last_name} added to the ${teamNames[String(values.get('team_slug'))]} ${teamPlayerAgeGroupValue.value} roster.`, 'success');
   await loadTeamAccess();
 });
 
@@ -342,7 +393,7 @@ async function loadRegistrationRequests() {
   try {
     const result = await accountAction({ action: 'list_registration_approval_requests' });
     const items = result.requests || [];
-    registrationRequestsList.innerHTML = items.length ? items.map(item => `<tr><td>${esc(item.player_name)}</td><td>${esc(item.program_title)}</td><td>${esc(item.parent_email)}</td><td><span class="account-status ${item.status === 'pending' ? 'is-disabled' : ''}">${esc(item.status.toUpperCase())}</span></td><td>${esc(dateText(item.created_at))}</td></tr>`).join('') : '<tr><td colspan="5">No parent approval requests yet.</td></tr>';
+    registrationRequestsList.innerHTML = items.length ? items.map(item => `<tr><td>${esc(item.player_name)}</td><td>${esc(item.program_title)}</td><td>${esc(item.parent_email)}</td><td><span class="account-status ${['pending', 'email_failed'].includes(item.status) ? 'is-disabled' : ''}">${esc(item.status === 'email_failed' ? 'EMAIL SETUP REQUIRED' : item.status.toUpperCase())}</span></td><td>${esc(dateText(item.created_at))}</td></tr>`).join('') : '<tr><td colspan="5">No parent approval requests yet.</td></tr>';
   } catch (error) {
     registrationRequestsList.innerHTML = `<tr><td colspan="5">${esc(error.message)}</td></tr>`;
   }
@@ -408,6 +459,11 @@ document.querySelector('[data-registration-requests-refresh]')?.addEventListener
 playerSearch?.addEventListener('input', () => {
   clearTimeout(playerSearchTimer);
   playerSearchTimer = setTimeout(() => { void searchExistingPlayers(); }, 280);
+});
+teamPlayerSearch?.addEventListener('input', () => {
+  if (selectedRosterPlayer) clearRosterPlayer();
+  clearTimeout(teamPlayerSearchTimer);
+  teamPlayerSearchTimer = setTimeout(() => { void searchTeamPlayers(); }, 280);
 });
 document.querySelector('[data-account-signout]')?.addEventListener('click', async () => { await client.auth.signOut(); window.location.replace('admin.html'); });
 

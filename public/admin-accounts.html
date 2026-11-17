@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Family Accounts Admin | Kings Hockey Academy</title>
-  <link rel="stylesheet" href="styles.css?v=parent-approval-1">
+  <link rel="stylesheet" href="styles.css?v=player-roster-email-2">
 </head>
 <body class="admin-page admin-programs-page" data-admin-accounts>
   <header class="site-header"><div class="wrap brand-wrap"><a class="brand" href="index.html" aria-label="Kings Hockey Academy home"><span class="brand-mark"><img src="assets/kha-logo.png" alt="Kings Hockey Academy logo"></span></a></div></header>
@@ -46,14 +46,18 @@
 
     <section class="account-admin-section" data-account-view="age-groups" aria-labelledby="team-access-heading">
       <div class="account-admin-section-heading"><div><p class="eyebrow red">TEAM PORTAL ACCESS</p><h2 id="team-access-heading">AGE GROUP PERMISSIONS</h2></div><button class="button button-light" data-team-access-refresh type="button">REFRESH</button></div>
-      <p class="account-admin-note">Grant or revoke a family account’s access to a specific team and age group. Only approved family accounts can open that age-group page.</p>
+      <p class="account-admin-note">Search for a saved player, then add that player to a team roster. Their age group is calculated from their date of birth and updates each July 31.</p>
+      <p class="account-admin-note">Older family-wide permissions do not assign a player to a roster. Search for each player and add them to the correct team again.</p>
+      <div class="account-player-search"><label for="team-roster-player-search">Search existing players</label><input id="team-roster-player-search" type="search" data-team-player-search minlength="2" placeholder="Type a player or parent name" autocomplete="off"><span data-team-player-search-status>Enter at least two letters to search.</span></div>
+      <div class="account-table-wrap player-search-results-wrap"><table class="account-table"><thead><tr><th>Player</th><th>Date of birth</th><th>Age group</th><th>Family account</th><th>Action</th></tr></thead><tbody data-team-player-results><tr><td colspan="5">Search for an existing player.</td></tr></tbody></table></div>
+      <div class="account-selected-player" data-team-selected-player hidden></div>
       <form class="team-access-form" data-team-access-form>
-        <label>Family account <b>*</b><select name="parent_id" data-team-access-account required><option value="">Loading family accounts…</option></select></label>
+        <input type="hidden" name="player_id" data-team-access-player-id>
         <label>Team <b>*</b><select name="team_slug" required><option value="nova-scotia-kings">Nova Scotia Kings</option><option value="nova-scotia-vipers">Nova Scotia Vipers</option><option value="quebec-predators">Quebec Predators</option><option value="montreal-sentinels">Montreal Sentinels</option></select></label>
-        <label>Age group <b>*</b><select name="age_group" required><option>U9</option><option>U11</option><option>U13</option><option>U15</option></select></label>
-        <button class="button button-gold" type="submit">GRANT ACCESS <b>↗</b></button>
+        <label>Calculated age group <output data-team-player-age-group>Choose a player</output><input type="hidden" name="age_group" data-team-player-age-group-value></label>
+        <button class="button button-gold" type="submit" disabled data-team-roster-submit>ADD TO ROSTER <b>↗</b></button>
       </form>
-      <div class="account-table-wrap team-access-table-wrap"><table class="account-table"><thead><tr><th>Family account</th><th>Team</th><th>Age group</th><th>Granted</th><th>Action</th></tr></thead><tbody data-team-access-list><tr><td colspan="5">Loading team access…</td></tr></tbody></table></div>
+      <div class="account-table-wrap team-access-table-wrap"><table class="account-table"><thead><tr><th>Player</th><th>Family account</th><th>Team</th><th>Age group</th><th>Added</th><th>Action</th></tr></thead><tbody data-team-access-list><tr><td colspan="6">Loading team rosters…</td></tr></tbody></table></div>
     </section>
 
     <section class="account-admin-section" data-account-view="all" aria-labelledby="family-email-heading">
@@ -92,6 +96,6 @@
     </section>
     <p class="admin-privacy">Family accounts can include personal information and details about minors. Keep access limited to trusted administrators.</p>
   </main>
-  <script src="supabase-config.js"></script><script src="js/site.js"></script><script type="module" src="js/admin-accounts.js?v=parent-approval-1"></script>
+  <script src="supabase-config.js"></script><script src="js/site.js"></script><script type="module" src="js/admin-accounts.js?v=player-roster-email-2"></script>
 </body>
 </html>

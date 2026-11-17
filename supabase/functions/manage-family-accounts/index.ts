@@ -84,6 +84,32 @@ Deno.serve(async request => {
       return json({ ok: true, id: data.user?.id, email });
     }
 
+    if (action === 'list_team_rosters') {
+      const { data: grants, error: grantError } = await service.from('team_age_group_access')
+        .select('id,parent_id,player_id,team_slug,age_group,granted_at')
+        .not('player_id', 'is', null).order('granted_at', { ascending: false }).limit(5000);
+      if (grantError) throw grantError;
+      const playerIds = [...new Set((grants || []).map(grant => grant.player_id))];
+      const parentIds = [...new Set((grants || []).map(grant => grant.parent_id))];
+      const { data: children, error: childError } = playerIds.length
+        ? await service.from('parent_children').select('id,first_name,last_name,date_of_birth').in('id', playerIds)
+        : { data: [], error: null };
+      if (childError) throw childError;
+      const players = new Map((children || []).map(child => [child.id, child]));
+      const parents = new Map<string, string>();
+      for (let page = 1; page <= 20; page += 1) {
+        const { data, error: usersError } = await service.auth.admin.listUsers({ page, perPage: 50 });
+        if (usersError) throw usersError;
+        for (const user of data.users) if (parentIds.includes(user.id)) parents.set(user.id, user.email || '');
+        if (data.users.length < 50 || parentIds.every(id => parents.has(id))) break;
+      }
+      return json({ roster: (grants || []).map(grant => ({
+        ...grant,
+        player: players.get(grant.player_id) || null,
+        parent_email: parents.get(grant.parent_id) || '',
+      })) });
+    }
+
     if (action === 'search_players') {
       const query = String(body?.query ?? '').trim().replace(/\s+/g, ' ');
       if (query.length < 2 || query.length > 100) return json({ error: 'Enter between 2 and 100 characters to search.' }, 400);
@@ -119,6 +145,7 @@ Deno.serve(async request => {
         const user = userById.get(child.parent_id);
         return {
           id: child.id,
+          parent_id: child.parent_id,
           first_name: child.first_name,
           last_name: child.last_name,
           date_of_birth: child.date_of_birth,
@@ -242,8 +269,13 @@ Deno.serve(async request => {
       const waiverTitles = waiverSnapshot.map(waiver => `<li>${escapeHtml(String(waiver.title))}</li>`).join('') || '<li>No additional waivers are required.</li>';
       const resendKey = Deno.env.get('RESEND_API_KEY');
       const from = Deno.env.get('QUESTION_FROM_EMAIL');
+      if (!recipients.length) {
+        await service.from('registration_approval_requests').update({ status: 'email_failed', resolved_at: new Date().toISOString() }).eq('id', approval.id);
+        return json({ error: 'No valid parent or guardian email address is saved for this player.' }, 400);
+      }
       if (!resendKey || !from) {
-        await service.from('registration_approval_requests').update({ status: 'cancelled', resolved_at: new Date().toISOString() }).eq('id', approval.id);
+        await service.from('registration_approval_requests').update({ status: 'email_failed', resolved_at: new Date().toISOString() }).eq('id', approval.id);
+        console.error('Parent approval email setup is missing RESEND_API_KEY or QUESTION_FROM_EMAIL.');
         return json({ error: 'The academy email service is not configured to send parent approvals.' }, 503);
       }
       const emailResponse = await fetch('https://api.resend.com/emails/batch', {
@@ -255,7 +287,7 @@ Deno.serve(async request => {
         }))),
       });
       if (!emailResponse.ok) {
-        await service.from('registration_approval_requests').update({ status: 'cancelled', resolved_at: new Date().toISOString() }).eq('id', approval.id);
+        await service.from('registration_approval_requests').update({ status: 'email_failed', resolved_at: new Date().toISOString() }).eq('id', approval.id);
         console.error('Parent approval email was rejected by Resend:', await emailResponse.text());
         return json({ error: 'The parent approval email could not be sent. Please try again.' }, 502);
       }

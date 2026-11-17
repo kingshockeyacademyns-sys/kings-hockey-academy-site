@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { ageGroupForBirthDate } from './age-groups.js';
 
 const teams = {
   'nova-scotia-kings': { name: 'Nova Scotia Kings', city: 'Pictou County' },
@@ -14,6 +15,7 @@ const team = teams[teamSlug];
 const message = document.querySelector('[data-age-group-message]');
 const login = document.querySelector('[data-age-group-login]');
 const privateContent = document.querySelector('[data-age-group-private]');
+const rosterList = document.querySelector('[data-team-roster]');
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
 function showMessage(text, kind = '') {
@@ -54,21 +56,33 @@ async function initialize() {
     return;
   }
 
-  const { data, error } = await client.from('team_age_group_access')
-    .select('id')
-    .eq('parent_id', sessionData.session.user.id)
+  const { data: children, error: childrenError } = await client.from('parent_children')
+    .select('id,first_name,last_name,date_of_birth').order('created_at', { ascending: true });
+  if (childrenError) {
+    showMessage('Your saved players could not be loaded. Please contact the academy.', 'error');
+    return;
+  }
+  const childIds = (children || []).map(child => child.id);
+  if (!childIds.length) {
+    showMessage('No saved players are attached to this family account. Add a player in your family portal first.');
+    return;
+  }
+  const { data: grants, error } = await client.from('team_age_group_access')
+    .select('player_id')
     .eq('team_slug', teamSlug)
-    .eq('age_group', ageGroup)
-    .maybeSingle();
+    .in('player_id', childIds);
   if (error) {
     showMessage('Team access could not be checked. The access setup may still need to be applied by the site administrator.', 'error');
     return;
   }
-  if (!data) {
+  const assignedIds = new Set((grants || []).map(grant => grant.player_id));
+  const rosterPlayers = (children || []).filter(child => assignedIds.has(child.id) && ageGroupForBirthDate(child.date_of_birth) === ageGroup);
+  if (!rosterPlayers.length) {
     showMessage('This family account has not been granted access to this team age group. Please contact the academy administrator.');
     return;
   }
-  showMessage('Your family account has access to this team age group.', 'success');
+  rosterList.innerHTML = rosterPlayers.map(player => `<li>${escapeHtml(player.first_name)} ${escapeHtml(player.last_name)}</li>`).join('');
+  showMessage('Your family has a player on this team roster.', 'success');
   privateContent.hidden = false;
 }
 
