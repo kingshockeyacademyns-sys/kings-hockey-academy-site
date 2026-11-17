@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { ageGroupForBirthDate } from './age-groups.js';
 
 const configured = window.KHA_SUPABASE_URL?.startsWith('https://') && window.KHA_SUPABASE_PUBLISHABLE_KEY && !window.KHA_SUPABASE_PUBLISHABLE_KEY.includes('PASTE_');
 const client = configured ? createClient(window.KHA_SUPABASE_URL, window.KHA_SUPABASE_PUBLISHABLE_KEY) : null;
@@ -11,18 +12,33 @@ const programSelect = document.querySelector('[data-admin-program]');
 const campaignType = document.querySelector('[data-campaign-type]');
 const campaignProgram = document.querySelector('[data-campaign-program]');
 const campaignProgramWrap = document.querySelector('[data-campaign-program-wrap]');
-const waiverRoot = document.querySelector('[data-admin-waivers]');
 const programSpecific = document.querySelector('[data-admin-program-specific]');
 const teamAccessList = document.querySelector('[data-team-access-list]');
 const teamAccessAccount = document.querySelector('[data-team-access-account]');
+const playerSearch = document.querySelector('[data-player-search]');
+const playerSearchResults = document.querySelector('[data-player-search-results]');
+const selectedPlayerPanel = document.querySelector('[data-selected-player]');
+const registrationRequestForm = document.querySelector('[data-admin-registration-request]');
+const registrationRequestsList = document.querySelector('[data-registration-requests]');
+const allowedViews = new Set(['all', 'age-groups', 'add-player']);
+const selectedView = new URLSearchParams(window.location.search).get('view');
+const accountView = allowedViews.has(selectedView) ? selectedView : 'all';
+document.querySelectorAll('[data-account-view]').forEach(section => { section.hidden = section.dataset.accountView !== accountView; });
+document.querySelectorAll('[data-account-view-link]').forEach(link => {
+  if (link.dataset.accountViewLink === accountView) link.setAttribute('aria-current', 'page');
+  else link.removeAttribute('aria-current');
+});
 let accounts = [];
 let programs = [];
-let waivers = [];
 let teamAccess = [];
+let matchingPlayers = [];
+let selectedPlayer = null;
+let playerSearchTimer = null;
 let adminUser = null;
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dateText = value => value ? new Date(value).toLocaleDateString() : 'Never';
 const teamNames = { 'nova-scotia-kings': 'Nova Scotia Kings', 'nova-scotia-vipers': 'Nova Scotia Vipers', 'quebec-predators': 'Quebec Predators', 'montreal-sentinels': 'Montreal Sentinels' };
+const halifaxDate = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Halifax', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
 function show(box, text, kind = 'error') {
   if (!box) return;
@@ -166,26 +182,17 @@ async function removeAccount(event) {
 }
 
 async function loadRegistrationOptions() {
-  const [programResult, waiverResult] = await Promise.all([
-    client.from('programs').select('id,title,season,fee,session_count,single_session_available,questions,jersey_size_enabled,jersey_number_enabled,is_open').order('created_at', { ascending: false }),
-    client.from('waivers').select('id,title,body').eq('is_active', true).order('created_at', { ascending: true }),
-  ]);
+  const programResult = await client.from('programs').select('id,title,season,fee,session_count,single_session_available,registration_closes_on,questions,jersey_size_enabled,jersey_number_enabled,is_open').order('created_at', { ascending: false });
   if (programResult.error) {
-    programSelect.innerHTML = '<option value="">Programs could not be loaded</option>';
-    show(feedback, 'Open programs could not be loaded for admin registration entry.');
+    if (programSelect) programSelect.innerHTML = '<option value="">Programs could not be loaded</option>';
+    show(feedback, 'Open programs could not be loaded for registration requests.');
     return;
   }
   programs = programResult.data || [];
   if (campaignProgram) campaignProgram.innerHTML = '<option value="">Select a program</option>' + programs.map(program => `<option value="${esc(program.id)}">${esc(program.title)} — ${esc(program.season || '')}</option>`).join('');
-  const available = programs.filter(program => program.is_open);
-  programSelect.innerHTML = available.length ? '<option value="">Select a program</option>' + available.map(program => `<option value="${esc(program.id)}">${esc(program.title)} — ${esc(program.season || '')}</option>`).join('') : '<option value="">No open programs available</option>';
-  if (waiverResult.error) {
-    waivers = [];
-    waiverRoot.innerHTML = '<legend>WAIVERS &amp; ACKNOWLEDGEMENTS</legend><p>Active waivers could not be loaded. Refresh the page before adding a registration.</p>';
-  } else {
-    waivers = waiverResult.data || [];
-    waiverRoot.innerHTML = `<legend>WAIVERS &amp; ACKNOWLEDGEMENTS</legend>${waivers.length ? waivers.map(waiver => `<label class="admin-waiver-approval"><input type="checkbox" name="waiver_${esc(waiver.id)}" value="true" required><span><strong>${esc(waiver.title)}</strong><small>${esc(waiver.body)}</small></span></label>`).join('') : '<p>No active waivers. The parent payment acknowledgement is still required.</p>'}`;
-  }
+  const today = halifaxDate();
+  const available = programs.filter(program => program.is_open && (!program.registration_closes_on || program.registration_closes_on >= today));
+  if (programSelect) programSelect.innerHTML = available.length ? '<option value="">Select a program</option>' + available.map(program => `<option value="${esc(program.id)}">${esc(program.title)} — ${esc(program.season || '')}</option>`).join('') : '<option value="">No open programs available</option>';
   updateProgramSummary();
   void refreshCampaignAudience();
 }
@@ -226,85 +233,119 @@ function updateProgramSummary() {
     const extras = questions.map((question, index) => `<label>${esc(question)}<textarea name="admin_question_${index}" rows="2" maxlength="1000"></textarea></label>`).join('');
     programSpecific.innerHTML = `${jerseySize}${extras}`;
   }
+  const feeText = String(program?.fee ?? '').trim();
+  const numericFee = feeText.replace(/,/g, '').replace(/[^\d.-]/g, '');
+  const fullCost = numericFee && Number.isFinite(Number(numericFee)) ? Number(numericFee) : null;
   const sessionCount = Number(program?.session_count);
-  const fullCost = Number(String(program?.fee ?? '').replace(/,/g, ''));
-  const singleSessionPrice = program?.single_session_available && Number.isInteger(sessionCount) && sessionCount > 0 && Number.isFinite(fullCost)
+  const singleSessionPrice = program?.single_session_available && fullCost !== null && Number.isInteger(sessionCount) && sessionCount > 0
     ? Math.round((fullCost / sessionCount + Number.EPSILON) * 100) / 100
     : null;
+  const money = value => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(value);
+  const programCost = fullCost === null ? feeText || 'Contact the academy' : money(fullCost);
+  const minimumPayment = program?.single_session_available ? singleSessionPrice : 100;
   document.querySelector('[data-admin-payment-note]').textContent = program
-    ? `Full program cost: CAD $${fullCost.toFixed(2)}.${program.single_session_available && singleSessionPrice === null ? ' Single-session pricing needs a session count before this registration can be confirmed.' : singleSessionPrice === null ? ' A CAD $100 minimum payment is due by e-transfer' : ` Single-session price and minimum payment: CAD $${singleSessionPrice.toFixed(2)}`}; remaining balance may be paid by e-transfer or cash no later than the second session. E-transfer: kingshockeyacademyns@gmail.com.`
+    ? `Full program cost: ${programCost}. Minimum payment: ${minimumPayment === null ? 'contact the academy to confirm' : money(minimumPayment)}. Remaining balance may be paid by e-transfer or cash no later than the second session. E-transfer: kingshockeyacademyns@gmail.com.`
     : 'Select a program to show its fee and payment summary.';
 }
 
-async function addRegistration(event) {
-  event.preventDefault();
-  const form = event.currentTarget;
-  const formData = new FormData(form);
-  const program = programs.find(item => item.id === String(formData.get('program_id')));
-  if (!program) { show(feedback, 'Select an open program.'); return; }
-  const waiverConsents = Object.fromEntries(waivers.map(waiver => [waiver.id, formData.get(`waiver_${waiver.id}`) === 'true']));
-  if (waivers.some(waiver => !waiverConsents[waiver.id])) { show(feedback, 'Confirm every active waiver before saving this registration.'); return; }
-  if (formData.get('confirm_parent_approval') !== 'on') { show(feedback, 'Confirm the parent or guardian has approved the waivers and payment terms.'); return; }
-  const dob = String(formData.get('date_of_birth') || '');
-  const parsed = new Date(`${dob}T00:00:00`);
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const earliest = new Date(today.getFullYear() - 25, today.getMonth(), today.getDate());
-  if (Number.isNaN(parsed.getTime()) || parsed > today || parsed < earliest) { show(feedback, 'Enter a valid player date of birth.'); return; }
-  const value = name => String(formData.get(name) || '').trim();
-  const secondGuardianKeys = ['second_guardian_first','second_guardian_last','second_guardian_email','second_guardian_phone','second_guardian_address','second_guardian_postal_code','second_guardian_province'];
-  const secondGuardianValues = Object.fromEntries(secondGuardianKeys.map(key => [key, value(key)]));
-  const hasSecondGuardian = secondGuardianKeys.some(key => secondGuardianValues[key]);
-  if (hasSecondGuardian && secondGuardianKeys.some(key => !secondGuardianValues[key])) { show(feedback, 'Complete all second parent / guardian fields, or leave them all empty.'); return; }
-  const customAnswers = {};
-  if (program.jersey_size_enabled) customAnswers['Jersey size (optional)'] = value('admin_jersey_size');
-  (Array.isArray(program.questions) ? program.questions : []).forEach((question, index) => { customAnswers[String(index)] = value(`admin_question_${index}`); });
-  const submit = form.querySelector('button[type="submit"]');
-  submit.disabled = true;
-  const { error } = await client.from('registrations').insert({
-    program_type: program.title,
-    program_id: program.id,
-    player_first: value('player_first'),
-    player_last: value('player_last'),
-    birth_year: parsed.getFullYear(),
-    date_of_birth: dob,
-    player_address: value('player_address'),
-    player_postal_code: value('player_postal_code'),
-    player_province: value('player_province'),
-    allergies: value('allergies') || null,
-    jersey_number: program.jersey_number_enabled ? value('jersey_number') || null : null,
-    guardian_name: `${value('guardian_first')} ${value('guardian_last')}`.slice(0, 120),
-    guardian_first: value('guardian_first'),
-    guardian_last: value('guardian_last'),
-    guardian_address: value('guardian_address'),
-    guardian_postal_code: value('guardian_postal_code'),
-    guardian_province: value('guardian_province'),
-    second_guardian_first: secondGuardianValues.second_guardian_first || null,
-    second_guardian_last: secondGuardianValues.second_guardian_last || null,
-    second_guardian_email: secondGuardianValues.second_guardian_email || null,
-    second_guardian_phone: secondGuardianValues.second_guardian_phone || null,
-    second_guardian_address: secondGuardianValues.second_guardian_address || null,
-    second_guardian_postal_code: secondGuardianValues.second_guardian_postal_code || null,
-    second_guardian_province: secondGuardianValues.second_guardian_province || null,
-    email: value('email'),
-    phone: value('phone'),
-    experience: value('experience') || '',
-    notes: value('notes') || null,
-    emergency_name: value('emergency_name'),
-    emergency_relationship: value('emergency_relationship'),
-    emergency_phone: value('emergency_phone'),
-    consent: true,
-    payment_terms_accepted: true,
-    waiver_consents: waiverConsents,
-    custom_answers: customAnswers,
-  });
-  submit.disabled = false;
-  if (error) {
-    show(feedback, 'The player registration could not be saved. Check the details and try again.');
+function renderPlayerResults(players) {
+  matchingPlayers = players;
+  if (!players.length) {
+    playerSearchResults.innerHTML = '<tr><td colspan="5">No saved players matched that search.</td></tr>';
     return;
   }
-  form.reset();
+  playerSearchResults.innerHTML = players.map((player, index) => `<tr><td><strong>${esc(player.first_name)} ${esc(player.last_name)}</strong><small>${esc(player.date_of_birth || 'Date of birth missing')}</small></td><td>${esc(ageGroupForBirthDate(player.date_of_birth) || 'Not available')}</td><td>${esc(player.parent_name || 'Family account')}</td><td>${player.parent_profile_complete ? '<span class="account-status">READY</span>' : '<span class="account-status is-disabled">PARENT DETAILS NEEDED</span>'}<small>${esc(player.parent_email || '')}</small></td><td><button type="button" class="account-action-button" data-select-player="${index}" ${player.can_request ? '' : 'disabled'}>${player.can_request ? 'Select' : 'Unavailable'}</button></td></tr>`).join('');
+  playerSearchResults.querySelectorAll('[data-select-player]').forEach(button => button.addEventListener('click', () => selectExistingPlayer(Number(button.dataset.selectPlayer))));
+}
+
+function selectExistingPlayer(index) {
+  selectedPlayer = matchingPlayers[index];
+  if (!selectedPlayer) return;
+  document.querySelector('[data-selected-child-id]').value = selectedPlayer.id;
+  selectedPlayerPanel.innerHTML = `<div><p class="eyebrow dark">SELECTED PLAYER</p><strong>${esc(selectedPlayer.first_name)} ${esc(selectedPlayer.last_name)}</strong><span>${esc(ageGroupForBirthDate(selectedPlayer.date_of_birth) || 'Age group unavailable')} · ${esc(selectedPlayer.parent_name || selectedPlayer.parent_email)}</span></div><button type="button" class="parent-text-button" data-clear-selected-player>CHANGE PLAYER</button>`;
+  selectedPlayerPanel.hidden = false;
+  registrationRequestForm.hidden = false;
+  selectedPlayerPanel.querySelector('[data-clear-selected-player]').addEventListener('click', clearSelectedPlayer);
   updateProgramSummary();
-  show(feedback, `Player registration added to ${program.title}.`, 'success');
+  show(feedback, 'Choose a program. The parent will receive the waivers and terms for confirmation.', 'success');
+}
+
+function clearSelectedPlayer() {
+  selectedPlayer = null;
+  document.querySelector('[data-selected-child-id]').value = '';
+  selectedPlayerPanel.hidden = true;
+  selectedPlayerPanel.innerHTML = '';
+  registrationRequestForm.hidden = true;
+  registrationRequestForm.reset();
+  updateProgramSummary();
+}
+
+async function searchExistingPlayers() {
+  const query = playerSearch.value.trim();
+  const status = document.querySelector('[data-player-search-status]');
+  if (query.length < 2) {
+    matchingPlayers = [];
+    playerSearchResults.innerHTML = '<tr><td colspan="5">Search for an existing player.</td></tr>';
+    status.textContent = 'Enter at least two letters to search.';
+    return;
+  }
+  status.textContent = 'Searching saved players…';
+  playerSearchResults.innerHTML = '<tr><td colspan="5">Searching…</td></tr>';
+  try {
+    const result = await accountAction({ action: 'search_players', query });
+    renderPlayerResults(result.players || []);
+    status.textContent = `${(result.players || []).length} matching saved player${(result.players || []).length === 1 ? '' : 's'}.`;
+  } catch (error) {
+    playerSearchResults.innerHTML = '<tr><td colspan="5">Saved players could not be searched.</td></tr>';
+    status.textContent = error.message;
+  }
+}
+
+async function requestPlayerRegistration(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (!selectedPlayer || !selectedPlayer.can_request) { show(feedback, 'Choose a player who already has a complete family profile.'); return; }
+  const values = new FormData(form);
+  const today = halifaxDate();
+  const program = programs.find(item => item.id === String(values.get('program_id')) && item.is_open && (!item.registration_closes_on || item.registration_closes_on >= today));
+  if (!program) { show(feedback, 'Select an open program.'); return; }
+  const customAnswers = {};
+  if (program.jersey_size_enabled) customAnswers['Jersey size (optional)'] = String(values.get('admin_jersey_size') || '').trim();
+  (Array.isArray(program.questions) ? program.questions : []).forEach((question, index) => { customAnswers[String(index)] = String(values.get(`admin_question_${index}`) || '').trim(); });
+  const recipients = [selectedPlayer.parent_email, selectedPlayer.second_guardian_email].filter(Boolean).join(' and ');
+  if (!confirm(`Send the current waivers and registration terms for ${selectedPlayer.first_name} ${selectedPlayer.last_name} to ${recipients}? The registration will only be created after a parent confirms.`)) return;
+  const submit = form.querySelector('button[type="submit"]');
+  submit.disabled = true;
+  show(feedback, 'Sending the parent approval request…', 'success');
+  try {
+    const result = await accountAction({
+      action: 'request_registration_approval',
+      child_id: selectedPlayer.id,
+      program_id: program.id,
+      form_data: {
+        jersey_number: program.jersey_number_enabled ? String(values.get('jersey_number') || '').trim() : '',
+        custom_answers: customAnswers,
+        experience: String(values.get('experience') || ''),
+        notes: String(values.get('notes') || '').trim(),
+      },
+    });
+    clearSelectedPlayer();
+    show(feedback, `Confirmation email sent to ${result.sent_to} for ${program.title}. The player will be registered after the parent approves.`, 'success');
+    await loadRegistrationRequests();
+  } catch (error) { show(feedback, error.message); }
+  finally { submit.disabled = false; }
+}
+
+async function loadRegistrationRequests() {
+  if (!registrationRequestsList) return;
+  registrationRequestsList.innerHTML = '<tr><td colspan="5">Loading parent approval requests…</td></tr>';
+  try {
+    const result = await accountAction({ action: 'list_registration_approval_requests' });
+    const items = result.requests || [];
+    registrationRequestsList.innerHTML = items.length ? items.map(item => `<tr><td>${esc(item.player_name)}</td><td>${esc(item.program_title)}</td><td>${esc(item.parent_email)}</td><td><span class="account-status ${item.status === 'pending' ? 'is-disabled' : ''}">${esc(item.status.toUpperCase())}</span></td><td>${esc(dateText(item.created_at))}</td></tr>`).join('') : '<tr><td colspan="5">No parent approval requests yet.</td></tr>';
+  } catch (error) {
+    registrationRequestsList.innerHTML = `<tr><td colspan="5">${esc(error.message)}</td></tr>`;
+  }
 }
 
 document.querySelector('[data-account-invite]')?.addEventListener('submit', async event => {
@@ -313,12 +354,9 @@ document.querySelector('[data-account-invite]')?.addEventListener('submit', asyn
   const submit = form.querySelector('button[type="submit"]');
   submit.disabled = true;
   try {
-    const values = new FormData(form);
-    const profileFields = ['first_name','last_name','phone','street_number','postal_code','province','second_guardian_first','second_guardian_last','second_guardian_email','second_guardian_phone','second_guardian_street_number','second_guardian_postal_code','second_guardian_province','emergency_name','emergency_relationship','emergency_phone'];
-    const profile = Object.fromEntries(profileFields.map(field => [field, String(values.get(`profile_${field}`) || '').trim()]));
-    const result = await accountAction({ action: 'invite', email: form.elements.email.value.trim(), profile });
+    const result = await accountAction({ action: 'invite', email: form.elements.email.value.trim() });
     form.reset();
-    show(feedback, `Invitation sent to ${result.email}.`, 'success');
+    show(feedback, `Login instructions sent to ${result.email}.`, 'success');
     await loadAccounts();
   } catch (error) { show(feedback, error.message); }
   finally { submit.disabled = false; }
@@ -359,13 +397,18 @@ document.querySelector('[data-account-campaign]')?.addEventListener('submit', as
   show(feedback, data.failed ? `Sent to ${data.accepted}; ${data.failed} could not be sent. Check the email service before retrying.` : messageType === 'program_update' ? `Required program notice accepted for delivery to ${data.accepted} registration address${data.accepted === 1 ? '' : 'es'}.` : `Academy news accepted for delivery to ${data.accepted} opted-in family account${data.accepted === 1 ? '' : 's'}.`, data.failed ? 'error' : 'success');
 });
 
-document.querySelector('[data-admin-registration]')?.addEventListener('submit', addRegistration);
+registrationRequestForm?.addEventListener('submit', requestPlayerRegistration);
 programSelect?.addEventListener('change', updateProgramSummary);
 campaignType?.addEventListener('change', updateCampaignMode);
 campaignProgram?.addEventListener('change', () => { void refreshCampaignAudience(); });
 search?.addEventListener('input', renderAccounts);
 document.querySelector('[data-account-refresh]')?.addEventListener('click', () => { void loadAccounts(); });
 document.querySelector('[data-team-access-refresh]')?.addEventListener('click', () => { void loadTeamAccess(); });
+document.querySelector('[data-registration-requests-refresh]')?.addEventListener('click', () => { void loadRegistrationRequests(); });
+playerSearch?.addEventListener('input', () => {
+  clearTimeout(playerSearchTimer);
+  playerSearchTimer = setTimeout(() => { void searchExistingPlayers(); }, 280);
+});
 document.querySelector('[data-account-signout]')?.addEventListener('click', async () => { await client.auth.signOut(); window.location.replace('admin.html'); });
 
 async function initialize() {
@@ -379,6 +422,7 @@ async function initialize() {
   adminMain.hidden = false;
   document.querySelector('[data-account-admin-email]').textContent = adminUser.email || '';
   await Promise.all([loadAccounts(), loadRegistrationOptions()]);
+  if (accountView === 'add-player') await loadRegistrationRequests();
   updateCampaignMode();
   client.auth.onAuthStateChange(event => { if (event === 'SIGNED_OUT') window.location.replace('admin.html'); });
 }

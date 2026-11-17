@@ -4,6 +4,9 @@ verify_jwt = false
 [functions.manage-family-accounts]
 verify_jwt = true
 
+[functions.confirm-family-registration]
+verify_jwt = false
+
 [functions.send-family-update]
 verify_jwt = true
 

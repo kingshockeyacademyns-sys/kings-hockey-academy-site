@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+  <base href="./">
+  <title>Confirm Player Registration | Kings Hockey Academy</title>
+  <link rel="stylesheet" href="styles.css?v=parent-approval-1">
+</head>
+<body data-family-registration-confirmation>
+  <header class="site-header"><div class="wrap brand-wrap"><a class="brand" href="index.html" aria-label="Kings Hockey Academy home"><span class="brand-mark"><img src="assets/kha-logo.png" alt="Kings Hockey Academy logo"></span></a></div></header>
+  <div class="menu-bar"><nav class="main-nav wrap" aria-label="Main navigation"><a href="index.html">Home</a><a href="about.html">About</a><a href="teams.html">Teams</a><a class="nav-register" href="registration.html">Registration</a><a href="parent-account.html">Login</a></nav></div>
+  <main class="family-approval-main">
+    <section class="page-hero registration-hero no-hero-logo wrap">
+      <p class="eyebrow"><span></span> KINGS HOCKEY ACADEMY · FAMILY APPROVAL</p>
+      <h1>CONFIRM A<br><em>REGISTRATION.</em></h1>
+      <p class="lead">Review the program details and waivers below. The player is added only after you confirm.</p>
+    </section>
+    <section class="family-approval-content"><div class="wrap">
+      <div class="alert" data-confirmation-message role="status" aria-live="polite">Loading this approval request…</div>
+      <section class="family-approval-card" data-confirmation-card hidden>
+        <p class="eyebrow dark"><span></span> PLAYER REGISTRATION</p>
+        <h2 data-confirmation-title></h2>
+        <p data-confirmation-program></p>
+        <div class="family-approval-terms"><strong>PAYMENT TERMS</strong><p data-confirmation-payment></p></div>
+        <form data-family-approval-form>
+          <fieldset class="family-approval-waivers"><legend>REQUIRED WAIVERS</legend><div data-confirmation-waivers></div></fieldset>
+          <label class="family-approval-checkbox"><input type="checkbox" name="registration_consent" required><span>I am the parent or guardian. Kings Hockey Academy may use these details to manage this registration and send necessary program information, including changes to dates, times, location, or safety.</span></label>
+          <label class="family-approval-checkbox"><input type="checkbox" name="payment_terms_accepted" required><span>I have reviewed and accept the payment terms shown above.</span></label>
+          <button class="button button-gold" type="submit">CONFIRM REGISTRATION <b>↗</b></button>
+        </form>
+      </section>
+    </div></section>
+  </main>
+  <footer class="site-footer"><div class="wrap footer-main"><div class="footer-identity"><a class="brand footer-brand" href="index.html"><span class="brand-mark"><img src="assets/kha-logo.png" alt=""></span></a></div><div class="footer-mission"><p>Develop better players.<br><strong>Build better people.</strong></p><p class="footer-ownership">© <span id="year"></span> Kings Hockey Nova Scotia<br><small>Official rights holder of Kings Hockey Academy.</small></p></div><div class="footer-contact"><span>CONTACT THE ACADEMY</span><a href="mailto:kingshockeyacademyns@gmail.com">kingshockeyacademyns@gmail.com</a><a class="footer-question" href="contact.html">ASK A GENERAL QUESTION ↗</a></div></div></footer>
+  <script>document.getElementById('year').textContent=new Date().getFullYear()</script>
+  <script src="supabase-config.js"></script><script src="js/site.js"></script><script type="module" src="js/family-registration-confirmation.js?v=parent-approval-1"></script>
+</body>
+</html>

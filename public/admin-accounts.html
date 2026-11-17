@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Family Accounts Admin | Kings Hockey Academy</title>
-  <link rel="stylesheet" href="styles.css?v=team-access-1">
+  <link rel="stylesheet" href="styles.css?v=parent-approval-1">
 </head>
 <body class="admin-page admin-programs-page" data-admin-accounts>
   <header class="site-header"><div class="wrap brand-wrap"><a class="brand" href="index.html" aria-label="Kings Hockey Academy home"><span class="brand-mark"><img src="assets/kha-logo.png" alt="Kings Hockey Academy logo"></span></a></div></header>
@@ -19,33 +19,32 @@
     <p class="eyebrow red">FAMILY PORTAL ADMINISTRATION</p>
     <h1>FAMILY<br><em>ACCOUNTS</em></h1>
     <p data-account-admin-email></p>
-    <p class="admin-program-intro">Review family accounts, control sign-in access, invite a new family, and add a player to a program registration.</p>
-    <div class="account-stats" data-account-stats><article><strong>—</strong><span>ACCOUNTS</span></article><article><strong>—</strong><span>ACTIVE FAMILIES</span></article><article><strong>—</strong><span>NEWS &amp; ANNOUNCEMENT SUBSCRIBERS</span></article></div>
+    <p class="admin-program-intro">Manage family accounts, team age-group access, and registration requests.</p>
+    <nav class="account-subnav" aria-label="Family account tools">
+      <a href="admin-accounts.html?view=all" data-account-view-link="all">ALL ACCOUNTS</a>
+      <a href="admin-accounts.html?view=age-groups" data-account-view-link="age-groups">AGE GROUP PERMISSIONS</a>
+      <a href="admin-accounts.html?view=add-player" data-account-view-link="add-player">ADD A PLAYER TO A REGISTRATION</a>
+    </nav>
+    <div class="account-stats" data-account-stats data-account-view="all"><article><strong>—</strong><span>ACCOUNTS</span></article><article><strong>—</strong><span>ACTIVE FAMILIES</span></article><article><strong>—</strong><span>NEWS &amp; ANNOUNCEMENT SUBSCRIBERS</span></article></div>
     <div class="alert" data-account-feedback hidden role="status"></div>
 
-    <section class="account-admin-section" aria-labelledby="invite-account-heading">
+    <section class="account-admin-section" data-account-view="all" aria-labelledby="invite-account-heading">
       <div class="account-admin-section-heading"><div><p class="eyebrow red">NEW FAMILY</p><h2 id="invite-account-heading">INVITE AN ACCOUNT</h2></div></div>
-      <p class="account-admin-note">Enter the parent’s contact and emergency details now. The invitation lets them set their own password and update their information later. News and new-program announcements remain optional.</p>
+      <p class="account-admin-note">Enter only the parent or guardian’s email address. We’ll send login instructions so they can set a password and complete their family details.</p>
       <form class="account-invite-form" data-account-invite>
         <label>Parent / guardian email <b>*</b><input name="email" type="email" maxlength="254" autocomplete="email" required></label>
-        <div class="form-row"><label>First name <b>*</b><input name="profile_first_name" maxlength="80" required></label><label>Last name <b>*</b><input name="profile_last_name" maxlength="80" required></label></div>
-        <label>Phone number <b>*</b><input name="profile_phone" type="tel" maxlength="40" required></label>
-        <div class="address-fields"><label>Street &amp; number <b>*</b><input name="profile_street_number" maxlength="300" required></label><div class="form-row"><label>Post code <b>*</b><input name="profile_postal_code" maxlength="16" required></label><label>Province <b>*</b><input name="profile_province" maxlength="80" required></label></div></div>
-        <div class="account-registration-subsection"><p class="eyebrow dark">SECOND PARENT / GUARDIAN <span>(OPTIONAL)</span></p><p class="account-admin-note">Leave all fields empty if there is no second parent or guardian.</p><div class="form-row"><label>First name<input name="profile_second_guardian_first" maxlength="80"></label><label>Last name<input name="profile_second_guardian_last" maxlength="80"></label></div><div class="form-row"><label>Email address<input name="profile_second_guardian_email" type="email" maxlength="254"></label><label>Phone number<input name="profile_second_guardian_phone" type="tel" maxlength="40"></label></div><div class="address-fields"><label>Street &amp; number<input name="profile_second_guardian_street_number" maxlength="300"></label><div class="form-row"><label>Post code<input name="profile_second_guardian_postal_code" maxlength="16"></label><label>Province<input name="profile_second_guardian_province" maxlength="80"></label></div></div></div>
-        <div class="form-row"><label>Emergency contact name <b>*</b><input name="profile_emergency_name" maxlength="120" required></label><label>Relationship to player <b>*</b><input name="profile_emergency_relationship" maxlength="80" required></label></div>
-        <label>Emergency contact phone <b>*</b><input name="profile_emergency_phone" type="tel" maxlength="40" required></label>
-        <button class="button button-gold" type="submit">SEND FAMILY INVITATION <b>↗</b></button>
+        <button class="button button-gold" type="submit">SEND LOGIN INSTRUCTIONS <b>↗</b></button>
       </form>
     </section>
 
-    <section class="account-admin-section" aria-labelledby="all-accounts-heading">
+    <section class="account-admin-section" data-account-view="all" aria-labelledby="all-accounts-heading">
       <div class="account-admin-section-heading"><div><p class="eyebrow red">ACCESS &amp; STATUS</p><h2 id="all-accounts-heading">ALL ACCOUNTS</h2></div><button class="button button-light" data-account-refresh type="button">REFRESH</button></div>
       <div class="account-search"><label>Find an account<input type="search" data-account-search placeholder="Search by email"></label><span data-account-total>Loading accounts…</span></div>
       <div class="account-table-wrap"><table class="account-table"><thead><tr><th>Email</th><th>Parent contact details</th><th>Status</th><th>Saved players</th><th>News &amp; announcements</th><th>Created</th><th>Last sign-in</th><th>Actions</th></tr></thead><tbody data-account-list><tr><td colspan="8">Loading family accounts…</td></tr></tbody></table></div>
       <p class="account-admin-note">Disabling an account blocks sign-in but keeps its saved profiles and registration history. Deleting an account permanently removes its saved child profiles; registration submissions remain in the submissions area.</p>
     </section>
 
-    <section class="account-admin-section" aria-labelledby="team-access-heading">
+    <section class="account-admin-section" data-account-view="age-groups" aria-labelledby="team-access-heading">
       <div class="account-admin-section-heading"><div><p class="eyebrow red">TEAM PORTAL ACCESS</p><h2 id="team-access-heading">AGE GROUP PERMISSIONS</h2></div><button class="button button-light" data-team-access-refresh type="button">REFRESH</button></div>
       <p class="account-admin-note">Grant or revoke a family account’s access to a specific team and age group. Only approved family accounts can open that age-group page.</p>
       <form class="team-access-form" data-team-access-form>
@@ -57,7 +56,7 @@
       <div class="account-table-wrap team-access-table-wrap"><table class="account-table"><thead><tr><th>Family account</th><th>Team</th><th>Age group</th><th>Granted</th><th>Action</th></tr></thead><tbody data-team-access-list><tr><td colspan="5">Loading team access…</td></tr></tbody></table></div>
     </section>
 
-    <section class="account-admin-section" aria-labelledby="family-email-heading">
+    <section class="account-admin-section" data-account-view="all" aria-labelledby="family-email-heading">
       <div class="account-admin-section-heading"><div><p class="eyebrow red">PROGRAM ANNOUNCEMENTS</p><h2 id="family-email-heading">EMAIL FAMILIES</h2></div></div>
       <p class="account-admin-note">Send a factual change notice to families registered in a specific program, or send optional academy news and new-program announcements to families who opted in. Keep registered-program notices focused on dates, location, schedule, safety, or other changes affecting that program.</p>
       <form class="account-campaign-form" data-account-campaign>
@@ -72,33 +71,27 @@
       </form>
     </section>
 
-    <section class="account-admin-section" aria-labelledby="admin-registration-heading">
-      <div class="account-admin-section-heading"><div><p class="eyebrow red">ADMIN ENTRY</p><h2 id="admin-registration-heading">ADD A PLAYER TO A REGISTRATION</h2></div></div>
-      <p class="account-admin-note">Use this when a parent needs help registering. Confirm with the parent before recording their contact details, waiver approvals, and payment acknowledgement.</p>
-      <form class="account-registration-form" data-admin-registration>
+    <section class="account-admin-section" data-account-view="add-player" aria-labelledby="admin-registration-heading">
+      <div class="account-admin-section-heading"><div><p class="eyebrow red">PARENT APPROVAL REQUIRED</p><h2 id="admin-registration-heading">ADD AN EXISTING PLAYER</h2></div></div>
+      <p class="account-admin-note">Search players already saved in family accounts. The parent receives an email with the active waivers and registration terms. The player is added only after the parent confirms.</p>
+      <div class="account-player-search"><label for="existing-player-search">Search existing players</label><input id="existing-player-search" type="search" data-player-search minlength="2" placeholder="Type a player or parent name" autocomplete="off"><span data-player-search-status>Enter at least two letters to search.</span></div>
+      <div class="account-table-wrap player-search-results-wrap"><table class="account-table"><thead><tr><th>Player</th><th>Age group</th><th>Family account</th><th>Parent profile</th><th>Action</th></tr></thead><tbody data-player-search-results><tr><td colspan="5">Search for an existing player.</td></tr></tbody></table></div>
+      <div class="account-selected-player" data-selected-player hidden></div>
+      <form class="account-registration-form" data-admin-registration-request hidden>
+        <input type="hidden" name="child_id" data-selected-child-id>
         <label>Program <b>*</b><select name="program_id" data-admin-program required><option value="">Loading open programs…</option></select></label>
-        <div class="form-row"><label>Player first name <b>*</b><input name="player_first" maxlength="80" required></label><label>Player last name <b>*</b><input name="player_last" maxlength="80" required></label></div>
-        <label>Date of birth <b>*</b><input name="date_of_birth" type="date" required></label>
-        <div class="address-fields"><label>Player street &amp; number <b>*</b><input name="player_address" maxlength="300" required></label><div class="form-row"><label>Player post code <b>*</b><input name="player_postal_code" maxlength="16" required></label><label>Player province <b>*</b><input name="player_province" maxlength="80" required></label></div></div>
-        <label>Medical information / allergies<textarea name="allergies" rows="3" maxlength="3000"></textarea></label>
         <label data-admin-jersey-wrap hidden>Jersey number<input name="jersey_number" maxlength="4" inputmode="numeric"></label>
-        <div class="form-row"><label>Parent / guardian first name <b>*</b><input name="guardian_first" maxlength="59" required></label><label>Parent / guardian last name <b>*</b><input name="guardian_last" maxlength="59" required></label></div>
-        <label>Email address <b>*</b><input name="email" type="email" maxlength="254" required></label>
-        <label>Phone number <b>*</b><input name="phone" maxlength="40" required></label>
-        <div class="address-fields"><label>Parent street &amp; number <b>*</b><input name="guardian_address" maxlength="300" required></label><div class="form-row"><label>Parent post code <b>*</b><input name="guardian_postal_code" maxlength="16" required></label><label>Parent province <b>*</b><input name="guardian_province" maxlength="80" required></label></div></div>
-        <div class="account-registration-subsection"><p class="eyebrow dark">SECOND PARENT / GUARDIAN <span>(OPTIONAL)</span></p><p class="account-admin-note">Leave all fields empty if there is no second parent or guardian to include.</p><div class="form-row"><label>First name<input name="second_guardian_first" maxlength="80"></label><label>Last name<input name="second_guardian_last" maxlength="80"></label></div><div class="form-row"><label>Email address<input name="second_guardian_email" type="email" maxlength="254"></label><label>Phone number<input name="second_guardian_phone" maxlength="40"></label></div><div class="address-fields"><label>Street &amp; number<input name="second_guardian_address" maxlength="300"></label><div class="form-row"><label>Post code<input name="second_guardian_postal_code" maxlength="16"></label><label>Province<input name="second_guardian_province" maxlength="80"></label></div></div></div>
-        <div class="form-row"><label>Playing experience<select name="experience"><option value="">Choose one (optional)</option><option>New to hockey</option><option>Learn to skate / play</option><option>Recreational</option><option>Competitive</option></select></label><label>Anything else the academy should know?<textarea name="notes" rows="2" maxlength="3000"></textarea></label></div>
         <div class="account-registration-subsection program-specific-fields" data-admin-program-specific></div>
-        <div class="form-row"><label>Emergency contact name <b>*</b><input name="emergency_name" maxlength="120" required></label><label>Relationship to player <b>*</b><input name="emergency_relationship" maxlength="80" required></label></div>
-        <label>Emergency contact phone <b>*</b><input name="emergency_phone" maxlength="40" required></label>
-        <fieldset class="account-waiver-list" data-admin-waivers><legend>WAIVERS &amp; ACKNOWLEDGEMENTS</legend><p>Loading active waivers…</p></fieldset>
-        <label class="program-optional-field account-admin-confirm"><input name="confirm_parent_approval" type="checkbox" required><span>I confirm the parent or guardian has authorized these waiver approvals and acknowledged the payment terms.</span></label>
-        <p class="account-admin-note" data-admin-payment-note>Select a program to show its fee and payment summary.</p>
-        <button class="button button-gold" type="submit">SAVE PLAYER REGISTRATION <b>↗</b></button>
+        <label>Playing experience<select name="experience"><option value="">Choose one (optional)</option><option>New to hockey</option><option>Learn to skate / play</option><option>Recreational</option><option>Competitive</option></select></label>
+        <label>Registration note for the academy<textarea name="notes" rows="3" maxlength="3000"></textarea></label>
+        <p class="account-admin-note" data-admin-payment-note>Select a program to show its current payment terms.</p>
+        <button class="button button-gold" type="submit">EMAIL PARENT FOR APPROVAL <b>↗</b></button>
       </form>
+      <div class="account-admin-section-heading pending-registration-heading"><div><p class="eyebrow red">FOLLOW UP</p><h3>PARENT APPROVAL REQUESTS</h3></div><button class="button button-light" data-registration-requests-refresh type="button">REFRESH</button></div>
+      <div class="account-table-wrap"><table class="account-table"><thead><tr><th>Player</th><th>Program</th><th>Parent email</th><th>Status</th><th>Sent</th></tr></thead><tbody data-registration-requests><tr><td colspan="5">Loading parent approval requests…</td></tr></tbody></table></div>
     </section>
     <p class="admin-privacy">Family accounts can include personal information and details about minors. Keep access limited to trusted administrators.</p>
   </main>
-  <script src="supabase-config.js"></script><script src="js/site.js"></script><script type="module" src="js/admin-accounts.js?v=team-access-1"></script>
+  <script src="supabase-config.js"></script><script src="js/site.js"></script><script type="module" src="js/admin-accounts.js?v=parent-approval-1"></script>
 </body>
 </html>
