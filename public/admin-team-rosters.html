@@ -6,7 +6,19 @@
   <meta name="robots" content="noindex,nofollow">
   <title>Team Roster Admin | Kings Hockey Academy</title>
   <link rel="stylesheet" href="styles.css?v=team-roster-admin-1">
-  <link rel="stylesheet" href="styles-roster-admin-additions.css?v=team-roster-admin-1">
+  
+<style id="admin-programs-navigation-style">
+.admin-top-actions .admin-program-dropdown{position:relative;display:flex;align-items:center;}
+.admin-top-actions .admin-program-link{display:inline-flex;align-items:center;}
+.admin-top-actions .admin-program-toggle{border:0;background:transparent;color:#d9ad4b;padding:0 7px;min-width:22px;cursor:pointer;font:inherit;}
+.admin-top-actions .admin-program-dropdown:hover .admin-program-toggle,.admin-top-actions .admin-program-dropdown:focus-within .admin-program-toggle,.admin-top-actions .admin-program-dropdown.is-open .admin-program-toggle{color:#e7bd61;}
+.admin-top-actions .admin-program-submenu{display:none;position:absolute;top:100%;left:0;z-index:999;min-width:165px;padding:5px 0;background:#080909;border:1px solid rgba(217,173,75,.32);box-shadow:0 12px 24px rgba(0,0,0,.35);}
+.admin-top-actions .admin-program-submenu a{display:block;padding:12px 15px;color:#d9d4c7;text-decoration:none;font-size:10px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;}
+.admin-top-actions .admin-program-submenu a:hover,.admin-top-actions .admin-program-submenu a.active{color:#e7bd61;}
+.admin-top-actions .admin-program-dropdown:hover .admin-program-submenu,.admin-top-actions .admin-program-dropdown:focus-within .admin-program-submenu,.admin-top-actions .admin-program-dropdown.is-open .admin-program-submenu{display:block;}
+@media(max-width:760px){.admin-top-actions .admin-program-submenu{left:0;min-width:150px;}}
+</style>
+<link rel="stylesheet" href="styles-roster-admin-additions.css?v=team-roster-admin-1">
 </head>
 
 <body class="admin-page" data-team-roster-admin>
@@ -32,38 +44,18 @@
     </a>
 
     <div class="admin-top-actions">
-      <a class="admin-top-link" data-admin-nav="submissions" href="admin-dashboard.html">
-        SUBMISSIONS
-      </a>
-
-      <a class="admin-top-link" data-admin-nav="programs" href="admin-programs.html">
-        PROGRAMS
-      </a>
-
-      <a class="admin-top-link" data-admin-nav="waivers" href="admin-waivers.html">
-        WAIVERS
-      </a>
-
-      <a class="admin-top-link" data-admin-nav="accounts" href="admin-accounts.html?view=all">
-        ACCOUNTS
-      </a>
-
-      <a
-        class="admin-top-link is-current"
-        data-admin-nav="rosters"
-        href="admin-team-rosters.html"
-        aria-current="page"
-      >
-        TEAM ROSTERS
-      </a>
-
-      <a class="admin-top-link" data-admin-nav="schedules" href="admin-team-schedule.html">
-        TEAM SCHEDULES
-      </a>
-
-      <button class="admin-logout" data-roster-admin-logout type="button">
-        Sign out
-      </button>
+      <div class="admin-program-dropdown" id="admin-program-dropdown">
+        <a data-admin-nav="programs" href="admin-programs.html" class="admin-top-link admin-program-link">PROGRAMS</a>
+        <button class="admin-program-toggle" type="button" aria-label="Show Programs subpages" aria-expanded="false">⌄</button>
+        <div class="admin-program-submenu">
+          <a href="admin-dashboard.html">Submissions</a>
+          <a href="admin-waivers.html">Waivers</a>
+          <a href="admin-accounts.html?view=all">Accounts</a>
+        </div>
+      </div>
+      <a class="admin-top-link is-current" data-admin-nav="rosters" href="admin-team-rosters.html" aria-current="page">TEAM ROSTERS</a>
+      <a class="admin-top-link" data-admin-nav="schedules" href="admin-team-schedule.html">TEAM SCHEDULES</a>
+      <button class="admin-logout" data-roster-admin-logout type="button">Sign out</button>
     </div>
   </header>
 
@@ -265,5 +257,8 @@
   ></script>
 
 <script src="js/site.js"></script>
+<script id="admin-programs-navigation-script">
+(function(){const root=document.getElementById('admin-program-dropdown');if(!root)return;const btn=root.querySelector('.admin-program-toggle');btn.addEventListener('click',function(e){e.preventDefault();const open=root.classList.toggle('is-open');btn.setAttribute('aria-expanded',String(open));});document.addEventListener('click',function(e){if(!root.contains(e.target)){root.classList.remove('is-open');btn.setAttribute('aria-expanded','false');}});})();
+</script>
 </body>
 </html>
