@@ -35,6 +35,13 @@ document.querySelectorAll('[data-account-view-link]').forEach(link => {
   if (link.dataset.accountViewLink === accountView) link.setAttribute('aria-current', 'page');
   else link.removeAttribute('aria-current');
 });
+const activeAdminNav = accountView === 'age-groups' ? 'rosters' : 'accounts';
+document.querySelectorAll('[data-admin-nav]').forEach(link => {
+  const isCurrent = link.dataset.adminNav === activeAdminNav;
+  link.classList.toggle('is-current', isCurrent);
+  if (isCurrent) link.setAttribute('aria-current', 'page');
+  else link.removeAttribute('aria-current');
+});
 let accounts = [];
 let programs = [];
 let teamAccess = [];
@@ -149,20 +156,10 @@ async function saveRosterDetails(event) {
     return;
   }
   button.disabled = true;
-  const { data: updated, error } = await client.from('team_age_group_access')
-    .update({ jersey_number: jerseyRaw || null, position })
-    .eq('id', id)
-    .select('id')
-    .maybeSingle();
+  const { error } = await client.from('team_age_group_access').update({ jersey_number: jerseyRaw || null, position }).eq('id', id);
   button.disabled = false;
   if (error) {
-    show(feedback, error.code === '23505'
-      ? 'That jersey number is already assigned within this team age group.'
-      : `Roster details were not saved: ${error.message}`);
-    return;
-  }
-  if (!updated?.id) {
-    show(feedback, 'No roster row was updated. Confirm this account is an approved admin and the roster update migration is applied.');
+    show(feedback, error.code === '23505' ? 'That jersey number is already assigned within this team age group.' : 'Roster details could not be saved. Apply the roster details database migration and try again.');
     return;
   }
   show(feedback, 'Jersey number and position saved.', 'success');
