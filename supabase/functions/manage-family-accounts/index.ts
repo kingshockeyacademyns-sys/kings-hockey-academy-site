@@ -86,7 +86,7 @@ Deno.serve(async request => {
 
     if (action === 'list_team_rosters') {
       const { data: grants, error: grantError } = await service.from('team_age_group_access')
-        .select('id,parent_id,player_id,team_slug,age_group,granted_at')
+        .select('id,parent_id,player_id,team_slug,age_group,jersey_number,position,granted_at')
         .not('player_id', 'is', null).order('granted_at', { ascending: false }).limit(5000);
       if (grantError) throw grantError;
       const playerIds = [...new Set((grants || []).map(grant => grant.player_id))];
@@ -108,6 +108,114 @@ Deno.serve(async request => {
         player: players.get(grant.player_id) || null,
         parent_email: parents.get(grant.parent_id) || '',
       })) });
+    }
+
+    if (action === 'search_registrations') {
+      const query = String(body?.query ?? '').trim().replace(/\s+/g, ' ');
+      if (query.length < 2 || query.length > 100) return json({ error: 'Enter between 2 and 100 characters to search parent-submitted registrations.' }, 400);
+
+      // Parent-submitted registrations live in public.registrations. They are linked
+      // to the family account by family_user_id, then matched to that parent's saved
+      // child profile by name and date of birth so roster assignments use a real player_id.
+      const { data: registrationRows, error: registrationError } = await service.from('registrations')
+        .select('id,family_user_id,program_id,program_type,player_first,player_last,date_of_birth,birth_year,guardian_name,email,created_at')
+        .not('program_id', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(5000);
+      if (registrationError) throw registrationError;
+
+      const rows: Record<string, any>[] = (registrationRows || []) as Record<string, any>[];
+      const users: Array<Record<string, any>> = [];
+      for (let page = 1; page <= 20; page += 1) {
+        const { data, error: usersError } = await service.auth.admin.listUsers({ page, perPage: 50 });
+        if (usersError) throw usersError;
+        users.push(...data.users);
+        if (data.users.length < 50) break;
+      }
+      const userByEmail = new Map(users.map(user => [String(user.email || '').trim().toLowerCase(), user]));
+      const userById = new Map(users.map(user => [String(user.id), user]));
+      const resolveParentId = (row: Record<string, any>) => {
+        const savedId = String(row.family_user_id || '').trim();
+        if (savedId) return savedId;
+        return String(userByEmail.get(String(row.email || '').trim().toLowerCase())?.id || '');
+      };
+      const parentIds = [...new Set(rows.map(resolveParentId).filter(Boolean))];
+      const childRows: Record<string, any>[] = [];
+      for (let offset = 0; offset < parentIds.length; offset += 500) {
+        const { data, error: childError } = await service.from('parent_children')
+          .select('id,parent_id,first_name,last_name,date_of_birth')
+          .in('parent_id', parentIds.slice(offset, offset + 500));
+        if (childError) throw childError;
+        childRows.push(...((data || []) as Record<string, any>[]));
+      }
+      const childrenByParent = new Map<string, Record<string, any>[]>();
+      for (const child of childRows) {
+        const key = String(child.parent_id);
+        if (!childrenByParent.has(key)) childrenByParent.set(key, []);
+        childrenByParent.get(key)!.push(child);
+      }
+      const programIds = [...new Set(rows.map(row => String(row.program_id || '')).filter(Boolean))];
+      const programRows: Record<string, any>[] = [];
+      for (let offset = 0; offset < programIds.length; offset += 500) {
+        const { data, error: programError } = await service.from('programs')
+          .select('id,title,season')
+          .in('id', programIds.slice(offset, offset + 500));
+        if (programError) throw programError;
+        programRows.push(...((data || []) as Record<string, any>[]));
+      }
+      const programById = new Map(programRows.map(program => [String(program.id), program]));
+      const { data: profileRows, error: profileError } = parentIds.length
+        ? await service.from('parent_profiles').select('user_id,first_name,last_name').in('user_id', parentIds.slice(0, 1000))
+        : { data: [], error: null };
+      if (profileError) throw profileError;
+      const profileById = new Map(((profileRows || []) as Record<string, any>[]).map(profile => [String(profile.user_id), profile]));
+      const normalize = (value: unknown) => String(value ?? '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+      const normalized = normalize(query);
+      const matches: Record<string, any>[] = [];
+      let unmatchedCount = 0;
+
+      for (const registration of rows) {
+        const parentId = resolveParentId(registration);
+        const profile = parentId ? profileById.get(parentId) : null;
+        const authUser = parentId ? userById.get(parentId) : null;
+        const parentName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || String(registration.guardian_name || '');
+        const program = programById.get(String(registration.program_id));
+        const childName = `${registration.player_first || ''} ${registration.player_last || ''}`.trim();
+        const haystack = [registration.id, `registration #${registration.id}`, registration.player_first, registration.player_last,
+          childName, parentName, registration.email, program?.title, program?.season, registration.program_type, 'submitted']
+          .map(normalize).join(' | ');
+        if (!haystack.includes(normalized)) continue;
+
+        const parentChildren = parentId ? (childrenByParent.get(parentId) || []) : [];
+        const first = normalize(registration.player_first);
+        const last = normalize(registration.player_last);
+        const dob = String(registration.date_of_birth || '').slice(0, 10);
+        const birthYear = Number(registration.birth_year || (dob ? dob.slice(0, 4) : 0));
+        const candidates = parentChildren.filter(child => normalize(child.first_name) === first && normalize(child.last_name) === last &&
+          (dob ? String(child.date_of_birth || '').slice(0, 10) === dob : Number(String(child.date_of_birth || '').slice(0, 4)) === birthYear));
+        if (candidates.length !== 1) {
+          unmatchedCount += 1;
+          continue;
+        }
+        const child = candidates[0];
+        matches.push({
+          id: child.id,
+          parent_id: child.parent_id,
+          first_name: child.first_name,
+          last_name: child.last_name,
+          date_of_birth: child.date_of_birth,
+          parent_name: parentName,
+          parent_email: registration.email || authUser?.email || '',
+          registration_id: registration.id,
+          registration_request_id: null,
+          registration_status: 'submitted',
+          program_id: registration.program_id,
+          program_type: program?.season || registration.program_type || '',
+          program_title: program?.title || registration.program_type || 'Parent registration',
+          registered_at: registration.created_at,
+        });
+      }
+      return json({ players: matches.slice(0, 100), unmatched_count: unmatchedCount });
     }
 
     if (action === 'search_players') {
