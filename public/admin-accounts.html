@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Family Accounts Admin | Kings Hockey Academy</title>
-  <link rel="stylesheet" href="styles.css?v=roster-jersey-position-2">
+  <link rel="stylesheet" href="styles.css?v=roster-jersey-position-1">
 </head>
 <body class="admin-page admin-programs-page" data-admin-accounts>
   <header class="site-header"><div class="wrap brand-wrap"><a class="brand" href="index.html" aria-label="Kings Hockey Academy home"><span class="brand-mark"><img src="assets/kha-logo.png" alt="Kings Hockey Academy logo"></span></a></div></header>
@@ -13,17 +13,25 @@
   <div class="alert error admin-message" data-account-message hidden role="status"></div>
   <header class="admin-head">
     <a class="brand" href="index.html"><span class="crest">K</span><span>KINGS <small>ADMINISTRATION</small></span></a>
-    <div class="admin-top-actions"><a class="admin-top-link" href="admin-dashboard.html">SUBMISSIONS</a><a class="admin-top-link" href="admin-programs.html">PROGRAMS</a><a class="admin-top-link" href="admin-waivers.html">WAIVERS</a><a class="admin-top-link is-current" href="admin-accounts.html" aria-current="page">ACCOUNTS</a><button class="admin-logout" data-account-signout type="button">Sign out</button></div>
+    <div class="admin-top-actions">
+      <a class="admin-top-link" data-admin-nav="submissions" href="admin-dashboard.html">SUBMISSIONS</a>
+      <a class="admin-top-link" data-admin-nav="programs" href="admin-programs.html">PROGRAMS</a>
+      <a class="admin-top-link" data-admin-nav="waivers" href="admin-waivers.html">WAIVERS</a>
+      <a class="admin-top-link is-current" data-admin-nav="accounts" href="admin-accounts.html?view=all" aria-current="page">ACCOUNTS</a>
+      <a class="admin-top-link" data-admin-nav="rosters" href="admin-accounts.html?view=age-groups">TEAM ROSTERS</a>
+      <a class="admin-top-link" data-admin-nav="schedules" href="admin-team-schedule.html">TEAM SCHEDULES</a>
+      <button class="admin-logout" data-account-signout type="button">Sign out</button>
+    </div>
   </header>
   <main class="admin-main account-admin-main">
     <p class="eyebrow red">FAMILY PORTAL ADMINISTRATION</p>
     <h1>FAMILY<br><em>ACCOUNTS</em></h1>
     <p data-account-admin-email></p>
     <p class="admin-program-intro">Manage family accounts, team age-group access, and registration requests.</p>
-    <nav class="account-subnav" aria-label="Family account tools">
+    <nav class="account-subnav" aria-label="Accounts subpages">
       <a href="admin-accounts.html?view=all" data-account-view-link="all">ALL ACCOUNTS</a>
-      <a href="admin-accounts.html?view=age-groups" data-account-view-link="age-groups">AGE GROUP PERMISSIONS &amp; ROSTERS</a>
-      <a href="admin-accounts.html?view=add-player" data-account-view-link="add-player">ADD A PLAYER TO A REGISTRATION</a>
+      <a href="admin-accounts.html?view=age-groups" data-account-view-link="age-groups">TEAM ROSTERS &amp; AGE GROUP PERMISSIONS</a>
+      <a href="admin-accounts.html?view=add-player" data-account-view-link="add-player">ADD PLAYER TO REGISTRATION</a>
     </nav>
     <div class="account-stats" data-account-stats data-account-view="all"><article><strong>—</strong><span>ACCOUNTS</span></article><article><strong>—</strong><span>ACTIVE FAMILIES</span></article><article><strong>—</strong><span>NEWS &amp; ANNOUNCEMENT SUBSCRIBERS</span></article></div>
     <div class="alert" data-account-feedback hidden role="status"></div>
@@ -96,6 +104,6 @@
     </section>
     <p class="admin-privacy">Family accounts can include personal information and details about minors. Keep access limited to trusted administrators.</p>
   </main>
-  <script src="supabase-config.js"></script><script src="js/site.js"></script><script type="module" src="js/admin-accounts.js?v=roster-jersey-position-2"></script>
+  <script src="supabase-config.js"></script><script src="js/site.js"></script><script type="module" src="js/admin-accounts.js?v=roster-jersey-position-1"></script>
 </body>
 </html>

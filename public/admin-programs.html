@@ -34,10 +34,12 @@
   <header class="admin-head">
     <a class="brand" href="index.html"><span class="crest">K</span><span>KINGS <small>REGISTRATION ADMIN</small></span></a>
     <div class="admin-top-actions">
-      <a class="admin-top-link" href="admin-dashboard.html">SUBMISSIONS</a>
-      <a class="admin-top-link is-current" href="admin-programs.html" aria-current="page">PROGRAMS</a>
-      <a class="admin-top-link" href="admin-waivers.html">WAIVERS</a>
-      <a class="admin-top-link" href="admin-accounts.html">ACCOUNTS</a>
+      <a class="admin-top-link" data-admin-nav="submissions" href="admin-dashboard.html">SUBMISSIONS</a>
+      <a class="admin-top-link is-current" data-admin-nav="programs" href="admin-programs.html" aria-current="page">PROGRAMS</a>
+      <a class="admin-top-link" data-admin-nav="waivers" href="admin-waivers.html">WAIVERS</a>
+      <a class="admin-top-link" data-admin-nav="accounts" href="admin-accounts.html?view=all">ACCOUNTS</a>
+      <a class="admin-top-link" data-admin-nav="rosters" href="admin-accounts.html?view=age-groups">TEAM ROSTERS</a>
+      <a class="admin-top-link" data-admin-nav="schedules" href="admin-team-schedule.html">TEAM SCHEDULES</a>
       <button class="admin-logout" data-admin-logout type="button">Sign out</button>
     </div>
   </header>
