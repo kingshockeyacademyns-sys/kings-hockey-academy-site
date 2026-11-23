@@ -35,7 +35,7 @@ document.querySelectorAll('[data-account-view-link]').forEach(link => {
   if (link.dataset.accountViewLink === accountView) link.setAttribute('aria-current', 'page');
   else link.removeAttribute('aria-current');
 });
-const activeAdminNav = accountView === 'age-groups' ? 'rosters' : 'accounts';
+const activeAdminNav = 'accounts';
 document.querySelectorAll('[data-admin-nav]').forEach(link => {
   const isCurrent = link.dataset.adminNav === activeAdminNav;
   link.classList.toggle('is-current', isCurrent);
