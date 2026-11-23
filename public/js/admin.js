@@ -24,32 +24,47 @@ async function loadExportPrograms() {
   const button = document.querySelector('[data-admin-export]');
   if (!select || !button) return;
 
-  const { data, error } = await client.from('registrations')
-    .select('program_id,program_type,programs(title)')
-    .order('created_at', { ascending: false });
-  if (error) {
-    setMessage('Could not load the program list for CSV export.');
+  // Load active programs directly. Programs with zero submissions must still appear.
+  const { data: programs, error: programsError } = await client.from('programs')
+    .select('id,title,is_open,registration_closes_on')
+    .order('title', { ascending: true });
+  if (programsError) {
+    setMessage('Could not load active programs for CSV export.');
     return;
   }
 
-  const choices = new Map();
-  (data || []).forEach(row => {
+  const activePrograms = (programs || []).filter(isProgramOpen);
+  const { data: registrationRows, error: registrationsError } = await client.from('registrations')
+    .select('program_id,program_type');
+  if (registrationsError) {
+    setMessage('Active programs loaded, but submission counts could not be retrieved.');
+  }
+
+  const counts = new Map();
+  (registrationRows || []).forEach(row => {
     const key = row.program_id ? `program:${row.program_id}` : `legacy:${row.program_type || 'other'}`;
-    if (!choices.has(key)) {
-      choices.set(key, {
-        title: row.programs?.title || row.program_type || (row.program_id ? 'Registration program' : 'Legacy submissions'),
-        count: 0
-      });
-    }
-    choices.get(key).count += 1;
+    counts.set(key, (counts.get(key) || 0) + 1);
   });
 
-  const sorted = [...choices.entries()].sort((a, b) => a[1].title.localeCompare(b[1].title));
-  select.innerHTML = '<option value="">Select one program…</option>' + sorted.map(([key, item]) =>
-    `<option value="${esc(key)}">${esc(item.title)} (${item.count} submission${item.count === 1 ? '' : 's'})</option>`
+  const options = activePrograms.map(program => {
+    const key = `program:${program.id}`;
+    return { key, title: program.title || 'Untitled program', count: counts.get(key) || 0 };
+  });
+
+  // Keep legacy unlinked submissions available as separate selectable options.
+  const legacyTypes = new Set((registrationRows || []).filter(row => !row.program_id).map(row => row.program_type || 'other'));
+  [...legacyTypes].sort((a, b) => String(a).localeCompare(String(b))).forEach(type => {
+    const key = `legacy:${type}`;
+    options.push({ key, title: `Legacy: ${type}`, count: counts.get(key) || 0 });
+  });
+
+  select.innerHTML = '<option value="">Select one program…</option>' + options.map(item =>
+    `<option value="${esc(item.key)}">${esc(item.title)} (${item.count} submission${item.count === 1 ? '' : 's'})</option>`
   ).join('');
 
-  if (submissionProgramId) select.value = `program:${submissionProgramId}`;
+  if (submissionProgramId && activePrograms.some(program => String(program.id) === String(submissionProgramId))) {
+    select.value = `program:${submissionProgramId}`;
+  }
   button.disabled = !select.value;
   select.addEventListener('change', () => { button.disabled = !select.value; });
 }
