@@ -24,16 +24,17 @@ async function loadExportPrograms() {
   const button = document.querySelector('[data-admin-export]');
   if (!select || !button) return;
 
-  // Load active programs directly. Programs with zero submissions must still appear.
+  // Load every program record, open or closed. Programs are hard-deleted from
+  // this table, so every returned row is a program that still exists.
   const { data: programs, error: programsError } = await client.from('programs')
-    .select('id,title,is_open,registration_closes_on')
+    .select('id,title')
     .order('title', { ascending: true });
   if (programsError) {
-    setMessage('Could not load active programs for CSV export.');
+    setMessage('Could not load programs for CSV export.');
     return;
   }
 
-  const activePrograms = (programs || []).filter(isProgramOpen);
+  const availablePrograms = programs || [];
   const { data: registrationRows, error: registrationsError } = await client.from('registrations')
     .select('program_id,program_type');
   if (registrationsError) {
@@ -46,7 +47,7 @@ async function loadExportPrograms() {
     counts.set(key, (counts.get(key) || 0) + 1);
   });
 
-  const options = activePrograms.map(program => {
+  const options = availablePrograms.map(program => {
     const key = `program:${program.id}`;
     return { key, title: program.title || 'Untitled program', count: counts.get(key) || 0 };
   });
@@ -62,7 +63,7 @@ async function loadExportPrograms() {
     `<option value="${esc(item.key)}">${esc(item.title)} (${item.count} submission${item.count === 1 ? '' : 's'})</option>`
   ).join('');
 
-  if (submissionProgramId && activePrograms.some(program => String(program.id) === String(submissionProgramId))) {
+  if (submissionProgramId && availablePrograms.some(program => String(program.id) === String(submissionProgramId))) {
     select.value = `program:${submissionProgramId}`;
   }
   button.disabled = !select.value;
