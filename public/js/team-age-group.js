@@ -15,7 +15,6 @@ const team = teams[teamSlug];
 const message = document.querySelector('[data-age-group-message]');
 const login = document.querySelector('[data-age-group-login]');
 const privateContent = document.querySelector('[data-age-group-private]');
-const rosterList = document.querySelector('[data-team-roster]');
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
 function showMessage(text, kind = '') {
@@ -70,6 +69,7 @@ async function initialize() {
   const { data: grants, error } = await client.from('team_age_group_access')
     .select('player_id')
     .eq('team_slug', teamSlug)
+    .eq('age_group', ageGroup)
     .in('player_id', childIds);
   if (error) {
     showMessage('Team access could not be checked. The access setup may still need to be applied by the site administrator.', 'error');
@@ -81,9 +81,14 @@ async function initialize() {
     showMessage('This family account has not been granted access to this team age group. Please contact the academy administrator.');
     return;
   }
-  rosterList.innerHTML = rosterPlayers.map(player => `<li>${escapeHtml(player.first_name)} ${escapeHtml(player.last_name)}</li>`).join('');
-  showMessage('Your family has a player on this team roster.', 'success');
+  const query = `team=${encodeURIComponent(teamSlug)}&age_group=${encodeURIComponent(ageGroup)}`;
+  document.querySelector('[data-hub-roster]').href = `team-roster.html?${query}`;
+  document.querySelector('[data-hub-schedule]').href = `team-schedule.html?${query}`;
+  showMessage('Your family has approved access to this team age group.', 'success');
   privateContent.hidden = false;
 }
 
-initialize();
+initialize().catch(error => {
+  console.error('Team age-group access check failed:', error);
+  showMessage('The team access check failed to finish. Refresh once; if it persists, contact the academy administrator.', 'error');
+});

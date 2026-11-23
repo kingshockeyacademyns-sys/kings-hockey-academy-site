@@ -111,17 +111,62 @@ async function loadAccounts() {
 
 async function loadTeamAccess() {
   if (!teamAccessList) return;
-  teamAccessList.innerHTML = '<tr><td colspan="6">Loading team rosters…</td></tr>';
+  teamAccessList.innerHTML = '<tr><td colspan="8">Loading team rosters…</td></tr>';
   try {
     const result = await accountAction({ action: 'list_team_rosters' });
     teamAccess = result.roster || [];
   } catch (error) {
     teamAccess = [];
-    teamAccessList.innerHTML = '<tr><td colspan="6">Team rosters could not be loaded. Apply the player roster database update first.</td></tr>';
+    teamAccessList.innerHTML = '<tr><td colspan="8">Team rosters could not be loaded. Apply the player roster database update first.</td></tr>';
     return;
   }
-  teamAccessList.innerHTML = teamAccess.length ? teamAccess.map(grant => `<tr><td><strong>${esc(grant.player ? `${grant.player.first_name} ${grant.player.last_name}` : 'Saved player')}</strong></td><td>${esc(grant.parent_email || 'Family account')}</td><td>${esc(teamNames[grant.team_slug] || grant.team_slug)}</td><td>${esc(ageGroupForBirthDate(grant.player?.date_of_birth) || grant.age_group)}</td><td>${esc(dateText(grant.granted_at))}</td><td><button type="button" class="account-delete-button" data-team-access-revoke="${esc(grant.id)}">Remove</button></td></tr>`).join('') : '<tr><td colspan="6">No players have been added to a team roster yet.</td></tr>';
+  const positions = ['Centre', 'Left Wing', 'Right Wing', 'Defence', 'Goalie', 'Forward'];
+  teamAccessList.innerHTML = teamAccess.length ? teamAccess.map(grant => `<tr>
+    <td><strong>${esc(grant.player ? `${grant.player.first_name} ${grant.player.last_name}` : 'Saved player')}</strong></td>
+    <td>${esc(grant.parent_email || 'Family account')}</td>
+    <td>${esc(teamNames[grant.team_slug] || grant.team_slug)}</td>
+    <td>${esc(ageGroupForBirthDate(grant.player?.date_of_birth) || grant.age_group)}</td>
+    <td><input class="team-roster-edit-number" type="number" min="0" max="99" step="1" inputmode="numeric" aria-label="Jersey number for ${esc(grant.player?.first_name || 'player')}" data-roster-jersey="${esc(grant.id)}" value="${esc(grant.jersey_number || '')}" placeholder="—"></td>
+    <td><select class="team-roster-edit-position" aria-label="Position for ${esc(grant.player?.first_name || 'player')}" data-roster-position="${esc(grant.id)}"><option value="">Unassigned</option>${positions.map(position => `<option value="${esc(position)}" ${grant.position === position ? 'selected' : ''}>${esc(position)}</option>`).join('')}</select></td>
+    <td>${esc(dateText(grant.granted_at))}</td>
+    <td><div class="account-row-actions"><button type="button" class="account-action-button" data-roster-save="${esc(grant.id)}">Save</button><button type="button" class="account-delete-button" data-team-access-revoke="${esc(grant.id)}">Remove</button></div></td>
+  </tr>`).join('') : '<tr><td colspan="8">No players have been added to a team roster yet.</td></tr>';
   teamAccessList.querySelectorAll('[data-team-access-revoke]').forEach(button => button.addEventListener('click', revokeTeamAccess));
+  teamAccessList.querySelectorAll('[data-roster-save]').forEach(button => button.addEventListener('click', saveRosterDetails));
+}
+
+async function saveRosterDetails(event) {
+  const button = event.currentTarget;
+  const id = button.dataset.rosterSave;
+  const jerseyInput = teamAccessList.querySelector(`[data-roster-jersey="${CSS.escape(id)}"]`);
+  const positionInput = teamAccessList.querySelector(`[data-roster-position="${CSS.escape(id)}"]`);
+  const jerseyRaw = String(jerseyInput?.value || '').trim();
+  const jerseyNumber = jerseyRaw === '' ? null : Number(jerseyRaw);
+  const position = String(positionInput?.value || '').trim() || null;
+  if (jerseyRaw && (!/^\d{1,2}$/.test(jerseyRaw) || jerseyNumber < 0 || jerseyNumber > 99)) {
+    show(feedback, 'Jersey number must be a whole number from 0 to 99.');
+    jerseyInput?.focus();
+    return;
+  }
+  button.disabled = true;
+  const { data: updated, error } = await client.from('team_age_group_access')
+    .update({ jersey_number: jerseyRaw || null, position })
+    .eq('id', id)
+    .select('id')
+    .maybeSingle();
+  button.disabled = false;
+  if (error) {
+    show(feedback, error.code === '23505'
+      ? 'That jersey number is already assigned within this team age group.'
+      : `Roster details were not saved: ${error.message}`);
+    return;
+  }
+  if (!updated?.id) {
+    show(feedback, 'No roster row was updated. Confirm this account is an approved admin and the roster update migration is applied.');
+    return;
+  }
+  show(feedback, 'Jersey number and position saved.', 'success');
+  await loadTeamAccess();
 }
 
 async function revokeTeamAccess(event) {
