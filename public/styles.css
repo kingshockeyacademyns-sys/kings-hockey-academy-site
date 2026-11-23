@@ -248,3 +248,62 @@
 .team-roster-heading{margin:26px 0 10px;font:700 13px/1.2 var(--sans);letter-spacing:.1em}
 .team-roster-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;padding:0;list-style:none}
 .team-roster-list li{padding:12px;border:1px solid #e2dccd;background:#f3f0e7;color:var(--black);font-size:12px;font-weight:700}
+
+
+/* Private team roster and schedule pages */
+.private-team-section { padding: 70px 0 100px; }
+.private-team-tabs { display:flex; gap:12px; flex-wrap:wrap; margin:0 0 34px; }
+.private-team-tabs a { display:inline-flex; align-items:center; padding:14px 22px; border:1px solid rgba(20,20,20,.2); color:var(--ink,#171717); text-decoration:none; font-size:.78rem; font-weight:800; letter-spacing:.08em; }
+.private-team-tabs a[aria-current="page"] { background:var(--ink,#171717); color:#fff; border-color:var(--ink,#171717); }
+.private-team-hub-links { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:32px 0; }
+.private-team-hub-links .team-age-group-link { text-decoration:none; }
+.private-roster-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:30px 0; }
+.private-roster-card { display:flex; align-items:center; gap:18px; padding:22px; border:1px solid rgba(20,20,20,.14); background:#fff; }
+.private-roster-number { font-size:1.2rem; font-weight:900; color:#b58a39; }
+.private-roster-card h3 { margin:0; font-size:1.05rem; }
+.private-roster-card p { margin:6px 0 0; font-size:.72rem; letter-spacing:.08em; font-weight:700; }
+.private-team-empty { padding:24px; border:1px dashed rgba(20,20,20,.25); }
+.team-calendar-controls { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:28px 0 14px; }
+.team-calendar-controls h3 { flex:1; min-width:150px; margin:0; font-size:1.2rem; }
+.team-calendar-controls button { border:1px solid rgba(20,20,20,.25); background:#fff; padding:10px 14px; font-weight:800; cursor:pointer; }
+.team-calendar { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); border-top:1px solid rgba(20,20,20,.16); border-left:1px solid rgba(20,20,20,.16); }
+.team-calendar-weekday { padding:12px 4px; text-align:center; background:#171717; color:#fff; font-size:.65rem; font-weight:800; letter-spacing:.08em; }
+.team-calendar-day { min-height:100px; padding:8px; border-right:1px solid rgba(20,20,20,.16); border-bottom:1px solid rgba(20,20,20,.16); overflow:hidden; }
+.team-calendar-day > span { display:block; font-size:.78rem; font-weight:800; margin-bottom:6px; }
+.team-calendar-day.is-outside { background:#f4f4f4; color:#999; }
+.team-calendar-day.is-today > span { display:inline-flex; justify-content:center; align-items:center; width:24px; height:24px; border-radius:50%; background:#b58a39; color:#fff; }
+.team-calendar-day small { display:block; margin:3px 0; padding:3px 4px; background:#eee3c9; color:#171717; font-size:.58rem; line-height:1.25; overflow:hidden; text-overflow:ellipsis; }
+.team-events-heading { margin:48px 0 20px; }
+.team-event-list { display:grid; gap:14px; }
+.team-event-card { display:flex; gap:20px; padding:22px; border:1px solid rgba(20,20,20,.15); background:#fff; }
+.team-event-date { flex:0 0 64px; text-align:center; padding:8px; background:#171717; color:#fff; }
+.team-event-date strong { display:block; font-size:1.8rem; line-height:1.1; }
+.team-event-date span { font-size:.7rem; font-weight:800; }
+.team-event-copy h3 { margin:4px 0 10px; }
+.team-event-copy p { margin:5px 0; }
+.team-event-copy .eyebrow { margin:0; }
+.team-schedule-admin .team-admin-panel { margin:36px 0; padding:28px; background:#fff; border:1px solid rgba(20,20,20,.14); }
+.team-admin-panel-heading h2 { margin:0 0 22px; }
+.team-event-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.team-event-form label,.team-admin-filter label { display:flex; flex-direction:column; gap:8px; font-size:.8rem; font-weight:700; }
+.team-event-form input,.team-event-form select,.team-event-form textarea,.team-admin-filter select { width:100%; padding:12px; border:1px solid rgba(20,20,20,.25); background:#fff; font:inherit; }
+.team-event-details-field { grid-column:1/-1; }
+.team-event-form-actions { grid-column:1/-1; display:flex; gap:12px; flex-wrap:wrap; }
+.team-admin-filter { display:flex; gap:18px; margin-bottom:22px; }
+.team-admin-filter label { min-width:220px; }
+@media(max-width:700px) {
+ .private-team-hub-links,.private-roster-grid,.team-event-form { grid-template-columns:1fr; }
+ .team-calendar-day { min-height:66px; padding:4px; }
+ .team-calendar-day small { font-size:.48rem; }
+ .team-event-card { padding:14px; gap:12px; }
+ .team-event-date { flex-basis:52px; }
+ .team-admin-filter { flex-direction:column; }
+ .team-schedule-admin .team-admin-panel { padding:16px; }
+}
+
+/* Admin roster jersey and position editing */
+.team-access-table-wrap .team-roster-edit-number,.team-access-table-wrap .team-roster-edit-position{width:100%;min-width:80px;max-width:140px;padding:9px 8px;border:1px solid #ddd7c9;background:#fff;font:12px var(--sans);color:var(--black)}
+.team-access-table-wrap .team-roster-edit-position{min-width:115px}
+.team-access-table-wrap .account-row-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.team-access-table-wrap [data-roster-save]{border:0;padding:8px 10px;background:#171717;color:#fff;font:700 9px var(--sans);cursor:pointer}
+.team-access-table-wrap [data-roster-save]:disabled{opacity:.55;cursor:wait}

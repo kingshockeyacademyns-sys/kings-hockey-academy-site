@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Family Accounts Admin | Kings Hockey Academy</title>
-  <link rel="stylesheet" href="styles.css?v=player-roster-email-2">
+  <link rel="stylesheet" href="styles.css?v=roster-jersey-position-1">
 </head>
 <body class="admin-page admin-programs-page" data-admin-accounts>
   <header class="site-header"><div class="wrap brand-wrap"><a class="brand" href="index.html" aria-label="Kings Hockey Academy home"><span class="brand-mark"><img src="assets/kha-logo.png" alt="Kings Hockey Academy logo"></span></a></div></header>
@@ -22,7 +22,7 @@
     <p class="admin-program-intro">Manage family accounts, team age-group access, and registration requests.</p>
     <nav class="account-subnav" aria-label="Family account tools">
       <a href="admin-accounts.html?view=all" data-account-view-link="all">ALL ACCOUNTS</a>
-      <a href="admin-accounts.html?view=age-groups" data-account-view-link="age-groups">AGE GROUP PERMISSIONS</a>
+      <a href="admin-accounts.html?view=age-groups" data-account-view-link="age-groups">AGE GROUP PERMISSIONS &amp; ROSTERS</a>
       <a href="admin-accounts.html?view=add-player" data-account-view-link="add-player">ADD A PLAYER TO A REGISTRATION</a>
     </nav>
     <div class="account-stats" data-account-stats data-account-view="all"><article><strong>—</strong><span>ACCOUNTS</span></article><article><strong>—</strong><span>ACTIVE FAMILIES</span></article><article><strong>—</strong><span>NEWS &amp; ANNOUNCEMENT SUBSCRIBERS</span></article></div>
@@ -57,7 +57,7 @@
         <label>Calculated age group <output data-team-player-age-group>Choose a player</output><input type="hidden" name="age_group" data-team-player-age-group-value></label>
         <button class="button button-gold" type="submit" disabled data-team-roster-submit>ADD TO ROSTER <b>↗</b></button>
       </form>
-      <div class="account-table-wrap team-access-table-wrap"><table class="account-table"><thead><tr><th>Player</th><th>Family account</th><th>Team</th><th>Age group</th><th>Added</th><th>Action</th></tr></thead><tbody data-team-access-list><tr><td colspan="6">Loading team rosters…</td></tr></tbody></table></div>
+      <div class="account-table-wrap team-access-table-wrap"><table class="account-table"><thead><tr><th>Player</th><th>Family account</th><th>Team</th><th>Age group</th><th>Jersey #</th><th>Position</th><th>Added</th><th>Actions</th></tr></thead><tbody data-team-access-list><tr><td colspan="8">Loading team rosters…</td></tr></tbody></table></div>
     </section>
 
     <section class="account-admin-section" data-account-view="all" aria-labelledby="family-email-heading">
@@ -96,6 +96,6 @@
     </section>
     <p class="admin-privacy">Family accounts can include personal information and details about minors. Keep access limited to trusted administrators.</p>
   </main>
-  <script src="supabase-config.js"></script><script src="js/site.js"></script><script type="module" src="js/admin-accounts.js?v=player-roster-email-2"></script>
+  <script src="supabase-config.js"></script><script src="js/site.js"></script><script type="module" src="js/admin-accounts.js?v=roster-jersey-position-1"></script>
 </body>
 </html>
