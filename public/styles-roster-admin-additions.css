@@ -21,3 +21,7 @@
 .team-roster-add-panel>[data-roster-add-selected]:disabled{opacity:.5;cursor:not-allowed}
 .team-roster-add-panel .account-table{min-width:650px}
 @media(max-width:700px){.team-roster-admin .team-roster-team-grid{grid-template-columns:1fr}.team-roster-filter{align-items:flex-start;flex-direction:column}.team-roster-manager .team-admin-panel-heading{align-items:flex-start;flex-direction:column}}
+
+.team-roster-add-panel .account-player-search-options{display:grid;gap:7px;max-width:360px;margin:18px 0 12px;color:#484438;font-size:10px;font-weight:700}
+.team-roster-add-panel .account-player-search-options select{width:100%;padding:11px;border:1px solid #ddd7c9;background:#fff;color:#211d14;font:12px var(--sans)}
+.team-roster-add-panel [data-roster-search-results] small{display:block;margin-top:4px;color:#746f63;font-size:10px;font-weight:400}
