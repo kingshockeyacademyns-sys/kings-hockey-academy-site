@@ -19,6 +19,41 @@ const setMessage = text => {
 };
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+async function loadExportPrograms() {
+  const select = document.querySelector('[data-export-program]');
+  const button = document.querySelector('[data-admin-export]');
+  if (!select || !button) return;
+
+  const { data, error } = await client.from('registrations')
+    .select('program_id,program_type,programs(title)')
+    .order('created_at', { ascending: false });
+  if (error) {
+    setMessage('Could not load the program list for CSV export.');
+    return;
+  }
+
+  const choices = new Map();
+  (data || []).forEach(row => {
+    const key = row.program_id ? `program:${row.program_id}` : `legacy:${row.program_type || 'other'}`;
+    if (!choices.has(key)) {
+      choices.set(key, {
+        title: row.programs?.title || row.program_type || (row.program_id ? 'Registration program' : 'Legacy submissions'),
+        count: 0
+      });
+    }
+    choices.get(key).count += 1;
+  });
+
+  const sorted = [...choices.entries()].sort((a, b) => a[1].title.localeCompare(b[1].title));
+  select.innerHTML = '<option value="">Select one program…</option>' + sorted.map(([key, item]) =>
+    `<option value="${esc(key)}">${esc(item.title)} (${item.count} submission${item.count === 1 ? '' : 's'})</option>`
+  ).join('');
+
+  if (submissionProgramId) select.value = `program:${submissionProgramId}`;
+  button.disabled = !select.value;
+  select.addEventListener('change', () => { button.disabled = !select.value; });
+}
+
 async function loadRows() {
   let query = client.from('registrations')
     .select('id,program_id,program_type,player_first,player_last,date_of_birth,birth_year,guardian_first,guardian_last,guardian_name,email,created_at,programs(title,season)')
@@ -235,6 +270,7 @@ async function initializePage() {
         filter.hidden = false;
       }
     }
+    await loadExportPrograms();
     await loadRows();
   }
 }
@@ -402,11 +438,30 @@ document.querySelector('[data-admin-logout]')?.addEventListener('click', async (
 });
 
 document.querySelector('[data-admin-export]')?.addEventListener('click', async () => {
+  const select = document.querySelector('[data-export-program]');
+  const selected = select?.value || '';
+  if (!selected) {
+    setMessage('Select one program before downloading the CSV.');
+    return;
+  }
+
   let query = client.from('registrations').select('*').order('created_at', { ascending: false });
-  if (submissionProgramId) query = query.eq('program_id', submissionProgramId);
+  if (selected.startsWith('program:')) {
+    query = query.eq('program_id', selected.slice('program:'.length));
+  } else if (selected.startsWith('legacy:')) {
+    query = query.is('program_id', null).eq('program_type', selected.slice('legacy:'.length));
+  } else {
+    setMessage('Select one valid program before downloading the CSV.');
+    return;
+  }
+
   const { data, error } = await query;
   if (error) {
-    setMessage('The CSV file could not be created.');
+    setMessage('The selected program CSV could not be created.');
+    return;
+  }
+  if (!data?.length) {
+    setMessage('There are no submissions for the selected program.');
     return;
   }
 
@@ -417,9 +472,12 @@ document.querySelector('[data-admin-export]')?.addEventListener('click', async (
   }).join(',')).join('\r\n');
   const link = document.createElement('a');
   link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  link.download = `kha-registrations${submissionProgramId ? '-program' : ''}-${new Date().toISOString().slice(0,10)}.csv`;
+  const selectedLabel = select.options[select.selectedIndex]?.textContent || 'selected-program';
+  const slug = selectedLabel.replace(/\s*\(\d+ submissions?\)\s*$/i, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'selected-program';
+  link.download = `kha-registration-${slug}-${new Date().toISOString().slice(0,10)}.csv`;
   link.click();
   URL.revokeObjectURL(link.href);
+  setMessage(`Downloaded ${data.length} submission${data.length === 1 ? '' : 's'} for ${selectedLabel.replace(/\s*\(\d+ submissions?\)\s*$/i, '')}.`);
 });
 
 if (client) {
