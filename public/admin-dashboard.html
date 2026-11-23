@@ -17,6 +17,16 @@
 .admin-top-actions .admin-program-dropdown:hover .admin-program-submenu,.admin-top-actions .admin-program-dropdown:focus-within .admin-program-submenu,.admin-top-actions .admin-program-dropdown.is-open .admin-program-submenu{display:block;}
 @media(max-width:760px){.admin-top-actions .admin-program-submenu{left:0;min-width:150px;}}
 </style>
+<style id="submission-export-tools-style">
+.submission-export-tools{margin:26px 0 22px;padding:18px 20px;border:1px solid rgba(18,18,18,.14);background:rgba(255,255,255,.42);max-width:780px;}
+.submission-export-tools>label{display:block;margin-bottom:10px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#27231c;}
+.submission-export-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.submission-export-controls select{min-width:260px;max-width:100%;padding:13px 14px;border:1px solid #d5cbb7;background:#fff;color:#171717;font:inherit;}
+.submission-export-controls button:disabled{opacity:.45;cursor:not-allowed;}
+.submission-export-tools>p{margin:10px 0 0;font-size:12px;color:#666;}
+@media(max-width:600px){.submission-export-controls{align-items:stretch;flex-direction:column}.submission-export-controls select,.submission-export-controls button{width:100%;min-width:0}}
+</style>
+
 </head>
 <body class="admin-page admin-dashboard-page" data-admin-page="dashboard">
   <header class="site-header">
@@ -40,13 +50,22 @@
       </div>
       <a class="admin-top-link" data-admin-nav="rosters" href="admin-team-rosters.html">TEAM ROSTERS</a>
       <a class="admin-top-link" data-admin-nav="schedules" href="admin-team-schedule.html">TEAM SCHEDULES</a>
-      <button class="button button-red" data-admin-export type="button">DOWNLOAD CSV ↗</button>
       <button class="admin-logout" data-admin-logout type="button">Sign out</button>
     </div>
   </header>
   <main class="admin-main">
     <p class="eyebrow red">PRIVATE REGISTRATION RECORDS</p>
     <h1>REGISTRATION<br><em>SUBMISSIONS</em></h1>
+    <section class="submission-export-tools" aria-label="Export one registration program">
+      <label for="submission-export-program">Export submissions for one program</label>
+      <div class="submission-export-controls">
+        <select id="submission-export-program" data-export-program>
+          <option value="">Select one program…</option>
+        </select>
+        <button class="button button-red" data-admin-export type="button" disabled>DOWNLOAD SELECTED CSV ↗</button>
+      </div>
+      <p>Only the selected program’s registration submissions will be included in the CSV.</p>
+    </section>
     <p data-admin-email></p>
     <p class="submission-filter-note" data-registration-filter hidden>Showing submissions for <strong data-registration-filter-name></strong> · <a href="admin-dashboard.html">View all submissions</a></p>
     <p data-registration-count>Loading…</p>
