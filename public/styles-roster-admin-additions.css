@@ -1,0 +1,23 @@
+
+/* Dedicated team-by-team admin roster pages */
+.team-roster-admin .team-roster-team-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:28px 0 55px}
+.team-roster-team-card{display:grid;gap:13px;min-height:150px;padding:22px;border:1px solid #d9d3c6;background:#fffefa;color:#211d14;text-decoration:none}
+.team-roster-team-card strong{font:700 clamp(23px,3vw,34px)/1.1 var(--serif)}
+.team-roster-team-card>span:last-child{color:#8d6722;font-size:10px;font-weight:700}
+.team-roster-team-card:hover,.team-roster-team-card:focus-visible{border-color:#b98724;transform:translateY(-2px)}
+.team-roster-team-subnav{margin:20px 0 28px}
+.team-roster-team-subnav a[aria-current=page]{border-color:#b98724;background:#211d14;color:#fff}
+.team-roster-manager,.team-roster-add-panel{margin:22px 0;padding:clamp(18px,3vw,30px);border:1px solid #e2dccd;background:#fffefa}
+.team-roster-manager .team-admin-panel-heading,.team-roster-add-panel .team-admin-panel-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:15px}
+.team-roster-manager h2,.team-roster-add-panel h2{margin:0;font:700 clamp(24px,3vw,35px)/1.05 var(--serif)}
+.team-roster-manager h2 em,.team-roster-add-panel h2 em{color:#b98724;font-style:normal}
+.team-roster-filter{display:flex;align-items:end;justify-content:space-between;gap:14px;margin:18px 0}
+.team-roster-filter label{display:grid;gap:7px;color:#484438;font-size:10px;font-weight:700}
+.team-roster-filter select{min-width:150px;padding:10px;border:1px solid #ddd7c9;background:white;font:12px var(--sans)}
+.team-roster-filter>span{color:#746f63;font-size:10px}
+.team-roster-admin-table{min-width:760px}
+.team-roster-admin-table input,.team-roster-admin-table select{max-width:125px;padding:8px;border:1px solid #ddd7c9;background:white;color:#211d14;font:11px var(--sans)}
+.team-roster-add-panel>[data-roster-add-selected]{margin-top:15px;border:0;cursor:pointer}
+.team-roster-add-panel>[data-roster-add-selected]:disabled{opacity:.5;cursor:not-allowed}
+.team-roster-add-panel .account-table{min-width:650px}
+@media(max-width:700px){.team-roster-admin .team-roster-team-grid{grid-template-columns:1fr}.team-roster-filter{align-items:flex-start;flex-direction:column}.team-roster-manager .team-admin-panel-heading{align-items:flex-start;flex-direction:column}}
