@@ -41,3 +41,7 @@
 .admin-top-actions .admin-team-tree .admin-age-branch-content>a{padding:8px 12px;font-size:9px;letter-spacing:.06em;text-transform:none}
 .admin-top-actions .admin-team-tree a.active{color:#e7bd61;background:rgba(217,173,75,.08)}
 @media(max-width:760px){.admin-top-actions .admin-team-submenu.admin-team-tree{max-height:65vh;min-width:230px}.admin-top-actions .admin-team-tree summary{white-space:normal}}
+
+/* Shared Team Staff link inserted by admin-nav.js on all authenticated admin pages. */
+.admin-top-actions>[data-admin-nav="staff"]{display:inline-flex;align-items:center;white-space:nowrap}
+.admin-top-actions>[data-admin-nav="staff"]:hover,.admin-top-actions>[data-admin-nav="staff"]:focus-visible,.admin-top-actions>[data-admin-nav="staff"].is-current{color:#e7bd61}
