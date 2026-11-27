@@ -84,6 +84,7 @@ async function initialize() {
   const query = `team=${encodeURIComponent(teamSlug)}&age_group=${encodeURIComponent(ageGroup)}`;
   document.querySelector('[data-hub-roster]').href = `team-roster.html?${query}`;
   document.querySelector('[data-hub-schedule]').href = `team-schedule.html?${query}`;
+  document.querySelector('[data-hub-staff]').href = `team-staff.html?${query}`;
   showMessage('Your family has approved access to this team age group.', 'success');
   privateContent.hidden = false;
 }

@@ -17,13 +17,22 @@ const roles = {
   team_staff: 'Other Team Staff'
 };
 const teamSelect = document.querySelector('[data-staff-team]');
+const ageGroupSelect = document.querySelector('[data-staff-age-group]');
 const form = document.querySelector('[data-staff-invite-form]');
 const submitButton = document.querySelector('[data-staff-invite-submit]');
 const list = document.querySelector('[data-staff-list]');
 const count = document.querySelector('[data-staff-count]');
 const message = document.querySelector('[data-staff-message]');
+const accountSearch = document.querySelector('[data-staff-account-search]');
+const accountResults = document.querySelector('[data-staff-account-results]');
+const selectedAccountText = document.querySelector('[data-staff-selected-account]');
+const existingRole = document.querySelector('[data-staff-existing-role]');
+const existingAssignButton = document.querySelector('[data-staff-existing-assign]');
 let currentSession = null;
 let staff = [];
+let selectedAccount = null;
+let searchTimer = null;
+let searchRequest = 0;
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -46,11 +55,15 @@ async function callStaffFunction(body) {
   return data || {};
 }
 
+function selectedAgeGroup() {
+  return ageGroupSelect?.value || 'all';
+}
+
 function renderStaff() {
   const teamSlug = teamSelect.value;
-  if (count) count.textContent = `${staff.length} staff member${staff.length === 1 ? '' : 's'} assigned to ${teams[teamSlug] || 'this team'}.`;
+  if (count) count.textContent = `${staff.length} staff assignment${staff.length === 1 ? '' : 's'} for ${teams[teamSlug] || 'this team'}.`;
   if (!staff.length) {
-    list.innerHTML = '<tr><td colspan="5">No staff members are assigned to this team yet.</td></tr>';
+    list.innerHTML = '<tr><td colspan="6">No staff members are assigned to this team yet.</td></tr>';
     return;
   }
   list.innerHTML = staff.map(member => {
@@ -60,9 +73,11 @@ function renderStaff() {
     const statusClass = active && !disabledAccount ? '' : ' inactive';
     const assigned = member.created_at ? new Date(member.created_at).toLocaleDateString() : '—';
     const email = member.email || 'Account email unavailable';
+    const ageGroup = member.age_group || 'All age groups';
     return `<tr>
-      <td><strong>${esc(email)}</strong><small>${esc(member.user_id || '')}</small></td>
+      <td><strong>${esc(email)}</strong><small>${esc(member.display_name || member.user_id || '')}</small></td>
       <td>${esc(roles[member.staff_role] || member.staff_role || 'Unassigned')}</td>
+      <td>${esc(ageGroup)}</td>
       <td><span class="staff-status${statusClass}">${esc(status)}</span></td>
       <td>${esc(assigned)}</td>
       <td><div class="staff-actions">
@@ -79,7 +94,7 @@ async function loadStaff(showNotice = false) {
   const teamSlug = teamSelect.value;
   if (!teams[teamSlug]) return;
   if (count) count.textContent = `Loading staff for ${teams[teamSlug]}…`;
-  list.innerHTML = '<tr><td colspan="5">Loading staff…</td></tr>';
+  list.innerHTML = '<tr><td colspan="6">Loading staff…</td></tr>';
   try {
     const result = await callStaffFunction({ action: 'list', team_slug: teamSlug });
     staff = Array.isArray(result.staff) ? result.staff : [];
@@ -87,7 +102,7 @@ async function loadStaff(showNotice = false) {
     if (showNotice) notice(`Staff list refreshed for ${teams[teamSlug]}.`);
   } catch (error) {
     staff = [];
-    list.innerHTML = `<tr><td colspan="5">${esc(error.message)}</td></tr>`;
+    list.innerHTML = `<tr><td colspan="6">${esc(error.message)}</td></tr>`;
     if (count) count.textContent = 'Staff list could not be loaded.';
     notice(error.message, true);
   }
@@ -106,12 +121,14 @@ async function inviteStaff(event) {
   submitButton.disabled = true;
   submitButton.textContent = 'ASSIGNING…';
   try {
-    const result = await callStaffFunction({ action: 'invite', email, team_slug: teamSlug, staff_role: staffRole });
+    const result = await callStaffFunction({
+      action: 'invite', email, team_slug: teamSlug, age_group: selectedAgeGroup(), staff_role: staffRole
+    });
     form.reset();
     if (result.invitation_sent) {
-      notice(`Invitation sent to ${email} and assigned to ${teams[teamSlug]} as ${roles[staffRole]}.`);
+      notice(`Invitation sent to ${email} and assigned to ${teams[teamSlug]} (${result.age_group || 'all age groups'}) as ${roles[staffRole]}.`);
     } else {
-      notice(`Existing account ${email} assigned to ${teams[teamSlug]} as ${roles[staffRole]}. No duplicate account was created.`);
+      notice(`Existing account ${email} assigned to ${teams[teamSlug]} (${result.age_group || 'all age groups'}) as ${roles[staffRole]}. No duplicate account was created.`);
     }
     await loadStaff();
   } catch (error) {
@@ -119,6 +136,79 @@ async function inviteStaff(event) {
   } finally {
     submitButton.disabled = false;
     submitButton.innerHTML = 'ASSIGN STAFF <b>↗</b>';
+  }
+}
+
+function clearSelectedAccount() {
+  selectedAccount = null;
+  if (selectedAccountText) selectedAccountText.textContent = 'No account selected.';
+  if (existingAssignButton) existingAssignButton.disabled = true;
+}
+
+function renderAccountResults(accounts, query) {
+  if (!accountResults) return;
+  if (!accounts.length) {
+    accountResults.innerHTML = `<p class="staff-note">No existing account matched “${esc(query)}”. Use the email invitation form above if this person is new to the system.</p>`;
+    return;
+  }
+  accountResults.innerHTML = `<ul class="staff-account-results">${accounts.map(account => `
+    <li><button type="button" class="staff-account-result" data-select-account="${esc(account.user_id)}" aria-pressed="${selectedAccount?.user_id === account.user_id ? 'true' : 'false'}">
+      <span><strong>${esc(account.display_name || 'Account holder')}</strong><small>${esc(account.email)}</small></span>
+      <span>${selectedAccount?.user_id === account.user_id ? 'SELECTED' : 'SELECT'}</span>
+    </button></li>`).join('')}</ul>`;
+  accountResults.querySelectorAll('[data-select-account]').forEach(button => button.addEventListener('click', () => {
+    selectedAccount = accounts.find(account => account.user_id === button.dataset.selectAccount) || null;
+    if (selectedAccountText) selectedAccountText.textContent = selectedAccount
+      ? `Selected: ${selectedAccount.display_name || selectedAccount.email} (${selectedAccount.email})`
+      : 'No account selected.';
+    if (existingAssignButton) existingAssignButton.disabled = !selectedAccount;
+    renderAccountResults(accounts, query);
+  }));
+}
+
+async function searchAccounts() {
+  const query = String(accountSearch.value || '').trim();
+  const requestId = ++searchRequest;
+  clearSelectedAccount();
+  if (query.length < 2) {
+    accountResults.innerHTML = '<p class="staff-note">Enter at least two characters to search existing accounts.</p>';
+    return;
+  }
+  accountResults.innerHTML = '<p class="staff-note">Searching existing accounts…</p>';
+  try {
+    const result = await callStaffFunction({ action: 'search_accounts', query });
+    if (requestId !== searchRequest) return;
+    renderAccountResults(Array.isArray(result.accounts) ? result.accounts : [], query);
+  } catch (error) {
+    if (requestId === searchRequest) accountResults.innerHTML = `<p class="staff-note">${esc(error.message)}</p>`;
+  }
+}
+
+async function assignExistingAccount() {
+  if (!selectedAccount) {
+    notice('Search for and select an existing account first.', true);
+    return;
+  }
+  const teamSlug = teamSelect.value;
+  const staffRole = existingRole.value;
+  existingAssignButton.disabled = true;
+  existingAssignButton.textContent = 'ASSIGNING…';
+  try {
+    await callStaffFunction({
+      action: 'assign', user_id: selectedAccount.user_id, team_slug: teamSlug,
+      age_group: selectedAgeGroup(), staff_role: staffRole
+    });
+    const name = selectedAccount.display_name || selectedAccount.email;
+    notice(`${name} assigned to ${teams[teamSlug]} (${selectedAgeGroup() === 'all' ? 'all age groups' : selectedAgeGroup()}) as ${roles[staffRole]}. Existing account reused.`);
+    accountSearch.value = '';
+    accountResults.innerHTML = '<p class="staff-note">Account assigned. Search again to add another existing account.</p>';
+    clearSelectedAccount();
+    await loadStaff();
+  } catch (error) {
+    notice(error.message, true);
+  } finally {
+    existingAssignButton.disabled = !selectedAccount;
+    existingAssignButton.innerHTML = 'ASSIGN EXISTING ACCOUNT <b>↗</b>';
   }
 }
 
@@ -171,6 +261,10 @@ async function init() {
     notice('This page is restricted to approved academy administrators.', true);
     form.querySelectorAll('input,select,button').forEach(element => element.disabled = true);
     teamSelect.disabled = true;
+    ageGroupSelect.disabled = true;
+    accountSearch.disabled = true;
+    existingRole.disabled = true;
+    existingAssignButton.disabled = true;
     return;
   }
   const email = document.querySelector('[data-staff-admin-email]');
@@ -181,8 +275,14 @@ async function init() {
   });
   teamSelect.addEventListener('change', () => { notice(''); void loadStaff(); });
   form.addEventListener('submit', inviteStaff);
+  accountSearch.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => void searchAccounts(), 300);
+  });
+  existingAssignButton.addEventListener('click', () => void assignExistingAccount());
   document.querySelector('[data-staff-refresh]')?.addEventListener('click', () => void loadStaff(true));
   await loadStaff();
+  accountResults.innerHTML = '<p class="staff-note">Enter at least two characters to search existing accounts.</p>';
 }
 
 init();
