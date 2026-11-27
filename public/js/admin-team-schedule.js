@@ -7,13 +7,20 @@ const list=document.querySelector('[data-team-admin-events]');
 const notice=document.querySelector('[data-team-admin-message]');
 const filterTeam=document.querySelector('[data-event-filter-team]');
 const filterAge=document.querySelector('[data-event-filter-age]');
+const scheduleParams=new URLSearchParams(location.search);
+const requestedTeam=scheduleParams.get('team');
+const requestedAge=(scheduleParams.get('age')||'').toUpperCase();
+if(filterTeam&&teams[requestedTeam])filterTeam.value=requestedTeam;
+if(filterAge&&['U9','U11','U13','U15'].includes(requestedAge))filterAge.value=requestedAge;
+if(form&&teams[requestedTeam])form.elements.team_slug.value=requestedTeam;
+if(form&&['U9','U11','U13','U15'].includes(requestedAge))form.elements.age_group.value=requestedAge;
 const cancel=document.querySelector('[data-event-cancel]');
 let events=[];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const msg=(text,error=false)=>{notice.textContent=text;notice.className=`alert${error?' error':' success'} admin-message`;notice.hidden=!text;};
 const dateText=value=>new Date(`${value}T12:00:00Z`).toLocaleDateString('en-CA',{timeZone:'UTC',weekday:'short',month:'short',day:'numeric',year:'numeric'});
 const timeText=value=>{if(!value)return '';const [h,m]=value.slice(0,5).split(':').map(Number);return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`;};
-function resetForm(){form.reset();form.elements.id.value='';cancel.hidden=true;form.querySelector('[data-event-save]').textContent='SAVE EVENT ↗';}
+function resetForm(){form.reset();form.elements.id.value='';if(teams[requestedTeam])form.elements.team_slug.value=requestedTeam;if(['U9','U11','U13','U15'].includes(requestedAge))form.elements.age_group.value=requestedAge;cancel.hidden=true;form.querySelector('[data-event-save]').textContent='SAVE EVENT ↗';}
 function render(){
  const team=filterTeam.value,age=filterAge.value;
  const rows=events.filter(e=>(team==='all'||e.team_slug===team)&&(age==='all'||e.age_group===age));
@@ -51,6 +58,7 @@ async function initialize(){
  const {data:isAdmin,error:adminError}=await client.rpc('kha_is_admin');
  if(adminError||isAdmin!==true){msg('This page is restricted to approved academy administrators.',true);form.hidden=true;return;}
  document.querySelector('[data-team-admin-email]').textContent=data.session.user.email||'';
+ const context=document.querySelector('[data-schedule-context]');if(context&&teams[requestedTeam]&&['U9','U11','U13','U15'].includes(requestedAge)){context.hidden=false;const teamLink=context.querySelector('[data-schedule-context-team]');const ageLink=context.querySelector('[data-schedule-context-age]');teamLink.textContent=teams[requestedTeam].toUpperCase();teamLink.href=`admin-team.html?team=${encodeURIComponent(requestedTeam)}`;ageLink.textContent=requestedAge;ageLink.href=`admin-team-age-group.html?team=${encodeURIComponent(requestedTeam)}&age=${encodeURIComponent(requestedAge)}`;}
  await loadEvents();
 }
 initialize();
