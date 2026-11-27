@@ -71,4 +71,28 @@
       }
     });
   });
+
+  // Shared Team Staff link: adding it here keeps the admin navigation in sync
+  // on every page that loads this shared script. The admin sign-in page does
+  // not load this script and therefore does not expose an authenticated link.
+  document.querySelectorAll('.admin-top-actions').forEach((actions) => {
+    if (actions.querySelector('[data-admin-nav="staff"]')) return;
+    const staffLink = document.createElement('a');
+    staffLink.className = 'admin-top-link';
+    staffLink.dataset.adminNav = 'staff';
+    staffLink.href = 'admin-team-staff.html';
+    staffLink.textContent = 'TEAM STAFF';
+    const currentPage = window.location.pathname.split('/').pop();
+    if (currentPage === 'admin-team-staff.html') {
+      staffLink.classList.add('is-current');
+      staffLink.setAttribute('aria-current', 'page');
+    }
+    const schedulesLink = actions.querySelector('[data-admin-nav="schedules"]');
+    if (schedulesLink) actions.insertBefore(staffLink, schedulesLink);
+    else {
+      const logout = actions.querySelector('button.admin-logout');
+      if (logout) actions.insertBefore(staffLink, logout);
+      else actions.appendChild(staffLink);
+    }
+  });
 })();
