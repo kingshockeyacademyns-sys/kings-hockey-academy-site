@@ -17,7 +17,15 @@ const accountContent = document.querySelector('[data-parent-account-content]');
 const allowedViews = new Set(['account', 'players', 'registrations']);
 const activeView = new URLSearchParams(window.location.search).get('view');
 const familyView = allowedViews.has(activeView) ? activeView : 'account';
-let passwordSetupRequired = /(?:^|&)type=(?:invite|recovery)(?:&|$)/.test(window.location.hash.slice(1));
+const authHashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+const authQueryParams = new URLSearchParams(window.location.search);
+// Supabase may return invitation/recovery links as a hash (type=invite) or
+// as a PKCE callback (?code=...). Keep the profile/password setup form active
+// for either callback shape so invited parents cannot skip their details.
+let passwordSetupRequired = ['invite', 'recovery'].includes(authHashParams.get('type'))
+  || ['invite', 'recovery'].includes(authQueryParams.get('type'))
+  || authQueryParams.get('invite') === '1'
+  || Boolean(authQueryParams.get('code'));
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
 document.querySelectorAll('[data-family-view]').forEach(section => { section.hidden = section.dataset.familyView !== familyView; });
@@ -335,7 +343,7 @@ document.querySelector('[data-parent-set-password]')?.addEventListener('submit',
   const { error: profileError } = await client.from('parent_profiles').upsert(record, { onConflict: 'user_id' });
   if (profileError) {
     console.error('Invited parent profile save failed:', profileError);
-    showMessage('Your parent details could not be saved. Check the information and try again.');
+    showMessage(`Your parent details could not be saved (${profileError.code || 'database error'}). Please try again or contact the academy.`);
     return;
   }
 
@@ -443,7 +451,12 @@ if (!client) {
   showMessage('Family accounts are not connected yet. Please contact the academy.');
 } else {
   client.auth.onAuthStateChange((event, session) => {
-    if (event === 'PASSWORD_RECOVERY') passwordSetupRequired = true;
+    if (event === 'PASSWORD_RECOVERY' || authQueryParams.get('invite') === '1'
+      || ['invite', 'recovery'].includes(authHashParams.get('type'))
+      || ['invite', 'recovery'].includes(authQueryParams.get('type'))
+      || Boolean(authQueryParams.get('code'))) {
+      passwordSetupRequired = true;
+    }
     setTimeout(() => { void syncSession(session); }, 0);
   });
   client.auth.getSession().then(({ data, error }) => {
