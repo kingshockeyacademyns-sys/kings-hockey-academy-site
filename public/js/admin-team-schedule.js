@@ -26,7 +26,16 @@ if(scopedSchedule){
   keepOnly(filterAge,requestedAge,requestedAge);
   const filterPanel=document.querySelector('.team-admin-filter');if(filterPanel)filterPanel.hidden=true;
   const heading=document.querySelector('.team-schedule-admin h1');if(heading)heading.innerHTML=`${teams[requestedTeam].toUpperCase()}<br><em>${requestedAge} SCHEDULE.</em>`;
-  document.querySelectorAll('[data-team-event-form] label').forEach(label=>{if(label.querySelector('[name=team_slug],[name=age_group]'))label.classList.add('schedule-scope-fixed');});
+  // On a team-specific schedule, team and age are fixed by the page URL.
+  // Keep the form controls in the DOM for FormData, but don't show dropdowns.
+  document.querySelectorAll('[data-team-event-form] label').forEach(label=>{
+    if(label.querySelector('[name=team_slug],[name=age_group]'))label.hidden=true;
+  });
+  const fixedMessage=document.querySelector('[data-schedule-fixed-message]');
+  if(fixedMessage){
+    fixedMessage.textContent=`This calendar is for ${teams[requestedTeam]} ${requestedAge} only. New and edited events are automatically assigned to this team and age group.`;
+    fixedMessage.hidden=false;
+  }
 }
 const cancel=document.querySelector('[data-event-cancel]');
 let events=[];
@@ -58,6 +67,8 @@ async function loadEvents(){
 form.addEventListener('submit',async event=>{
  event.preventDefault();const values=new FormData(form);const id=String(values.get('id')||'');
  const record={team_slug:String(values.get('team_slug')),age_group:String(values.get('age_group')),event_type:String(values.get('event_type')),title:String(values.get('title')).trim(),event_date:String(values.get('event_date')),start_time:values.get('start_time')||null,end_time:values.get('end_time')||null,location:String(values.get('location')||'').trim()||null,details:String(values.get('details')||'').trim()||null,updated_at:new Date().toISOString()};
+ // The scoped URL is authoritative: never let a scoped schedule save to another team/age.
+ if(scopedSchedule){record.team_slug=requestedTeam;record.age_group=requestedAge;}
  if(record.start_time&&record.end_time&&record.end_time<=record.start_time){msg('End time must be later than start time. For an event crossing midnight, leave the end time blank and explain it in Details.',true);return;}
  let saveResult;if(id){let update=client.from('team_schedule_events').update(record).eq('id',id);if(scopedSchedule)update=update.eq('team_slug',requestedTeam).eq('age_group',requestedAge);saveResult=await update;}else{saveResult=await client.from('team_schedule_events').insert(record);}const {error}=saveResult;
  if(error){msg(error.message||'Event could not be saved. Only approved admins can manage schedules.',true);return;}
