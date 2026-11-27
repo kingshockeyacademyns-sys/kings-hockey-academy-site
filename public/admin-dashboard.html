@@ -27,7 +27,7 @@
 @media(max-width:600px){.submission-export-controls{align-items:stretch;flex-direction:column}.submission-export-controls select,.submission-export-controls button{width:100%;min-width:0}}
 </style>
 
-<link rel="stylesheet" href="admin-nav.css?v=2"></head>
+<link rel="stylesheet" href="admin-nav.css?v=3"></head>
 <body class="admin-page admin-dashboard-page" data-admin-page="dashboard">
   <header class="site-header">
     <div class="wrap brand-wrap">
@@ -48,7 +48,7 @@
         <button class="admin-program-toggle" type="button" aria-label="Show Programs subpages" aria-expanded="false">⌄</button>
         <div class="admin-program-submenu"><a href="admin-dashboard.html" class="active" aria-current="page">Submissions</a><a href="admin-waivers.html">Waivers</a><a href="admin-accounts.html?view=all">Accounts</a></div>
       </div>
-      <a class="admin-top-link" data-admin-nav="teams" href="admin-teams.html">TEAMS</a>
+      <div class="admin-team-dropdown" data-admin-team-dropdown><a class="admin-top-link" data-admin-nav="teams" href="admin-teams.html">TEAMS</a><button class="admin-team-toggle" type="button" aria-label="Show Teams subpages" aria-expanded="false">⌄</button><div class="admin-team-submenu"><a href="admin-teams.html">All Teams</a><a href="admin-team.html?team=nova-scotia-kings">Nova Scotia Kings</a><a href="admin-team.html?team=nova-scotia-vipers">Nova Scotia Vipers</a><a href="admin-team.html?team=quebec-predators">Quebec Predators</a><a href="admin-team.html?team=montreal-sentinels">Montreal Sentinels</a></div></div>
       <a class="admin-top-link" data-admin-nav="schedules" href="admin-team-schedule.html">TEAM SCHEDULES</a>
       <button class="admin-logout" data-admin-logout type="button">Sign out</button>
     </div>
@@ -79,5 +79,6 @@
 <script id="admin-programs-navigation-script">
 (function(){const root=document.getElementById('admin-program-dropdown');if(!root)return;const btn=root.querySelector('.admin-program-toggle');btn.addEventListener('click',function(e){e.preventDefault();const open=root.classList.toggle('is-open');btn.setAttribute('aria-expanded',String(open));});document.addEventListener('click',function(e){if(!root.contains(e.target)){root.classList.remove('is-open');btn.setAttribute('aria-expanded','false');}});})();
 </script>
+<script src="js/admin-nav.js?v=teams-dropdown-1"></script>
 </body>
 </html>

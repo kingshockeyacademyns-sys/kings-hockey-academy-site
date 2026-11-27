@@ -12,3 +12,14 @@
 .admin-top-actions .admin-program-dropdown:focus-within .admin-program-submenu,
 .admin-top-actions .admin-program-dropdown.is-open .admin-program-submenu{display:block}
 @media(max-width:760px){.admin-top-actions .admin-program-submenu{left:0;min-width:150px}}
+
+/* Teams submenu mirrors the Programs dropdown across every admin page. */
+.admin-top-actions .admin-team-dropdown{position:relative;display:flex;align-items:center}
+.admin-top-actions .admin-team-dropdown>.admin-top-link{display:inline-flex;align-items:center}
+.admin-top-actions .admin-team-toggle{border:0;background:transparent;color:#d9ad4b;padding:0 7px;min-width:22px;cursor:pointer;font:inherit}
+.admin-top-actions .admin-team-dropdown:hover .admin-team-toggle,.admin-top-actions .admin-team-dropdown:focus-within .admin-team-toggle,.admin-top-actions .admin-team-dropdown.is-open .admin-team-toggle{color:#e7bd61}
+.admin-top-actions .admin-team-submenu{display:none;position:absolute;top:100%;left:0;z-index:1000;min-width:205px;padding:5px 0;background:#080909;border:1px solid rgba(217,173,75,.32);box-shadow:0 12px 24px rgba(0,0,0,.35)}
+.admin-top-actions .admin-team-submenu a{display:block;padding:12px 15px;color:#d9d4c7;text-decoration:none;font-size:10px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.admin-top-actions .admin-team-submenu a:hover,.admin-top-actions .admin-team-submenu a:focus-visible,.admin-top-actions .admin-team-submenu a.active{color:#e7bd61}
+.admin-top-actions .admin-team-dropdown:hover .admin-team-submenu,.admin-top-actions .admin-team-dropdown:focus-within .admin-team-submenu,.admin-top-actions .admin-team-dropdown.is-open .admin-team-submenu{display:block}
+@media(max-width:760px){.admin-top-actions .admin-team-submenu{left:0;min-width:180px}}
