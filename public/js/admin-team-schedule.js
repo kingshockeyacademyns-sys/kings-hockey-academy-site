@@ -10,10 +10,24 @@ const filterAge=document.querySelector('[data-event-filter-age]');
 const scheduleParams=new URLSearchParams(location.search);
 const requestedTeam=scheduleParams.get('team');
 const requestedAge=(scheduleParams.get('age')||'').toUpperCase();
+const validAge=['U9','U11','U13','U15'].includes(requestedAge);
+// A team+age URL is a private, isolated schedule view.
+const scopedSchedule=Boolean(teams[requestedTeam]&&validAge);
 if(filterTeam&&teams[requestedTeam])filterTeam.value=requestedTeam;
-if(filterAge&&['U9','U11','U13','U15'].includes(requestedAge))filterAge.value=requestedAge;
+if(filterAge&&validAge)filterAge.value=requestedAge;
 if(form&&teams[requestedTeam])form.elements.team_slug.value=requestedTeam;
-if(form&&['U9','U11','U13','U15'].includes(requestedAge))form.elements.age_group.value=requestedAge;
+if(form&&validAge)form.elements.age_group.value=requestedAge;
+if(scopedSchedule){
+  // Keep the scoped page from offering other teams or age groups.
+  const keepOnly=(select,value,label)=>{if(!select)return;select.innerHTML='';const option=document.createElement('option');option.value=value;option.textContent=label;select.append(option);select.value=value;};
+  keepOnly(form?.elements.team_slug,requestedTeam,teams[requestedTeam]);
+  keepOnly(form?.elements.age_group,requestedAge,requestedAge);
+  keepOnly(filterTeam,requestedTeam,teams[requestedTeam]);
+  keepOnly(filterAge,requestedAge,requestedAge);
+  const filterPanel=document.querySelector('.team-admin-filter');if(filterPanel)filterPanel.hidden=true;
+  const heading=document.querySelector('.team-schedule-admin h1');if(heading)heading.innerHTML=`${teams[requestedTeam].toUpperCase()}<br><em>${requestedAge} SCHEDULE.</em>`;
+  document.querySelectorAll('[data-team-event-form] label').forEach(label=>{if(label.querySelector('[name=team_slug],[name=age_group]'))label.classList.add('schedule-scope-fixed');});
+}
 const cancel=document.querySelector('[data-event-cancel]');
 let events=[];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -29,7 +43,7 @@ function render(){
  list.querySelectorAll('[data-event-edit]').forEach(button=>button.addEventListener('click',()=>editEvent(events.find(e=>e.id===button.dataset.eventEdit))));
  list.querySelectorAll('[data-event-delete]').forEach(button=>button.addEventListener('click',async()=>{
   const event=events.find(e=>e.id===button.dataset.eventDelete);if(!event||!confirm(`Delete "${event.title}" from this team schedule?`))return;
-  const {error}=await client.from('team_schedule_events').delete().eq('id',event.id);
+  let deletion=client.from('team_schedule_events').delete().eq('id',event.id);if(scopedSchedule)deletion=deletion.eq('team_slug',requestedTeam).eq('age_group',requestedAge);const {error}=await deletion;
   if(error){msg('Event could not be deleted. Confirm you are an approved admin.',true);return;}
   msg('Event deleted.');await loadEvents();
  }));
@@ -37,7 +51,7 @@ function render(){
 function editEvent(event){if(!event)return;Object.entries({id:event.id,team_slug:event.team_slug,age_group:event.age_group,event_type:event.event_type,title:event.title,event_date:event.event_date,start_time:event.start_time?.slice(0,5)||'',end_time:event.end_time?.slice(0,5)||'',location:event.location||'',details:event.details||''}).forEach(([key,value])=>form.elements.namedItem(key).value=value);cancel.hidden=false;form.querySelector('[data-event-save]').textContent='UPDATE EVENT ↗';form.scrollIntoView({behavior:'smooth',block:'start'});}
 async function loadEvents(){
  list.innerHTML='<p>Loading schedule events…</p>';
- const {data,error}=await client.from('team_schedule_events').select('*').order('event_date',{ascending:true}).order('start_time',{ascending:true});
+ let query=client.from('team_schedule_events').select('*');if(scopedSchedule)query=query.eq('team_slug',requestedTeam).eq('age_group',requestedAge);const {data,error}=await query.order('event_date',{ascending:true}).order('start_time',{ascending:true});
  if(error){list.innerHTML='<p class="admin-program-empty">Could not load team events. This page requires an approved KHA admin account and the team schedule migration.</p>';msg('Admin access or database setup is missing.',true);return;}
  events=data||[];render();
 }
@@ -45,7 +59,7 @@ form.addEventListener('submit',async event=>{
  event.preventDefault();const values=new FormData(form);const id=String(values.get('id')||'');
  const record={team_slug:String(values.get('team_slug')),age_group:String(values.get('age_group')),event_type:String(values.get('event_type')),title:String(values.get('title')).trim(),event_date:String(values.get('event_date')),start_time:values.get('start_time')||null,end_time:values.get('end_time')||null,location:String(values.get('location')||'').trim()||null,details:String(values.get('details')||'').trim()||null,updated_at:new Date().toISOString()};
  if(record.start_time&&record.end_time&&record.end_time<=record.start_time){msg('End time must be later than start time. For an event crossing midnight, leave the end time blank and explain it in Details.',true);return;}
- const {error}=id?await client.from('team_schedule_events').update(record).eq('id',id):await client.from('team_schedule_events').insert(record);
+ let saveResult;if(id){let update=client.from('team_schedule_events').update(record).eq('id',id);if(scopedSchedule)update=update.eq('team_slug',requestedTeam).eq('age_group',requestedAge);saveResult=await update;}else{saveResult=await client.from('team_schedule_events').insert(record);}const {error}=saveResult;
  if(error){msg(error.message||'Event could not be saved. Only approved admins can manage schedules.',true);return;}
  msg(id?'Event updated.':'Event added to the team schedule.');resetForm();await loadEvents();
 });
