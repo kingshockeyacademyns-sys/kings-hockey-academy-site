@@ -14,4 +14,4 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.manage-team-staff]
-verify_jwt = true
+verify_jwt = false
