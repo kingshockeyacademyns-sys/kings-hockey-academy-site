@@ -301,14 +301,54 @@ document.querySelector('[data-parent-signup]')?.addEventListener('submit', async
 
 document.querySelector('[data-parent-set-password]')?.addEventListener('submit', async event => {
   event.preventDefault();
-  const values = new FormData(event.currentTarget);
-  const password = String(values.get('password'));
-  if (password !== String(values.get('confirm_password'))) { showMessage('The passwords do not match.'); return; }
-  const { error } = await client.auth.updateUser({ password });
-  if (error) { showMessage('Your password could not be saved. Please try again.'); return; }
+  if (!client) { showMessage('Family accounts are not connected yet. Please contact the academy.'); return; }
+
+  const form = event.currentTarget;
+  const values = new FormData(form);
+  const password = String(values.get('password') || '');
+  if (password.length < 8) { showMessage('Use a password with at least 8 characters.'); return; }
+  if (password !== String(values.get('confirm_password') || '')) { showMessage('The passwords do not match.'); return; }
+
+  const profile = parentProfileValues(form);
+  const requiredProfileFields = ['first_name', 'last_name', 'phone', 'street_number', 'postal_code', 'province', 'emergency_name', 'emergency_relationship', 'emergency_phone'];
+  if (requiredProfileFields.some(field => !profile[`profile_${field}`])) {
+    showMessage('Complete all required parent, address, and emergency contact fields.');
+    return;
+  }
+
+  const secondFields = parentProfileFields.filter(field => field.startsWith('second_guardian_'));
+  const secondValues = secondFields.map(field => profile[`profile_${field}`]);
+  if (secondValues.some(Boolean) && secondValues.some(value => !value)) {
+    showMessage('Complete all second parent / guardian fields, or leave them all blank.');
+    return;
+  }
+
+  const { data: sessionData, error: sessionError } = await client.auth.getSession();
+  const userId = sessionData.session?.user?.id;
+  if (sessionError || !userId) {
+    showMessage('Your invitation session has expired. Open the invitation link from your email again.');
+    return;
+  }
+
+  const record = Object.fromEntries(parentProfileFields.map(field => [field, profile[`profile_${field}`] || null]));
+  Object.assign(record, { user_id: userId, updated_at: new Date().toISOString() });
+  const { error: profileError } = await client.from('parent_profiles').upsert(record, { onConflict: 'user_id' });
+  if (profileError) {
+    console.error('Invited parent profile save failed:', profileError);
+    showMessage('Your parent details could not be saved. Check the information and try again.');
+    return;
+  }
+
+  const { error: passwordError } = await client.auth.updateUser({ password });
+  if (passwordError) {
+    console.error('Invited parent password update failed:', passwordError);
+    showMessage('Your details were saved, but your password could not be set. Please try again.');
+    return;
+  }
+
   passwordSetupRequired = false;
   history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
-  event.currentTarget.reset();
+  form.reset();
   showMessage('Your family account is ready. Add your children’s profiles below.', 'success');
   const { data } = await client.auth.getSession();
   await syncSession(data.session);
