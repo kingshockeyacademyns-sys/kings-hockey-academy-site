@@ -21,7 +21,7 @@
     .age-hub-action{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#e7bd61;font-weight:700}
     @media(max-width:560px){.age-hub-grid{grid-template-columns:1fr}.age-hub-top{align-items:flex-start;gap:14px}.age-hub-logo{width:86px;height:86px;flex-basis:86px}.age-hub-card{min-height:175px;padding:20px}}
   </style>
-<link rel="stylesheet" href="admin-nav.css?v=team-staff-nav-1"></head>
+<link rel="stylesheet" href="admin-nav.css?v=3"></head>
 <body class="admin-page" data-team-age-group-page>
   <header class="site-header"><div class="wrap brand-wrap"><a class="brand" href="index.html" aria-label="Kings Hockey Academy home"><span class="brand-mark"><img src="assets/kha-logo.png" alt="Kings Hockey Academy logo"></span></a></div></header>
   <div class="menu-bar"><nav class="main-nav wrap" aria-label="Main navigation"><a href="index.html">Home</a><a href="about.html">About</a><div class="nav-dropdown"><a href="teams.html">Teams</a><button class="nav-dropdown-toggle" type="button" aria-label="Show Teams subpages" aria-expanded="false"><span aria-hidden="true">⌄</span></button><div class="nav-submenu"><a href="teams/nova-scotia-kings.html">Nova Scotia Kings</a><a href="teams/nova-scotia-vipers.html">Nova Scotia Vipers</a><a href="teams/quebec-predators.html">Quebec Predators</a><a href="teams/montreal-sentinels.html">Montreal Sentinels</a></div></div><a class="nav-register" href="registration.html">Registration</a><a href="parent-account.html">Login</a></nav></div>
@@ -37,10 +37,11 @@
     <section class="age-hub-grid" aria-label="Age group management options">
       <a class="age-hub-card" data-age-roster-link href="admin-team-roster.html"><p class="eyebrow">PLAYER MANAGEMENT</p><h2>TEAM <em>ROSTER.</em></h2><span class="age-hub-action">Manage players ↗</span></a>
       <a class="age-hub-card" data-age-schedule-link href="admin-team-schedule.html"><p class="eyebrow">EVENT MANAGEMENT</p><h2>TEAM <em>SCHEDULE.</em></h2><span class="age-hub-action">Manage events ↗</span></a>
+      <a class="age-hub-card" data-age-staff-link href="admin-team-staff.html"><p class="eyebrow">STAFF MANAGEMENT</p><h2>TEAM <em>STAFF.</em></h2><span class="age-hub-action">Add or manage staff ↗</span></a>
     </section>
   </main>
-  <script src="supabase-config.js"></script><script type="module" src="js/admin-team-age-group.js?v=admin-team-age-group-1"></script><script src="js/site.js"></script>
+  <script src="supabase-config.js"></script><script type="module" src="js/admin-team-age-group.js?v=team-staff-age-hub-2"></script><script src="js/site.js"></script>
   <script>(function(){const root=document.getElementById('admin-program-dropdown');if(!root)return;const btn=root.querySelector('.admin-program-toggle');btn.addEventListener('click',function(e){e.preventDefault();const open=root.classList.toggle('is-open');btn.setAttribute('aria-expanded',String(open));});document.addEventListener('click',function(e){if(!root.contains(e.target)){root.classList.remove('is-open');btn.setAttribute('aria-expanded','false');}});})();</script>
-<script src="js/admin-nav.js?v=team-staff-nav-1"></script>
+<script src="js/admin-nav.js?v=teams-full-tree-2"></script>
 </body>
 </html>

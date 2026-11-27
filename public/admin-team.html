@@ -18,13 +18,14 @@
     .team-age-label{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#d9ad4b;font-weight:700}
     .team-age-card strong{font:700 clamp(32px,4vw,48px)/1 var(--serif)}
     .team-age-action{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#e7bd61;font-weight:700}
+    .team-staff-shortcut{display:inline-flex;align-items:center;gap:12px;margin:0 0 12px;padding:13px 17px;border:1px solid rgba(217,173,75,.4);color:#e7bd61;text-decoration:none;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}.team-staff-shortcut:hover{border-color:#d9ad4b;background:rgba(217,173,75,.06)}
     .team-page-breadcrumb{display:flex;gap:10px;align-items:center;margin:0 0 18px;font-size:10px;letter-spacing:.12em;text-transform:uppercase}
     .team-page-breadcrumb a{color:#d9ad4b;text-decoration:none}
     .team-page-breadcrumb span{color:#746f63}
     @media(max-width:760px){.team-age-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.team-page-logo{width:110px;height:110px;flex-basis:110px}}
     @media(max-width:480px){.team-page-top{align-items:flex-start;gap:14px}.team-page-logo{width:86px;height:86px;flex-basis:86px}.team-age-grid{gap:10px}.team-age-card{min-height:160px;padding:18px}}
   </style>
-<link rel="stylesheet" href="admin-nav.css?v=team-staff-nav-1"></head>
+<link rel="stylesheet" href="admin-nav.css?v=3"></head>
 <body class="admin-page" data-admin-team-page>
   <header class="site-header"><div class="wrap brand-wrap"><a class="brand" href="index.html" aria-label="Kings Hockey Academy home"><span class="brand-mark"><img src="assets/kha-logo.png" alt="Kings Hockey Academy logo"></span></a></div></header>
   <div class="menu-bar"><nav class="main-nav wrap" aria-label="Main navigation"><a href="index.html">Home</a><a href="about.html">About</a><div class="nav-dropdown"><a href="teams.html">Teams</a><button class="nav-dropdown-toggle" type="button" aria-label="Show Teams subpages" aria-expanded="false"><span aria-hidden="true">⌄</span></button><div class="nav-submenu"><a href="teams/nova-scotia-kings.html">Nova Scotia Kings</a><a href="teams/nova-scotia-vipers.html">Nova Scotia Vipers</a><a href="teams/quebec-predators.html">Quebec Predators</a><a href="teams/montreal-sentinels.html">Montreal Sentinels</a></div></div><a class="nav-register" href="registration.html">Registration</a><a href="parent-account.html">Login</a></nav></div>
@@ -43,6 +44,7 @@
     <div class="team-page-top"><div class="team-page-logo"><img data-team-logo src="assets/kha-logo.png" alt="Team logo"></div><div><h1 class="team-page-name" data-team-heading>SELECT <em>TEAM.</em></h1><p data-team-page-email></p></div></div>
     <div class="alert error admin-message" data-team-page-message role="status" hidden></div>
     <p class="team-page-description">Select an age group to manage that team's roster and schedule. Each age group has its own team roster and team schedule section.</p>
+    <a class="team-staff-shortcut" data-team-staff-link href="admin-team-staff.html">MANAGE TEAM STAFF ↗</a>
     <section class="team-age-grid" aria-label="Team age groups">
       <a class="team-age-card" href="admin-team-age-group.html?team=nova-scotia-kings&amp;age=U9" data-age-link="U9"><span class="team-age-label">Age group</span><strong>U9</strong><span class="team-age-action">Manage age group ↗</span></a>
       <a class="team-age-card" href="admin-team-age-group.html?team=nova-scotia-kings&amp;age=U11" data-age-link="U11"><span class="team-age-label">Age group</span><strong>U11</strong><span class="team-age-action">Manage age group ↗</span></a>
@@ -51,9 +53,9 @@
     </section>
   </main>
   <script src="supabase-config.js"></script>
-  <script type="module" src="js/admin-team-page.js?v=admin-team-page-1"></script>
+  <script type="module" src="js/admin-team-page.js?v=team-staff-shortcut-2"></script>
   <script src="js/site.js"></script>
   <script>(function(){const root=document.getElementById('admin-program-dropdown');if(!root)return;const btn=root.querySelector('.admin-program-toggle');btn.addEventListener('click',function(e){e.preventDefault();const open=root.classList.toggle('is-open');btn.setAttribute('aria-expanded',String(open));});document.addEventListener('click',function(e){if(!root.contains(e.target)){root.classList.remove('is-open');btn.setAttribute('aria-expanded','false');}});})();</script>
-<script src="js/admin-nav.js?v=team-staff-nav-1"></script>
+<script src="js/admin-nav.js?v=teams-full-tree-2"></script>
 </body>
 </html>

@@ -40,6 +40,13 @@
     .staff-account-result small{display:block;margin-top:4px;font-size:11px;color:#746f63}
     .staff-account-result[aria-pressed="true"]{border-color:#d9ad4b;background:#fbf4e4}
 
+    .staff-context{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:14px 18px;background:#080909;color:#f3eee2;border-left:3px solid #d9ad4b;margin:18px 0 24px}
+    .staff-context strong{color:#e7bd61}
+    .staff-mode-switch{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
+    .staff-mode-button{border:1px solid #cfc4b1;background:#fff;color:#171512;padding:11px 15px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+    .staff-mode-button[aria-pressed="true"]{background:#080909;color:#e7bd61;border-color:#080909}
+    .staff-mode-panel[hidden]{display:none}
+    .staff-context-fixed{font-size:11px;color:#746f63;margin:0}
     .staff-feedback.success{background:#e8f1e6;color:#355d2f;border:1px solid #c5d9bf}
     .staff-feedback.error{background:#f5e6e1;color:#8b3e2d;border:1px solid #e4c3b8}
     @media(max-width:760px){.staff-panel{padding:20px}.staff-form-grid{grid-template-columns:1fr}.staff-form-grid .staff-form-wide{grid-column:auto}}
@@ -64,31 +71,31 @@
     <p class="staff-page-intro">Invite coaches, team managers and other team staff. Staff access is assigned to one team at a time and does not grant access to the academy's other admin controls. If the email already belongs to a parent account, that existing account is used.</p>
     <div class="staff-feedback" data-staff-message role="status" aria-live="polite" hidden></div>
     <section class="staff-panel" aria-labelledby="staff-assignment-heading">
-      <p class="eyebrow red">STAFF ACCESS</p><h2 id="staff-assignment-heading">SELECT A TEAM.</h2>
+      <p class="eyebrow red">STAFF ACCESS</p><h2 id="staff-assignment-heading">ADD STAFF.</h2>
       <div class="staff-form-grid">
-        <label class="staff-form-wide">Team<select data-staff-team><option value="nova-scotia-kings">Nova Scotia Kings</option><option value="nova-scotia-vipers">Nova Scotia Vipers</option><option value="quebec-predators">Quebec Predators</option><option value="montreal-sentinels">Montreal Sentinels</option></select></label>
-        <label class="staff-form-wide">Assignment age group<select data-staff-age-group><option value="all">All age groups</option><option value="U9">U9</option><option value="U11">U11</option><option value="U13">U13</option><option value="U15">U15</option></select></label>
+        <label>Team<select data-staff-team><option value="nova-scotia-kings">Nova Scotia Kings</option><option value="nova-scotia-vipers">Nova Scotia Vipers</option><option value="quebec-predators">Quebec Predators</option><option value="montreal-sentinels">Montreal Sentinels</option></select></label>
+        <label>Age group<select data-staff-age-group><option value="all">All age groups</option><option value="U9">U9</option><option value="U11">U11</option><option value="U13">U13</option><option value="U15">U15</option></select></label>
+        <label>Staff position<select data-staff-role><option value="head_coach">Head Coach</option><option value="assistant_coach">Assistant Coach</option><option value="team_manager">Team Manager</option><option value="team_staff">Other Team Staff</option></select></label>
       </div>
-      <p class="staff-note">Choose a team and age-group scope for new assignments. “All age groups” assigns staff across the whole team.</p>
-    </section>
-    <section class="staff-panel" aria-labelledby="staff-invite-heading">
-      <p class="eyebrow red">ADD TEAM STAFF</p><h2 id="staff-invite-heading">INVITE OR ASSIGN.</h2>
-      <form data-staff-invite-form>
-        <div class="staff-form-grid">
-          <label>Email address<input type="email" name="email" autocomplete="email" maxlength="254" placeholder="coach@example.com" required></label>
-          <label>Staff position<select name="staff_role" required><option value="head_coach">Head Coach</option><option value="assistant_coach">Assistant Coach</option><option value="team_manager">Team Manager</option><option value="team_staff">Other Team Staff</option></select></label>
-          <div><button class="button button-gold" data-staff-invite-submit type="submit">ASSIGN STAFF <b>↗</b></button></div>
-        </div>
-        <p class="staff-note">New users receive an account invitation. Existing parent accounts are assigned to the team without creating a duplicate account.</p>
-      </form>
-    </section>
-    <section class="staff-panel" aria-labelledby="staff-existing-heading">
-      <p class="eyebrow red">EXISTING ACCOUNT</p><h2 id="staff-existing-heading">ADD AN ACCOUNT.</h2>
-      <div class="staff-form-grid">
-        <label class="staff-form-wide">Search by name or email<input type="search" data-staff-account-search autocomplete="off" placeholder="Start typing a name or email address" minlength="2"></label>
-        <div class="staff-form-wide" data-staff-account-results aria-live="polite"><p class="staff-note">Search for an existing parent or staff account. The account will be reused; no invitation or duplicate account is created.</p></div>
-        <label>Staff position<select data-staff-existing-role><option value="head_coach">Head Coach</option><option value="assistant_coach">Assistant Coach</option><option value="team_manager">Team Manager</option><option value="team_staff">Other Team Staff</option></select></label>
-        <div class="staff-form-wide"><p data-staff-selected-account class="staff-note">No account selected.</p><button class="button button-gold" data-staff-existing-assign type="button" disabled>ASSIGN EXISTING ACCOUNT <b>↗</b></button></div>
+      <div class="staff-context" data-staff-context><span>Adding staff to <strong data-staff-context-team>Nova Scotia Kings</strong> · <strong data-staff-context-age>All age groups</strong></span><p class="staff-context-fixed" data-staff-context-note>Select the team and age group once. Your selection applies to the entire staff assignment.</p></div>
+      <div class="staff-mode-switch" role="group" aria-label="Choose how to add staff">
+        <button class="staff-mode-button" type="button" data-staff-mode="existing" aria-pressed="true">Existing account</button>
+        <button class="staff-mode-button" type="button" data-staff-mode="invite" aria-pressed="false">Invite by email</button>
+      </div>
+      <div class="staff-mode-panel" data-staff-existing-panel>
+        <label class="staff-form-wide" style="display:flex;flex-direction:column;gap:8px;font-size:11px;font-weight:700;color:#302d27">Search existing account<input type="search" data-staff-account-search autocomplete="off" placeholder="Search by name or email" minlength="2" style="width:100%;min-height:46px;border:1px solid #d8cfbf;background:#fff;padding:11px 12px;font:inherit;font-size:13px"></label>
+        <div class="staff-form-wide" data-staff-account-results aria-live="polite"><p class="staff-note">Search for a parent or existing staff account. The account will be reused.</p></div>
+        <p data-staff-selected-account class="staff-note">No account selected.</p>
+        <button class="button button-gold" data-staff-existing-assign type="button" disabled>ASSIGN TO TEAM <b>↗</b></button>
+      </div>
+      <div class="staff-mode-panel" data-staff-invite-panel hidden>
+        <form data-staff-invite-form>
+          <div class="staff-form-grid">
+            <label>Email address<input type="email" name="email" autocomplete="email" maxlength="254" placeholder="coach@example.com" required></label>
+            <div><button class="button button-gold" data-staff-invite-submit type="submit">INVITE TO TEAM <b>↗</b></button></div>
+          </div>
+          <p class="staff-note">Use this option only if the person does not already have an account. Existing accounts should be selected under “Existing account”.</p>
+        </form>
       </div>
     </section>
     <section class="staff-panel" aria-labelledby="staff-list-heading">
@@ -98,7 +105,7 @@
     </section>
   </main>
   <script src="supabase-config.js"></script>
-  <script type="module" src="js/admin-team-staff.js?v=admin-team-staff-1"></script>
+  <script type="module" src="js/admin-team-staff.js?v=team-staff-flow-2"></script>
   <script src="js/site.js"></script>
   <script>(function(){const root=document.getElementById('admin-program-dropdown');if(!root)return;const btn=root.querySelector('.admin-program-toggle');btn.addEventListener('click',function(e){e.preventDefault();const open=root.classList.toggle('is-open');btn.setAttribute('aria-expanded',String(open));});document.addEventListener('click',function(e){if(!root.contains(e.target)){root.classList.remove('is-open');btn.setAttribute('aria-expanded','false');}});})();</script>
   <script src="js/admin-nav.js?v=team-staff-nav-1"></script>
