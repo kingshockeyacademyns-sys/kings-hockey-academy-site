@@ -43,6 +43,8 @@ function renderTeam() {
     logo.src = team.logo;
     logo.alt = `${team.name} logo`;
   }
+  const staffLink = document.querySelector('[data-team-staff-link]');
+  if (staffLink) staffLink.href = `admin-team-staff.html?team=${encodeURIComponent(teamSlug)}&age_group=all`;
   document.querySelectorAll('[data-age-link]').forEach(link => {
     const age = link.dataset.ageLink;
     link.href = `admin-team-age-group.html?team=${encodeURIComponent(teamSlug)}&age=${encodeURIComponent(age)}`;

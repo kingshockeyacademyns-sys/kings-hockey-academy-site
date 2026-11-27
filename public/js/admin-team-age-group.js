@@ -46,6 +46,8 @@ function renderPage() {
   if (roster) roster.href = `admin-team-roster.html?team=${encodeURIComponent(teamSlug)}&age=${encodeURIComponent(age)}`;
   const schedule = document.querySelector('[data-age-schedule-link]');
   if (schedule) schedule.href = `admin-team-schedule.html?team=${encodeURIComponent(teamSlug)}&age=${encodeURIComponent(age)}`;
+  const staff = document.querySelector('[data-age-staff-link]');
+  if (staff) staff.href = `admin-team-staff.html?team=${encodeURIComponent(teamSlug)}&age_group=${encodeURIComponent(age)}`;
   return true;
 }
 
