@@ -34,6 +34,12 @@
     .staff-action:disabled{opacity:.5;cursor:wait}
     .staff-feedback{padding:13px 16px;margin:18px 0;font-size:12px;line-height:1.6}
     .staff-feedback[hidden]{display:none}
+    .staff-account-results{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+    .staff-account-result{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid #dfd6c5;background:#fff;padding:12px 14px;cursor:pointer}
+    .staff-account-result strong{display:block;font-size:12px;color:#171512}
+    .staff-account-result small{display:block;margin-top:4px;font-size:11px;color:#746f63}
+    .staff-account-result[aria-pressed="true"]{border-color:#d9ad4b;background:#fbf4e4}
+
     .staff-feedback.success{background:#e8f1e6;color:#355d2f;border:1px solid #c5d9bf}
     .staff-feedback.error{background:#f5e6e1;color:#8b3e2d;border:1px solid #e4c3b8}
     @media(max-width:760px){.staff-panel{padding:20px}.staff-form-grid{grid-template-columns:1fr}.staff-form-grid .staff-form-wide{grid-column:auto}}
@@ -61,8 +67,9 @@
       <p class="eyebrow red">STAFF ACCESS</p><h2 id="staff-assignment-heading">SELECT A TEAM.</h2>
       <div class="staff-form-grid">
         <label class="staff-form-wide">Team<select data-staff-team><option value="nova-scotia-kings">Nova Scotia Kings</option><option value="nova-scotia-vipers">Nova Scotia Vipers</option><option value="quebec-predators">Quebec Predators</option><option value="montreal-sentinels">Montreal Sentinels</option></select></label>
+        <label class="staff-form-wide">Assignment age group<select data-staff-age-group><option value="all">All age groups</option><option value="U9">U9</option><option value="U11">U11</option><option value="U13">U13</option><option value="U15">U15</option></select></label>
       </div>
-      <p class="staff-note">Choose a team to view its staff assignments. Changing the team reloads the list for that team only.</p>
+      <p class="staff-note">Choose a team and age-group scope for new assignments. “All age groups” assigns staff across the whole team.</p>
     </section>
     <section class="staff-panel" aria-labelledby="staff-invite-heading">
       <p class="eyebrow red">ADD TEAM STAFF</p><h2 id="staff-invite-heading">INVITE OR ASSIGN.</h2>
@@ -75,10 +82,19 @@
         <p class="staff-note">New users receive an account invitation. Existing parent accounts are assigned to the team without creating a duplicate account.</p>
       </form>
     </section>
+    <section class="staff-panel" aria-labelledby="staff-existing-heading">
+      <p class="eyebrow red">EXISTING ACCOUNT</p><h2 id="staff-existing-heading">ADD AN ACCOUNT.</h2>
+      <div class="staff-form-grid">
+        <label class="staff-form-wide">Search by name or email<input type="search" data-staff-account-search autocomplete="off" placeholder="Start typing a name or email address" minlength="2"></label>
+        <div class="staff-form-wide" data-staff-account-results aria-live="polite"><p class="staff-note">Search for an existing parent or staff account. The account will be reused; no invitation or duplicate account is created.</p></div>
+        <label>Staff position<select data-staff-existing-role><option value="head_coach">Head Coach</option><option value="assistant_coach">Assistant Coach</option><option value="team_manager">Team Manager</option><option value="team_staff">Other Team Staff</option></select></label>
+        <div class="staff-form-wide"><p data-staff-selected-account class="staff-note">No account selected.</p><button class="button button-gold" data-staff-existing-assign type="button" disabled>ASSIGN EXISTING ACCOUNT <b>↗</b></button></div>
+      </div>
+    </section>
     <section class="staff-panel" aria-labelledby="staff-list-heading">
       <p class="eyebrow red">CURRENT TEAM</p><h2 id="staff-list-heading">STAFF MEMBERS.</h2>
       <div class="staff-list-toolbar"><p class="staff-count" data-staff-count>Loading staff…</p><button class="button button-light" data-staff-refresh type="button">REFRESH</button></div>
-      <div class="staff-table-wrap"><table class="staff-table"><thead><tr><th>Email / account</th><th>Position</th><th>Status</th><th>Assigned</th><th>Actions</th></tr></thead><tbody data-staff-list><tr><td colspan="5">Loading staff…</td></tr></tbody></table></div>
+      <div class="staff-table-wrap"><table class="staff-table"><thead><tr><th>Email / account</th><th>Position</th><th>Age group</th><th>Status</th><th>Assigned</th><th>Actions</th></tr></thead><tbody data-staff-list><tr><td colspan="6">Loading staff…</td></tr></tbody></table></div>
     </section>
   </main>
   <script src="supabase-config.js"></script>

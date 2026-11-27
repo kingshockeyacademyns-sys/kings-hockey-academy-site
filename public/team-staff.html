@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Team Staff | Kings Hockey Academy</title>
+  <link rel="stylesheet" href="styles.css?v=team-staff-public-1">
+  <style>
+    .public-staff-wrap{max-width:1080px;margin:0 auto;padding:54px 24px 80px}
+    .public-staff-heading{font:700 clamp(38px,7vw,76px)/.98 var(--serif);margin:10px 0 18px}
+    .public-staff-heading em{font-style:normal;color:var(--gold)}
+    .public-staff-intro{max-width:680px;color:#746f63;line-height:1.8;font-size:13px}
+    .public-staff-filter{margin:28px 0;max-width:280px;display:flex;flex-direction:column;gap:8px;font-size:11px;font-weight:700}
+    .public-staff-filter select{min-height:44px;border:1px solid #d8cfbf;background:#fff;padding:10px}
+    .public-staff-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:24px 0}
+    .public-staff-card{background:#fffdf8;border:1px solid #dfd6c5;padding:22px}
+    .public-staff-card h3{font:700 22px/1.2 var(--serif);margin:0 0 8px}
+    .public-staff-card p{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#746f63;margin:0}
+    .public-staff-card small{display:block;margin-top:12px;color:#9b711d;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+    .public-staff-state{padding:16px 18px;border:1px solid #dfd6c5;background:#fffdf8;color:#746f63;font-size:13px}
+  </style>
+</head>
+<body data-page="teams">
+<header class="site-header"><div class="wrap brand-wrap"><a class="brand" href="index.html" aria-label="Kings Hockey Academy home"><span class="brand-mark"><img src="assets/kha-logo.png" alt="Kings Hockey Academy logo"></span></a></div></header>
+<div class="menu-bar"><nav class="main-nav wrap" aria-label="Main navigation"><a href="index.html">Home</a><a href="about.html">About</a><div class="nav-dropdown"><a href="teams.html">Teams</a><button class="nav-dropdown-toggle" type="button" aria-label="Show Teams subpages" aria-expanded="false"><span aria-hidden="true">⌄</span></button><div class="nav-submenu"><a href="teams/nova-scotia-kings.html">Nova Scotia Kings</a><a href="teams/nova-scotia-vipers.html">Nova Scotia Vipers</a><a href="teams/quebec-predators.html">Quebec Predators</a><a href="teams/montreal-sentinels.html">Montreal Sentinels</a></div></div><a href="registration.html">Registration</a><a href="admin.html">Login</a></nav></div>
+<main>
+  <section class="public-staff-wrap">
+    <p class="eyebrow dark"><span></span> TEAM DIRECTORY</p>
+    <h1 class="public-staff-heading" data-public-staff-heading>TEAM<br><em>STAFF.</em></h1>
+    <p class="public-staff-intro" data-public-staff-intro>Meet the staff supporting this team. Staff names and positions are shown; account email addresses are kept private.</p>
+    <label class="public-staff-filter">AGE GROUP
+      <select data-public-staff-age>
+        <option value="all">All age groups</option><option value="U9">U9</option><option value="U11">U11</option><option value="U13">U13</option><option value="U15">U15</option>
+      </select>
+    </label>
+    <div class="public-staff-state" data-public-staff-state role="status" aria-live="polite">Loading team staff…</div>
+    <div class="public-staff-grid" data-public-staff-list></div>
+    <a class="button button-outline" data-public-staff-back href="teams.html">BACK TO TEAM PAGE <b>↗</b></a>
+  </section>
+</main>
+<footer class="site-footer"><div class="wrap footer-main"><div class="footer-identity"><a class="brand footer-brand" href="index.html"><span class="brand-mark"><img src="assets/kha-logo.png" alt=""></span></a></div><div class="footer-mission"><p>Develop better players.<br><strong>Build better people.</strong></p><p class="footer-ownership">© <span id="year"></span> Kings Hockey Nova Scotia<br><small>Official rights holder of Kings Hockey Academy.</small></p></div><div class="footer-contact"><span>CONTACT THE ACADEMY</span><a href="mailto:kingshockeyacademyns@gmail.com">kingshockeyacademyns@gmail.com</a><a class="footer-question" href="contact.html">ASK A GENERAL QUESTION ↗</a></div></div></footer>
+<script>document.getElementById('year').textContent=new Date().getFullYear();document.querySelectorAll('.nav-dropdown-toggle').forEach(t=>t.addEventListener('click',()=>{const d=t.closest('.nav-dropdown');d.classList.toggle('is-open');t.setAttribute('aria-expanded',String(d.classList.contains('is-open')))}));</script>
+<script src="supabase-config.js"></script><script type="module" src="js/team-staff-public.js?v=team-staff-public-1"></script><script src="js/site.js"></script>
+</body>
+</html>
