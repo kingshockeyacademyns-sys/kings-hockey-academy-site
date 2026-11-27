@@ -43,11 +43,20 @@
         </section>
         <section class="parent-profile-area" data-parent-area hidden>
           <form class="registration-form parent-account-form password-setup-form" data-parent-set-password hidden>
-            <div class="form-title"><span>SET YOUR PASSWORD</span><span>FAMILY ACCOUNT</span></div>
-            <p class="registration-step-intro">Choose a password to finish setting up your invited family account.</p>
-            <label>New password <b>*</b><input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
+            <div class="form-title"><span>COMPLETE YOUR FAMILY ACCOUNT</span><span>INVITED PARENT / GUARDIAN</span></div>
+            <p class="registration-step-intro">Add your contact information and emergency contact, then choose a password to finish setting up your family account.</p>
+            <div class="form-title"><span>PARENT / GUARDIAN DETAILS</span><span>* REQUIRED</span></div>
+            <div class="form-row"><label>First name <b>*</b><input name="profile_first_name" maxlength="80" autocomplete="given-name" required></label><label>Last name <b>*</b><input name="profile_last_name" maxlength="80" autocomplete="family-name" required></label></div>
+            <label>Phone number <b>*</b><input name="profile_phone" type="tel" maxlength="40" autocomplete="tel" required></label>
+            <div class="address-fields"><label>Street &amp; number <b>*</b><input name="profile_street_number" maxlength="300" autocomplete="street-address" required></label><div class="form-row"><label>Post code <b>*</b><input name="profile_postal_code" maxlength="16" autocomplete="postal-code" required></label><label>Province <b>*</b><input name="profile_province" maxlength="80" autocomplete="address-level1" required></label></div></div>
+            <div class="account-registration-subsection"><p class="eyebrow dark">SECOND PARENT / GUARDIAN <span>(OPTIONAL)</span></p><p class="parent-account-help">If you add a second parent or guardian, complete all of their details.</p><div class="form-row"><label>First name<input name="profile_second_guardian_first" maxlength="80"></label><label>Last name<input name="profile_second_guardian_last" maxlength="80"></label></div><div class="form-row"><label>Email address<input name="profile_second_guardian_email" type="email" maxlength="254" autocomplete="email"></label><label>Phone number<input name="profile_second_guardian_phone" type="tel" maxlength="40" autocomplete="tel"></label></div><div class="address-fields"><label>Street &amp; number<input name="profile_second_guardian_street_number" maxlength="300" autocomplete="street-address"></label><div class="form-row"><label>Post code<input name="profile_second_guardian_postal_code" maxlength="16" autocomplete="postal-code"></label><label>Province<input name="profile_second_guardian_province" maxlength="80" autocomplete="address-level1"></label></div></div></div>
+            <div class="form-title"><span>EMERGENCY CONTACT</span><span>* REQUIRED</span></div>
+            <div class="form-row"><label>Contact full name <b>*</b><input name="profile_emergency_name" maxlength="120" required></label><label>Relationship to player <b>*</b><input name="profile_emergency_relationship" maxlength="80" required></label></div>
+            <label>Emergency contact phone <b>*</b><input name="profile_emergency_phone" type="tel" maxlength="40" required></label>
+            <div class="form-title"><span>SET YOUR PASSWORD</span><span>* REQUIRED</span></div>
+            <label>New password <b>*</b><input name="password" type="password" autocomplete="new-password" minlength="8" required><small>Use at least 8 characters.</small></label>
             <label>Confirm new password <b>*</b><input name="confirm_password" type="password" autocomplete="new-password" minlength="8" required></label>
-            <button class="button button-gold" type="submit">SAVE PASSWORD <b>↗</b></button>
+            <button class="button button-gold" type="submit">COMPLETE ACCOUNT SETUP <b>↗</b></button>
           </form>
           <div data-parent-account-content>
           <div class="parent-profile-heading"><div><p class="eyebrow dark">SIGNED IN AS</p><strong data-parent-email></strong></div><button class="admin-logout" data-parent-signout type="button">Sign out</button></div>
@@ -98,7 +107,7 @@
   </main>
   <footer class="site-footer"><div class="wrap footer-main"><div class="footer-identity"><a class="brand footer-brand" href="index.html"><span class="brand-mark"><img src="assets/kha-logo.png" alt=""></span></a></div><div class="footer-mission"><p>Develop better players.<br><strong>Build better people.</strong></p><p class="footer-ownership">© <span id="year"></span> Kings Hockey Nova Scotia<br><small>Official rights holder of Kings Hockey Academy.</small></p></div><div class="footer-contact"><span>CONTACT THE ACADEMY</span><a href="mailto:kingshockeyacademyns@gmail.com">kingshockeyacademyns@gmail.com</a></div></div></footer>
   <script>document.getElementById('year').textContent=new Date().getFullYear()</script>
-  <script src="supabase-config.js"></script><script type="module" src="js/parent-account.js?v=age-group-july31-1"></script>
+  <script src="supabase-config.js"></script><script type="module" src="js/parent-account.js?v=invited-parent-profile-1"></script>
 <script src="js/site.js"></script>
 </body>
 </html>
