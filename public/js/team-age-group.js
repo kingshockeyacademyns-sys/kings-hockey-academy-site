@@ -50,8 +50,24 @@ async function initialize() {
     return;
   }
   if (!sessionData.session) {
-    showMessage('Sign in with a family account to check whether this team page has been shared with you.');
+    showMessage('Sign in to your account to check whether you have access to this team age group.');
     login.hidden = false;
+    return;
+  }
+
+  // Active team staff may open the team age-group hub without having a player
+  // attached to their account. The helper only checks the signed-in user's
+  // active membership for this team.
+  const { data: staffAccess, error: staffAccessError } = await client.rpc('kha_is_team_staff_for_team', {
+    p_team_slug: teamSlug
+  });
+  if (!staffAccessError && staffAccess === true) {
+    const query = `team=${encodeURIComponent(teamSlug)}&age_group=${encodeURIComponent(ageGroup)}`;
+    document.querySelector('[data-hub-roster]').href = `team-roster.html?${query}`;
+    document.querySelector('[data-hub-schedule]').href = `team-schedule.html?${query}`;
+    document.querySelector('[data-age-group-description]').textContent = `Private team hub for approved ${ageGroup} staff and families.`;
+    showMessage('Your active staff membership grants access to this team age group.', 'success');
+    privateContent.hidden = false;
     return;
   }
 
@@ -84,7 +100,6 @@ async function initialize() {
   const query = `team=${encodeURIComponent(teamSlug)}&age_group=${encodeURIComponent(ageGroup)}`;
   document.querySelector('[data-hub-roster]').href = `team-roster.html?${query}`;
   document.querySelector('[data-hub-schedule]').href = `team-schedule.html?${query}`;
-  document.querySelector('[data-hub-staff]').href = `team-staff.html?${query}`;
   showMessage('Your family has approved access to this team age group.', 'success');
   privateContent.hidden = false;
 }

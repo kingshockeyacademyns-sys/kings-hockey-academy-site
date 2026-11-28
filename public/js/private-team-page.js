@@ -45,14 +45,22 @@ async function initialize() {
     loginLink.hidden = false;
     return;
   }
+  // Check staff membership independently from player/family access. Coaches
+  // must not need a child attached to their account to open team pages.
+  const { data: staffAccess, error: staffAccessError } = await client.rpc('kha_is_team_staff_for_team', {
+    p_team_slug: teamSlug
+  });
+  const isTeamStaff = !staffAccessError && staffAccess === true;
+
   const { data: rosterProbe, error: accessError } = await client.rpc('get_team_roster', { p_team_slug: teamSlug, p_age_group: ageGroup });
   if (accessError) {
-    showMessage('This family account has not been granted access to this team age group. Contact the academy administrator.');
+    showMessage('This account has not been granted access to this team age group. Contact the academy administrator.');
     return;
   }
   privateContent.hidden = false;
   if (pageType === 'roster') await renderRoster(rosterProbe || []);
   else await loadSchedule(client);
+  if (isTeamStaff) showMessage('Private team page · active staff access · read-only.', 'success');
 }
 
 function renderRoster(data) {
