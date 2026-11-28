@@ -12,9 +12,10 @@ const emailUpdates = document.querySelector('[data-email-updates]');
 const parentProfileForm = document.querySelector('[data-parent-profile]');
 const parentProfileSummary = document.querySelector('[data-parent-profile-summary]');
 const registrationsList = document.querySelector('[data-parent-registrations]');
+const myTeamsList = document.querySelector('[data-parent-my-teams]');
 const passwordSetup = document.querySelector('[data-parent-set-password]');
 const accountContent = document.querySelector('[data-parent-account-content]');
-const allowedViews = new Set(['account', 'players', 'registrations']);
+const allowedViews = new Set(['account', 'players', 'registrations', 'teams']);
 const activeView = new URLSearchParams(window.location.search).get('view');
 const familyView = allowedViews.has(activeView) ? activeView : 'account';
 const authHashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
@@ -190,6 +191,89 @@ function renderRegistrations(registrations) {
   }).join('')}</ul></section>`).join('');
 }
 
+const TEAM_INFO = {
+  'nova-scotia-kings': { name: 'Nova Scotia Kings', page: 'teams/nova-scotia-kings.html' },
+  'nova-scotia-vipers': { name: 'Nova Scotia Vipers', page: 'teams/nova-scotia-vipers.html' },
+  'quebec-predators': { name: 'Quebec Predators', page: 'teams/quebec-predators.html' },
+  'montreal-sentinels': { name: 'Montreal Sentinels', page: 'teams/montreal-sentinels.html' }
+};
+const TEAM_AGE_GROUPS = ['U9', 'U11', 'U13', 'U15'];
+const STAFF_ROLE_LABELS = {
+  head_coach: 'Head Coach',
+  assistant_coach: 'Assistant Coach',
+  team_manager: 'Team Manager',
+  team_staff: 'Team Staff'
+};
+
+function renderMyTeams(staffMemberships, parentAssignments, childrenById) {
+  const cards = new Map();
+  const keyFor = (slug, ageGroup) => `${slug}|${ageGroup}`;
+  const addCard = (slug, ageGroup) => {
+    if (!TEAM_INFO[slug] || !TEAM_AGE_GROUPS.includes(ageGroup)) return null;
+    const key = keyFor(slug, ageGroup);
+    if (!cards.has(key)) cards.set(key, { slug, ageGroup, staffRoles: new Set(), players: new Set() });
+    return cards.get(key);
+  };
+
+  staffMemberships.forEach(membership => {
+    TEAM_AGE_GROUPS.forEach(ageGroup => {
+      const card = addCard(membership.team_slug, ageGroup);
+      if (card) card.staffRoles.add(STAFF_ROLE_LABELS[membership.staff_role] || 'Team Staff');
+    });
+  });
+
+  parentAssignments.forEach(assignment => {
+    const card = addCard(assignment.team_slug, assignment.age_group);
+    const child = childrenById.get(assignment.player_id);
+    if (card && child) card.players.add(`${child.first_name} ${child.last_name}`.trim());
+  });
+
+  const list = [...cards.values()].sort((a, b) => TEAM_INFO[a.slug].name.localeCompare(TEAM_INFO[b.slug].name) || a.ageGroup.localeCompare(b.ageGroup));
+  if (!list.length) {
+    myTeamsList.innerHTML = '<p class="parent-empty-state">No team access is linked to this account yet. Once the academy assigns you to a team or assigns your player to a team, it will appear here.</p>';
+    return;
+  }
+
+  myTeamsList.innerHTML = list.map(card => {
+    const info = TEAM_INFO[card.slug];
+    const roles = [...card.staffRoles];
+    const players = [...card.players].sort((a, b) => a.localeCompare(b));
+    const accessLabels = [];
+    if (roles.length) accessLabels.push(`Staff · ${roles.join(', ')}`);
+    if (players.length) accessLabels.push(`Parent access · ${players.join(', ')}`);
+    const href = `team-age-group.html?team=${encodeURIComponent(card.slug)}&age_group=${encodeURIComponent(card.ageGroup)}`;
+    return `<article class="parent-my-team-card"><div class="parent-my-team-heading"><div><p class="eyebrow dark">${escapeHtml(card.ageGroup)} AGE GROUP</p><h2>${escapeHtml(info.name)}</h2></div><span class="parent-my-team-access">${roles.length && players.length ? 'STAFF + FAMILY' : roles.length ? 'STAFF' : 'FAMILY'}</span></div><p>${escapeHtml(accessLabels.join(' · '))}</p><div class="parent-my-team-actions"><a class="button button-gold" href="${href}">OPEN TEAM AREA <b>↗</b></a><a class="parent-my-team-public-link" href="${escapeHtml(info.page)}">TEAM INFORMATION</a></div></article>`;
+  }).join('');
+}
+
+async function loadMyTeams(userId) {
+  myTeamsList.innerHTML = '<p>Loading team access…</p>';
+  const [staffResult, assignmentsResult] = await Promise.all([
+    client.from('team_staff_memberships').select('team_slug,staff_role').eq('user_id', userId).eq('is_active', true),
+    client.from('team_age_group_access').select('team_slug,age_group,player_id').not('player_id', 'is', null)
+  ]);
+
+  const staffMemberships = staffResult.error ? [] : (staffResult.data || []);
+  const parentAssignments = assignmentsResult.error ? [] : (assignmentsResult.data || []);
+  const playerIds = [...new Set(parentAssignments.map(row => row.player_id).filter(Boolean))];
+  let childrenById = new Map();
+  let childLoadFailed = false;
+  if (playerIds.length) {
+    const { data, error } = await client.from('parent_children').select('id,first_name,last_name').in('id', playerIds);
+    if (error) childLoadFailed = true;
+    else childrenById = new Map((data || []).map(child => [child.id, child]));
+  }
+
+  if (staffResult.error && assignmentsResult.error) {
+    myTeamsList.innerHTML = '<p class="parent-empty-state">Your team access could not be loaded. Please refresh and try again.</p>';
+    return;
+  }
+  renderMyTeams(staffMemberships, parentAssignments, childrenById);
+  if ((staffResult.error || assignmentsResult.error || childLoadFailed) && myTeamsList.querySelector('.parent-empty-state')) {
+    myTeamsList.innerHTML = '<p class="parent-empty-state">Team access could not be fully checked. Please refresh or contact the academy if a team is missing.</p>';
+  }
+}
+
 async function loadRegistrations(userId) {
   registrationsList.innerHTML = '<p>Loading registrations…</p>';
   const { data, error } = await client.from('registrations')
@@ -238,6 +322,7 @@ async function syncSession(session) {
   if (familyView === 'players') await loadChildren();
   if (familyView === 'account') await Promise.all([loadEmailPreferences(), loadParentProfile()]);
   if (familyView === 'registrations') await loadRegistrations(session.user.id);
+  if (familyView === 'teams') await loadMyTeams(session.user.id);
 }
 
 async function saveChildProfile(event) {
