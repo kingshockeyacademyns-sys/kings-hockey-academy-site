@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Team Roster Admin | Kings Hockey Academy</title>
-  <link rel="stylesheet" href="styles.css?v=team-roster-admin-1">
+  <link rel="stylesheet" href="styles.css?v=account-nav-1">
   
 <style id="admin-programs-navigation-style">
 .admin-top-actions .admin-program-dropdown{position:relative;display:flex;align-items:center;}
@@ -19,7 +19,7 @@
 @media(max-width:760px){.admin-top-actions .admin-program-submenu{left:0;min-width:150px;}}
 </style>
 <link rel="stylesheet" href="styles-roster-admin-additions.css?v=team-roster-admin-1">
-<link rel="stylesheet" href="admin-nav.css?v=team-staff-nav-1"></head>
+<link rel="stylesheet" href="admin-nav.css?v=3"></head>
 
 <body class="admin-page" data-team-roster-admin>
 
@@ -34,7 +34,7 @@
   </header>
 
   <div class="menu-bar">
-    <nav class="main-nav wrap" aria-label="Main navigation"><a href="index.html">Home</a><a href="about.html">About</a><div class="nav-dropdown"><a href="teams.html">Teams</a><button class="nav-dropdown-toggle" type="button" aria-label="Show Teams subpages" aria-expanded="false"><span aria-hidden="true">⌄</span></button><div class="nav-submenu"><a href="teams/nova-scotia-kings.html">Nova Scotia Kings</a><a href="teams/nova-scotia-vipers.html">Nova Scotia Vipers</a><a href="teams/quebec-predators.html">Quebec Predators</a><a href="teams/montreal-sentinels.html">Montreal Sentinels</a></div></div><a class="nav-register" href="registration.html">Registration</a><a href="parent-account.html">Login</a></nav>
+    <nav class="main-nav wrap" aria-label="Main navigation"><a href="index.html">Home</a><a href="about.html">About</a><div class="nav-dropdown"><a href="teams.html">Teams</a><button class="nav-dropdown-toggle" type="button" aria-label="Show Teams subpages" aria-expanded="false"><span aria-hidden="true">⌄</span></button><div class="nav-submenu"><a href="teams/nova-scotia-kings.html">Nova Scotia Kings</a><a href="teams/nova-scotia-vipers.html">Nova Scotia Vipers</a><a href="teams/quebec-predators.html">Quebec Predators</a><a href="teams/montreal-sentinels.html">Montreal Sentinels</a></div></div><a class="nav-register" href="registration.html">Registration</a><a class="nav-account-link" data-account-nav href="parent-account.html"><span data-account-status>Login</span><span class="nav-account-identity" data-account-identity hidden></span></a></nav>
   </div>
 
   <header class="admin-head">
@@ -256,10 +256,10 @@
     src="js/admin-team-roster.js?v=team-roster-admin-1"
   ></script>
 
-<script src="js/site.js"></script>
+<script src="js/site.js?v=account-nav-1"></script>
 <script id="admin-programs-navigation-script">
 (function(){const root=document.getElementById('admin-program-dropdown');if(!root)return;const btn=root.querySelector('.admin-program-toggle');btn.addEventListener('click',function(e){e.preventDefault();const open=root.classList.toggle('is-open');btn.setAttribute('aria-expanded',String(open));});document.addEventListener('click',function(e){if(!root.contains(e.target)){root.classList.remove('is-open');btn.setAttribute('aria-expanded','false');}});})();
 </script>
-<script src="js/admin-nav.js?v=team-staff-nav-1"></script>
+<script src="js/admin-nav.js?v=teams-full-tree-2"></script>
 </body>
 </html>

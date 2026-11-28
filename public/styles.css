@@ -307,3 +307,11 @@
 .team-access-table-wrap .account-row-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .team-access-table-wrap [data-roster-save]{border:0;padding:8px 10px;background:#171717;color:#fff;font:700 9px var(--sans);cursor:pointer}
 .team-access-table-wrap [data-roster-save]:disabled{opacity:.55;cursor:wait}
+
+/* Shared signed-in account indicator in the public navigation */
+.menu-bar .main-nav .nav-account-link{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:3px;height:50px;max-width:260px;min-width:0;white-space:nowrap;font-weight:700;color:var(--gold-light);letter-spacing:.08em;}
+.menu-bar .main-nav .nav-account-link:after{display:none;}
+.menu-bar .main-nav .nav-account-link [data-account-status]{font-size:10px;}
+.menu-bar .main-nav .nav-account-identity{display:block;max-width:260px;overflow:hidden;text-overflow:ellipsis;text-transform:none;font-size:9px;font-weight:400;letter-spacing:0;color:#d9d4c7;}
+.menu-bar .main-nav .nav-account-link:hover [data-account-status]{color:var(--gold);}
+@media(max-width:620px){.menu-bar .main-nav .nav-account-link{height:42px;max-width:140px;margin-left:auto;align-items:flex-end;gap:2px;font-size:8px;}.menu-bar .main-nav .nav-account-link [data-account-status]{font-size:8px;}.menu-bar .main-nav .nav-account-identity{max-width:140px;font-size:7px;}}

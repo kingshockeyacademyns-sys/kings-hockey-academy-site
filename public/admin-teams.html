@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Teams Admin | Kings Hockey Academy</title>
-  <link rel="stylesheet" href="styles.css?v=admin-teams-hub-1">
+  <link rel="stylesheet" href="styles.css?v=account-nav-1">
   <style>
     .admin-teams-intro{max-width:760px;color:#746f63;font-size:13px;line-height:1.8;margin:18px 0 30px}
     .admin-team-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:30px 0 60px}
@@ -20,10 +20,10 @@
     .admin-team-action span{font-size:17px;line-height:1}
     @media(max-width:650px){.admin-team-grid{grid-template-columns:1fr}.admin-team-art{height:245px}.admin-team-copy{padding:20px}}
   </style>
-<link rel="stylesheet" href="admin-nav.css?v=team-staff-nav-1"></head>
+<link rel="stylesheet" href="admin-nav.css?v=3"></head>
 <body class="admin-page" data-admin-teams>
   <header class="site-header"><div class="wrap brand-wrap"><a class="brand" href="index.html" aria-label="Kings Hockey Academy home"><span class="brand-mark"><img src="assets/kha-logo.png" alt="Kings Hockey Academy logo"></span></a></div></header>
-  <div class="menu-bar"><nav class="main-nav wrap" aria-label="Main navigation"><a href="index.html">Home</a><a href="about.html">About</a><div class="nav-dropdown"><a href="teams.html">Teams</a><button class="nav-dropdown-toggle" type="button" aria-label="Show Teams subpages" aria-expanded="false"><span aria-hidden="true">⌄</span></button><div class="nav-submenu"><a href="teams/nova-scotia-kings.html">Nova Scotia Kings</a><a href="teams/nova-scotia-vipers.html">Nova Scotia Vipers</a><a href="teams/quebec-predators.html">Quebec Predators</a><a href="teams/montreal-sentinels.html">Montreal Sentinels</a></div></div><a class="nav-register" href="registration.html">Registration</a><a href="parent-account.html">Login</a></nav></div>
+  <div class="menu-bar"><nav class="main-nav wrap" aria-label="Main navigation"><a href="index.html">Home</a><a href="about.html">About</a><div class="nav-dropdown"><a href="teams.html">Teams</a><button class="nav-dropdown-toggle" type="button" aria-label="Show Teams subpages" aria-expanded="false"><span aria-hidden="true">⌄</span></button><div class="nav-submenu"><a href="teams/nova-scotia-kings.html">Nova Scotia Kings</a><a href="teams/nova-scotia-vipers.html">Nova Scotia Vipers</a><a href="teams/quebec-predators.html">Quebec Predators</a><a href="teams/montreal-sentinels.html">Montreal Sentinels</a></div></div><a class="nav-register" href="registration.html">Registration</a><a class="nav-account-link" data-account-nav href="parent-account.html"><span data-account-status>Login</span><span class="nav-account-identity" data-account-identity hidden></span></a></nav></div>
   <header class="admin-head">
     <a class="brand" href="index.html"><span class="crest">K</span><span>KINGS <small>TEAM MANAGEMENT</small></span></a>
     <div class="admin-top-actions">
@@ -48,8 +48,8 @@
   </main>
   <script src="supabase-config.js"></script>
   <script type="module" src="js/admin-teams.js?v=admin-teams-hub-1"></script>
-  <script src="js/site.js"></script>
+  <script src="js/site.js?v=account-nav-1"></script>
   <script>(function(){const root=document.getElementById('admin-program-dropdown');if(!root)return;const btn=root.querySelector('.admin-program-toggle');btn.addEventListener('click',function(e){e.preventDefault();const open=root.classList.toggle('is-open');btn.setAttribute('aria-expanded',String(open));});document.addEventListener('click',function(e){if(!root.contains(e.target)){root.classList.remove('is-open');btn.setAttribute('aria-expanded','false');}});})();</script>
-<script src="js/admin-nav.js?v=team-staff-nav-1"></script>
+<script src="js/admin-nav.js?v=teams-full-tree-2"></script>
 </body>
 </html>
