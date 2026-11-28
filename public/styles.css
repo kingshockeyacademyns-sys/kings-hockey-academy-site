@@ -331,3 +331,11 @@
 .parent-approved-camps-note h2{margin:0 0 8px;font:700 24px/1 var(--serif);color:var(--black)}
 .parent-approved-camps-note p:last-child{margin:0;color:#746f63;font-size:11px;line-height:1.7}
 @media(max-width:760px){.parent-my-teams-list{grid-template-columns:1fr}}
+
+/* KHA header alignment fix: keep navigation centered independently of account status. */
+.menu-bar .main-nav{position:relative;}
+.menu-bar .main-nav .nav-account-link{position:absolute;right:0;top:0;margin-left:0;}
+@media(max-width:620px){
+  .menu-bar .main-nav{position:relative;padding-bottom:24px;}
+  .menu-bar .main-nav .nav-account-link{position:absolute;right:0;top:42px;height:22px;max-width:140px;margin-left:0;}
+}
