@@ -5,10 +5,11 @@ const configured = window.KHA_SUPABASE_URL?.startsWith('https://') && window.KHA
 const client = configured ? createClient(window.KHA_SUPABASE_URL, window.KHA_SUPABASE_PUBLISHABLE_KEY) : null;
 const adminPage = document.body.dataset.adminPage || 'login';
 const isDashboardPage = adminPage === 'dashboard';
+const isSubmissionsPage = adminPage === 'submissions';
 const isProgramsPage = adminPage === 'programs';
 const isWaiversPage = adminPage === 'waivers';
 const isLoginPage = adminPage === 'login';
-const isAuthenticatedAdminPage = isDashboardPage || isProgramsPage || isWaiversPage;
+const isAuthenticatedAdminPage = isDashboardPage || isSubmissionsPage || isProgramsPage || isWaiversPage;
 const submissionProgramId = new URLSearchParams(window.location.search).get('program_id');
 const login = document.querySelector('[data-admin-login]');
 const notice = document.querySelector('[data-admin-message]');
@@ -206,7 +207,7 @@ function programCard(program, submissionCount) {
   const isOpen = isProgramOpen(program);
   const closedByDeadline = program.registration_closes_on && program.registration_closes_on < localDateString();
   const action = isOpen
-    ? `<a class="program-submissions-link" href="admin-dashboard.html?program_id=${encodeURIComponent(program.id)}">VIEW SUBMISSIONS${submissionCount === null ? '' : ` (${submissionCount})`} ↗</a>`
+    ? `<a class="program-submissions-link" href="admin-submissions.html?program_id=${encodeURIComponent(program.id)}">VIEW SUBMISSIONS${submissionCount === null ? '' : ` (${submissionCount})`} ↗</a>`
     : `<span class="program-closed-label">CLOSED</span>`;
   const startDate = program.program_start_date ? `Starts ${formatProgramDate(program.program_start_date)}` : '';
   const closes = program.registration_closes_on ? `Registration closes ${formatProgramDate(program.registration_closes_on)}` : '';
@@ -251,6 +252,50 @@ function setProgramMessage(text, kind = 'success') {
   box.hidden = !text;
 }
 
+async function loadAdminOverview() {
+  const errorBox = document.querySelector('[data-admin-overview-error]');
+  const showError = message => { if (errorBox) { errorBox.textContent = message; errorBox.hidden = !message; } };
+  const setValue = (selector, value) => { const node = document.querySelector(selector); if (node) node.textContent = String(value); };
+  const recentRoot = document.querySelector('[data-overview-recent]');
+
+  const [registrationResult, programsResult, waiversResult, recentResult] = await Promise.all([
+    client.from('registrations').select('id', { count: 'exact', head: true }),
+    client.from('programs').select('id,title,is_open,registration_closes_on'),
+    client.from('waivers').select('id', { count: 'exact', head: true }).eq('is_active', true),
+    client.from('registrations').select('id,player_first,player_last,created_at,programs(title)').order('created_at', { ascending: false }).limit(6)
+  ]);
+
+  if (registrationResult.error) showError('Registration totals could not be loaded. Check administrator database access.');
+  else setValue('[data-overview-registrations]', registrationResult.count ?? 0);
+
+  if (programsResult.error) showError('Program totals could not be loaded.');
+  else {
+    const programs = programsResult.data || [];
+    const today = localDateString();
+    const openCount = programs.filter(program => Boolean(program.is_open) && (!program.registration_closes_on || program.registration_closes_on >= today)).length;
+    setValue('[data-overview-open-programs]', openCount);
+    setValue('[data-overview-all-programs]', programs.length);
+  }
+
+  if (waiversResult.error) setValue('[data-overview-waivers]', '—');
+  else setValue('[data-overview-waivers]', waiversResult.count ?? 0);
+
+  if (recentRoot) {
+    if (recentResult.error) {
+      recentRoot.innerHTML = '<p class="admin-recent-empty">Recent registration activity is temporarily unavailable.</p>';
+    } else if (!recentResult.data?.length) {
+      recentRoot.innerHTML = '<p class="admin-recent-empty">No registrations have been received yet. New submissions will appear here.</p>';
+    } else {
+      recentRoot.innerHTML = recentResult.data.map(row => {
+        const player = `${row.player_first || ''} ${row.player_last || ''}`.trim() || 'Player name not provided';
+        const program = row.programs?.title || 'Registration';
+        const date = row.created_at ? new Date(row.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'Date unavailable';
+        return `<div class="admin-recent-row"><div><strong class="admin-recent-player">${esc(player)}</strong><span class="admin-recent-program">${esc(program)}</span></div><time class="admin-recent-date">${esc(date)}</time></div>`;
+      }).join('');
+    }
+  }
+}
+
 async function initializePage() {
   if (!client) {
     setMessage('Admin sign-in is not connected to Supabase yet.');
@@ -283,6 +328,9 @@ async function initializePage() {
   if (isProgramsPage) await loadPrograms();
   if (isWaiversPage) await loadWaivers();
   if (isDashboardPage) {
+    await loadAdminOverview();
+  }
+  if (isSubmissionsPage) {
     if (submissionProgramId) {
       const { data: program } = await client.from('programs').select('title').eq('id', submissionProgramId).maybeSingle();
       const filter = document.querySelector('[data-registration-filter]');
