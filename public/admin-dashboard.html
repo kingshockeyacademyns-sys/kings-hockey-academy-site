@@ -4,81 +4,52 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>Registration Admin | Kings Hockey Academy</title>
+  <title>Admin Dashboard | Kings Hockey Academy</title>
   <link rel="stylesheet" href="styles.css?v=account-nav-1">
-<style id="admin-programs-navigation-style">
-.admin-top-actions .admin-program-dropdown{position:relative;display:flex;align-items:center;}
-.admin-top-actions .admin-program-link{display:inline-flex;align-items:center;}
-.admin-top-actions .admin-program-toggle{border:0;background:transparent;color:#d9ad4b;padding:0 7px;min-width:22px;cursor:pointer;font:inherit;}
-.admin-top-actions .admin-program-dropdown:hover .admin-program-toggle,.admin-top-actions .admin-program-dropdown:focus-within .admin-program-toggle,.admin-top-actions .admin-program-dropdown.is-open .admin-program-toggle{color:#e7bd61;}
-.admin-top-actions .admin-program-submenu{display:none;position:absolute;top:100%;left:0;z-index:999;min-width:165px;padding:5px 0;background:#080909;border:1px solid rgba(217,173,75,.32);box-shadow:0 12px 24px rgba(0,0,0,.35);}
-.admin-top-actions .admin-program-submenu a{display:block;padding:12px 15px;color:#d9d4c7;text-decoration:none;font-size:10px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;}
-.admin-top-actions .admin-program-submenu a:hover,.admin-top-actions .admin-program-submenu a.active{color:#e7bd61;}
-.admin-top-actions .admin-program-dropdown:hover .admin-program-submenu,.admin-top-actions .admin-program-dropdown:focus-within .admin-program-submenu,.admin-top-actions .admin-program-dropdown.is-open .admin-program-submenu{display:block;}
-@media(max-width:760px){.admin-top-actions .admin-program-submenu{left:0;min-width:150px;}}
-</style>
-<style id="submission-export-tools-style">
-.submission-export-tools{margin:26px 0 22px;padding:18px 20px;border:1px solid rgba(18,18,18,.14);background:rgba(255,255,255,.42);max-width:780px;}
-.submission-export-tools>label{display:block;margin-bottom:10px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#27231c;}
-.submission-export-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-.submission-export-controls select{min-width:260px;max-width:100%;padding:13px 14px;border:1px solid #d5cbb7;background:#fff;color:#171717;font:inherit;}
-.submission-export-controls button:disabled{opacity:.45;cursor:not-allowed;}
-.submission-export-tools>p{margin:10px 0 0;font-size:12px;color:#666;}
-@media(max-width:600px){.submission-export-controls{align-items:stretch;flex-direction:column}.submission-export-controls select,.submission-export-controls button{width:100%;min-width:0}}
-</style>
-
-<link rel="stylesheet" href="admin-nav.css?v=3"></head>
-<body class="admin-page admin-dashboard-page" data-admin-page="dashboard">
-  <header class="site-header">
-    <div class="wrap brand-wrap">
-      <a class="brand" href="index.html" aria-label="Kings Hockey Academy home">
-        <span class="brand-mark"><img src="assets/kha-logo.png" alt="Kings Hockey Academy logo"></span>
-      </a>
-    </div>
-  </header>
-  <div class="menu-bar">
-    <nav class="main-nav wrap" aria-label="Main navigation"><a href="index.html">Home</a><a href="about.html">About</a><div class="nav-dropdown"><a href="teams.html">Teams</a><button class="nav-dropdown-toggle" type="button" aria-label="Show Teams subpages" aria-expanded="false"><span aria-hidden="true">⌄</span></button><div class="nav-submenu"><a href="teams/nova-scotia-kings.html">Nova Scotia Kings</a><a href="teams/nova-scotia-vipers.html">Nova Scotia Vipers</a><a href="teams/quebec-predators.html">Quebec Predators</a><a href="teams/montreal-sentinels.html">Montreal Sentinels</a></div></div><a class="nav-register" href="registration.html">Registration</a><a class="nav-account-link" data-account-nav href="parent-account.html"><span data-account-status>Login</span><span class="nav-account-identity" data-account-identity hidden></span></a></nav>
-  </div>
+  <link rel="stylesheet" href="admin-nav.css?v=3">
+  <link rel="stylesheet" href="admin-dashboard.css?v=admin-dashboard-overview-1">
+</head>
+<body class="admin-page admin-overview-page" data-admin-page="dashboard">
+  <header class="site-header"><div class="wrap brand-wrap"><a class="brand" href="index.html" aria-label="Kings Hockey Academy home"><span class="brand-mark"><img src="assets/kha-logo.png" alt="Kings Hockey Academy logo"></span></a></div></header>
+  <div class="menu-bar"><nav class="main-nav wrap" aria-label="Main navigation"><a href="index.html">Home</a><a href="about.html">About</a><div class="nav-dropdown"><a href="teams.html">Teams</a><button class="nav-dropdown-toggle" type="button" aria-label="Show Teams subpages" aria-expanded="false"><span aria-hidden="true">⌄</span></button><div class="nav-submenu"><a href="teams/nova-scotia-kings.html">Nova Scotia Kings</a><a href="teams/nova-scotia-vipers.html">Nova Scotia Vipers</a><a href="teams/quebec-predators.html">Quebec Predators</a><a href="teams/montreal-sentinels.html">Montreal Sentinels</a></div></div><a class="nav-register" href="registration.html">Registration</a><a class="nav-account-link" data-account-nav href="parent-account.html"><span data-account-status>Login</span><span class="nav-account-identity" data-account-identity hidden></span></a></nav></div>
   <div class="alert error admin-message" data-admin-message hidden role="status"></div>
   <header class="admin-head">
-    <a class="brand" href="index.html"><span class="crest">K</span><span>KINGS <small>REGISTRATION ADMIN</small></span></a>
+    <a class="brand" href="admin-dashboard.html"><span class="crest">K</span><span>KINGS <small>ADMINISTRATION</small></span></a>
     <div class="admin-top-actions">
-      <div class="admin-program-dropdown" id="admin-program-dropdown">
-        <a data-admin-nav="programs" href="admin-programs.html" class="admin-top-link admin-program-link">PROGRAMS</a>
-        <button class="admin-program-toggle" type="button" aria-label="Show Programs subpages" aria-expanded="false">⌄</button>
-        <div class="admin-program-submenu"><a href="admin-dashboard.html" class="active" aria-current="page">Submissions</a><a href="admin-waivers.html">Waivers</a><a href="admin-accounts.html?view=all">Accounts</a></div>
-      </div>
+      <a class="admin-top-link is-current" data-admin-nav="dashboard" href="admin-dashboard.html" aria-current="page">DASHBOARD</a>
+      <div class="admin-program-dropdown" id="admin-program-dropdown"><a data-admin-nav="programs" href="admin-programs.html" class="admin-top-link admin-program-link">PROGRAMS</a><button class="admin-program-toggle" type="button" aria-label="Show Programs subpages" aria-expanded="false">⌄</button><div class="admin-program-submenu"><a href="admin-dashboard.html" class="active" aria-current="page">Dashboard</a><a href="admin-submissions.html">Submissions</a><a href="admin-waivers.html">Waivers</a><a href="admin-accounts.html?view=all">Accounts</a></div></div>
       <div class="admin-team-dropdown" data-admin-team-dropdown><a class="admin-top-link" data-admin-nav="teams" href="admin-teams.html">TEAMS</a><button class="admin-team-toggle" type="button" aria-label="Show Teams subpages" aria-expanded="false">⌄</button><div class="admin-team-submenu"><a href="admin-teams.html">All Teams</a><a href="admin-team.html?team=nova-scotia-kings">Nova Scotia Kings</a><a href="admin-team.html?team=nova-scotia-vipers">Nova Scotia Vipers</a><a href="admin-team.html?team=quebec-predators">Quebec Predators</a><a href="admin-team.html?team=montreal-sentinels">Montreal Sentinels</a></div></div>
       <a class="admin-top-link" data-admin-nav="schedules" href="admin-team-schedule.html">TEAM SCHEDULES</a>
       <button class="admin-logout" data-admin-logout type="button">Sign out</button>
     </div>
   </header>
-  <main class="admin-main">
-    <p class="eyebrow red">PRIVATE REGISTRATION RECORDS</p>
-    <h1>REGISTRATION<br><em>SUBMISSIONS</em></h1>
-    <section class="submission-export-tools" aria-label="Export one registration program">
-      <label for="submission-export-program">Export submissions for one program</label>
-      <div class="submission-export-controls">
-        <select id="submission-export-program" data-export-program>
-          <option value="">Select one program…</option>
-        </select>
-        <button class="button button-red" data-admin-export type="button" disabled>DOWNLOAD SELECTED CSV ↗</button>
-      </div>
-      <p>Only the selected program’s registration submissions will be included in the CSV.</p>
+  <main class="admin-main admin-overview-main">
+    <section class="admin-overview-hero"><div><p class="eyebrow red">KINGS HOCKEY ACADEMY · ADMINISTRATION</p><h1>ADMIN<br><em>DASHBOARD.</em></h1><p class="admin-overview-welcome">Welcome back, <strong data-admin-email>administrator</strong>.</p><p class="admin-overview-intro">Your central hub for registrations, programs, family accounts and team operations.</p></div><div class="admin-overview-hero-mark" aria-hidden="true"><span>K</span><small>EST. KHA</small></div></section>
+    <div class="alert error admin-message" data-admin-overview-error hidden role="status"></div>
+    <section class="admin-overview-stats" aria-label="Academy overview">
+      <article class="admin-overview-stat"><span>REGISTRATION SUBMISSIONS</span><strong data-overview-registrations>—</strong><a href="admin-submissions.html">View submissions ↗</a></article>
+      <article class="admin-overview-stat"><span>OPEN PROGRAMS</span><strong data-overview-open-programs>—</strong><a href="admin-programs.html">Manage programs ↗</a></article>
+      <article class="admin-overview-stat"><span>ALL PROGRAMS</span><strong data-overview-all-programs>—</strong><a href="admin-programs.html">Programs &amp; forms ↗</a></article>
+      <article class="admin-overview-stat"><span>ACTIVE WAIVERS</span><strong data-overview-waivers>—</strong><a href="admin-waivers.html">Manage waivers ↗</a></article>
     </section>
-    <p data-admin-email></p>
-    <p class="submission-filter-note" data-registration-filter hidden>Showing submissions for <strong data-registration-filter-name></strong> · <a href="admin-dashboard.html">View all submissions</a></p>
-    <p data-registration-count>Loading…</p>
-    <div class="submission-groups" data-registration-groups></div>
-    <p class="admin-privacy">Registration inquiries can include information about minors. Keep this account private and delete records when they are no longer needed.</p>
+    <section class="admin-overview-section" aria-labelledby="admin-quick-actions-title"><div class="admin-overview-section-heading"><div><p class="eyebrow red">WORKSPACE</p><h2 id="admin-quick-actions-title">QUICK ACTIONS</h2></div><span>Choose an area to manage</span></div>
+      <div class="admin-overview-actions">
+        <a class="admin-overview-action" href="admin-programs.html"><span class="admin-action-number">01</span><span><strong>Programs &amp; Forms</strong><small>Create programs, update registration details and manage open/closed status.</small></span><b aria-hidden="true">↗</b></a>
+        <a class="admin-overview-action" href="admin-submissions.html"><span class="admin-action-number">02</span><span><strong>Registration Submissions</strong><small>Review incoming registrations and export selected program submissions.</small></span><b aria-hidden="true">↗</b></a>
+        <a class="admin-overview-action" href="admin-accounts.html?view=all"><span class="admin-action-number">03</span><span><strong>Family Accounts</strong><small>Manage accounts, access, roles and family registration requests.</small></span><b aria-hidden="true">↗</b></a>
+        <a class="admin-overview-action" href="admin-waivers.html"><span class="admin-action-number">04</span><span><strong>Waivers</strong><small>Maintain waiver wording and active registration requirements.</small></span><b aria-hidden="true">↗</b></a>
+        <a class="admin-overview-action" href="admin-teams.html"><span class="admin-action-number">05</span><span><strong>Team Management</strong><small>Manage academy teams, age groups and team information.</small></span><b aria-hidden="true">↗</b></a>
+        <a class="admin-overview-action" href="admin-team-staff.html"><span class="admin-action-number">06</span><span><strong>Team Staff</strong><small>Manage staff access and team assignments.</small></span><b aria-hidden="true">↗</b></a>
+        <a class="admin-overview-action" href="admin-team-schedule.html"><span class="admin-action-number">07</span><span><strong>Team Schedules</strong><small>Review and update team schedule information.</small></span><b aria-hidden="true">↗</b></a>
+      </div>
+    </section>
+    <section class="admin-overview-section admin-recent-section" aria-labelledby="admin-recent-title"><div class="admin-overview-section-heading"><div><p class="eyebrow red">LATEST ACTIVITY</p><h2 id="admin-recent-title">RECENT REGISTRATIONS</h2></div><a class="admin-overview-text-link" href="admin-submissions.html">ALL SUBMISSIONS ↗</a></div><div class="admin-recent-list" data-overview-recent><p class="admin-overview-loading">Loading recent registrations…</p></div></section>
+    <p class="admin-privacy">Administrator access is restricted. Registration information may include personal details about minors.</p>
   </main>
   <script src="supabase-config.js"></script>
-  
-  <script type="module" src="js/admin.js?v=admin-role-check-1"></script>
-<script src="js/site.js?v=account-nav-1"></script>
-<script id="admin-programs-navigation-script">
-(function(){const root=document.getElementById('admin-program-dropdown');if(!root)return;const btn=root.querySelector('.admin-program-toggle');btn.addEventListener('click',function(e){e.preventDefault();const open=root.classList.toggle('is-open');btn.setAttribute('aria-expanded',String(open));});document.addEventListener('click',function(e){if(!root.contains(e.target)){root.classList.remove('is-open');btn.setAttribute('aria-expanded','false');}});})();
-</script>
-<script src="js/admin-nav.js?v=teams-full-tree-2"></script>
+  <script type="module" src="js/admin.js?v=admin-dashboard-overview-1"></script>
+  <script src="js/site.js?v=account-nav-1"></script>
+  <script>(function(){const root=document.getElementById('admin-program-dropdown');if(!root)return;const btn=root.querySelector('.admin-program-toggle');btn.addEventListener('click',function(e){e.preventDefault();const open=root.classList.toggle('is-open');btn.setAttribute('aria-expanded',String(open));});document.addEventListener('click',function(e){if(!root.contains(e.target)){root.classList.remove('is-open');btn.setAttribute('aria-expanded','false');}});})();</script>
+  <script src="js/admin-nav.js?v=teams-full-tree-2"></script>
 </body>
 </html>
