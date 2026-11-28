@@ -57,7 +57,7 @@
     <section class="account-admin-section" data-account-view="all" aria-labelledby="all-accounts-heading">
       <div class="account-admin-section-heading"><div><p class="eyebrow red">ACCESS &amp; STATUS</p><h2 id="all-accounts-heading">ALL ACCOUNTS</h2></div><button class="button button-light" data-account-refresh type="button">REFRESH</button></div>
       <div class="account-search"><label>Find an account<input type="search" data-account-search placeholder="Search by email"></label><span data-account-total>Loading accounts…</span></div>
-      <div class="account-table-wrap"><table class="account-table"><thead><tr><th>Email</th><th>Parent contact details</th><th>Status</th><th>Saved players</th><th>News &amp; announcements</th><th>Created</th><th>Last sign-in</th><th>Actions</th></tr></thead><tbody data-account-list><tr><td colspan="8">Loading family accounts…</td></tr></tbody></table></div>
+      <div class="account-table-wrap"><table class="account-table"><thead><tr><th>Email</th><th>Parent contact details</th><th>Status</th><th>Saved players</th><th>News &amp; announcements</th><th>Created</th><th>Last sign-in</th><th>Account &amp; admin roles</th></tr></thead><tbody data-account-list><tr><td colspan="8">Loading family accounts…</td></tr></tbody></table></div>
       <p class="account-admin-note">Disabling an account blocks sign-in but keeps its saved profiles and registration history. Deleting an account permanently removes its saved child profiles; registration submissions remain in the submissions area.</p>
     </section>
     <section class="account-admin-section" data-account-view="age-groups" aria-labelledby="team-access-heading">
@@ -110,7 +110,7 @@
     </section>
     <p class="admin-privacy">Family accounts can include personal information and details about minors. Keep access limited to trusted administrators.</p>
   </main>
-  <script src="supabase-config.js"></script><script type="module" src="js/admin-accounts.js?v=accounts-navigation-fix-2"></script>
+  <script src="supabase-config.js"></script><script type="module" src="js/admin-accounts.js?v=admin-role-management-1"></script>
 <script src="js/site.js?v=account-nav-1"></script>
 <script id="admin-programs-navigation-script">
 (function(){const root=document.getElementById('admin-program-dropdown');if(!root)return;const btn=root.querySelector('.admin-program-toggle');btn.addEventListener('click',function(e){e.preventDefault();const open=root.classList.toggle('is-open');btn.setAttribute('aria-expanded',String(open));});document.addEventListener('click',function(e){if(!root.contains(e.target)){root.classList.remove('is-open');btn.setAttribute('aria-expanded','false');}});})();
