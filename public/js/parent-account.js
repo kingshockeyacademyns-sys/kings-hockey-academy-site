@@ -17,7 +17,12 @@ const passwordSetup = document.querySelector('[data-parent-set-password]');
 const accountContent = document.querySelector('[data-parent-account-content]');
 const allowedViews = new Set(['account', 'players', 'registrations', 'teams']);
 const activeView = new URLSearchParams(window.location.search).get('view');
-const familyView = allowedViews.has(activeView) ? activeView : 'account';
+const requestedFamilyView = allowedViews.has(activeView) ? activeView : 'account';
+// Keep the teams view closed until the signed-in account's actual team access
+// has been checked. Accounts without team access should not see this feature.
+let familyView = requestedFamilyView === 'teams' ? 'account' : requestedFamilyView;
+const teamViewLink = document.querySelector('[data-family-view-link="teams"]');
+const teamViewSection = document.querySelector('[data-family-view="teams"]');
 const authHashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
 const authQueryParams = new URLSearchParams(window.location.search);
 // Supabase may return invitation/recovery links as a hash (type=invite) or
@@ -29,11 +34,18 @@ let passwordSetupRequired = ['invite', 'recovery'].includes(authHashParams.get('
   || Boolean(authQueryParams.get('code'));
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
-document.querySelectorAll('[data-family-view]').forEach(section => { section.hidden = section.dataset.familyView !== familyView; });
-document.querySelectorAll('[data-family-view-link]').forEach(link => {
-  if (link.dataset.familyViewLink === familyView) link.setAttribute('aria-current', 'page');
-  else link.removeAttribute('aria-current');
-});
+function setFamilyView(view) {
+  familyView = view;
+  document.querySelectorAll('[data-family-view]').forEach(section => { section.hidden = section.dataset.familyView !== view; });
+  document.querySelectorAll('[data-family-view-link]').forEach(link => {
+    if (link.dataset.familyViewLink === view) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
+}
+
+setFamilyView(familyView);
+if (teamViewLink) teamViewLink.hidden = true;
+if (teamViewSection) teamViewSection.hidden = true;
 
 function showMessage(text, kind = 'error') {
   messageBox.textContent = text;
@@ -230,8 +242,9 @@ function renderMyTeams(staffMemberships, parentAssignments, childrenById) {
 
   const list = [...cards.values()].sort((a, b) => TEAM_INFO[a.slug].name.localeCompare(TEAM_INFO[b.slug].name) || a.ageGroup.localeCompare(b.ageGroup));
   if (!list.length) {
-    myTeamsList.innerHTML = '<p class="parent-empty-state">No team access is linked to this account yet. Once the academy assigns you to a team or assigns your player to a team, it will appear here.</p>';
-    return;
+    // Do not disclose the team portal to accounts with no team assignment.
+    myTeamsList.innerHTML = '';
+    return false;
   }
 
   myTeamsList.innerHTML = list.map(card => {
@@ -244,34 +257,42 @@ function renderMyTeams(staffMemberships, parentAssignments, childrenById) {
     const href = `team-age-group.html?team=${encodeURIComponent(card.slug)}&age_group=${encodeURIComponent(card.ageGroup)}`;
     return `<article class="parent-my-team-card"><div class="parent-my-team-heading"><div><p class="eyebrow dark">${escapeHtml(card.ageGroup)} AGE GROUP</p><h2>${escapeHtml(info.name)}</h2></div><span class="parent-my-team-access">${roles.length && players.length ? 'STAFF + FAMILY' : roles.length ? 'STAFF' : 'FAMILY'}</span></div><p>${escapeHtml(accessLabels.join(' · '))}</p><div class="parent-my-team-actions"><a class="button button-gold" href="${href}">OPEN TEAM AREA <b>↗</b></a><a class="parent-my-team-public-link" href="${escapeHtml(info.page)}">TEAM INFORMATION</a></div></article>`;
   }).join('');
+  return true;
 }
 
 async function loadMyTeams(userId) {
-  myTeamsList.innerHTML = '<p>Loading team access…</p>';
-  const [staffResult, assignmentsResult] = await Promise.all([
+  myTeamsList.innerHTML = '';
+  const [staffResult, childrenResult] = await Promise.all([
     client.from('team_staff_memberships').select('team_slug,staff_role').eq('user_id', userId).eq('is_active', true),
-    client.from('team_age_group_access').select('team_slug,age_group,player_id').not('player_id', 'is', null)
+    client.from('parent_children').select('id,first_name,last_name')
   ]);
 
-  const staffMemberships = staffResult.error ? [] : (staffResult.data || []);
-  const parentAssignments = assignmentsResult.error ? [] : (assignmentsResult.data || []);
-  const playerIds = [...new Set(parentAssignments.map(row => row.player_id).filter(Boolean))];
-  let childrenById = new Map();
-  let childLoadFailed = false;
-  if (playerIds.length) {
-    const { data, error } = await client.from('parent_children').select('id,first_name,last_name').in('id', playerIds);
-    if (error) childLoadFailed = true;
-    else childrenById = new Map((data || []).map(child => [child.id, child]));
+  if (staffResult.error) {
+    // Fail closed if staff access cannot be verified.
+    return false;
   }
 
-  if (staffResult.error && assignmentsResult.error) {
-    myTeamsList.innerHTML = '<p class="parent-empty-state">Your team access could not be loaded. Please refresh and try again.</p>';
-    return;
+  const staffMemberships = staffResult.data || [];
+  if (childrenResult.error) {
+    // Preserve verified staff access, but do not infer family team access.
+    return renderMyTeams(staffMemberships, [], new Map());
   }
-  renderMyTeams(staffMemberships, parentAssignments, childrenById);
-  if ((staffResult.error || assignmentsResult.error || childLoadFailed) && myTeamsList.querySelector('.parent-empty-state')) {
-    myTeamsList.innerHTML = '<p class="parent-empty-state">Team access could not be fully checked. Please refresh or contact the academy if a team is missing.</p>';
+  const children = childrenResult.data || [];
+  const childrenById = new Map(children.map(child => [child.id, child]));
+  const playerIds = children.map(child => child.id).filter(Boolean);
+  let assignmentsResult = { data: [], error: null };
+  if (playerIds.length) {
+    assignmentsResult = await client.from('team_age_group_access')
+      .select('team_slug,age_group,player_id')
+      .in('player_id', playerIds)
+      .not('player_id', 'is', null);
   }
+
+  if (assignmentsResult.error) {
+    // Preserve verified staff access, but do not infer family team access.
+    return renderMyTeams(staffMemberships, [], childrenById);
+  }
+  return renderMyTeams(staffMemberships, assignmentsResult.data || [], childrenById);
 }
 
 async function loadRegistrations(userId) {
@@ -313,6 +334,9 @@ async function syncSession(session) {
   accountArea.hidden = !session;
   if (!session) {
     document.querySelector('[data-parent-email]').textContent = '';
+    if (teamViewLink) teamViewLink.hidden = true;
+    if (teamViewSection) teamViewSection.hidden = true;
+    setFamilyView('account');
     return;
   }
 
@@ -330,10 +354,25 @@ async function syncSession(session) {
   passwordSetup.hidden = !passwordSetupRequired;
   accountContent.hidden = passwordSetupRequired;
   if (passwordSetupRequired) return;
+
+  // Check actual staff and family team assignments for every signed-in account.
+  // The teams navigation and content stay hidden unless at least one assignment
+  // is confirmed by the existing Supabase access policies.
+  const hasTeamAccess = await loadMyTeams(session.user.id);
+  if (teamViewLink) teamViewLink.hidden = !hasTeamAccess;
+
+  if (requestedFamilyView === 'teams') {
+    if (hasTeamAccess) {
+      setFamilyView('teams');
+    } else {
+      setFamilyView('account');
+      window.history.replaceState({}, '', 'parent-account.html?view=account');
+    }
+  }
+
   if (familyView === 'players') await loadChildren();
   if (familyView === 'account') await Promise.all([loadEmailPreferences(), loadParentProfile()]);
   if (familyView === 'registrations') await loadRegistrations(session.user.id);
-  if (familyView === 'teams') await loadMyTeams(session.user.id);
 }
 
 async function saveChildProfile(event) {
