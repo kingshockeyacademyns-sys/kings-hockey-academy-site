@@ -89,13 +89,13 @@ async function setActive(button){const id=button.dataset.staffActive,active=butt
 async function removeStaff(button){const id=button.dataset.staffRemove,m=staff.find(x=>x.id===id),email=m?.email||'this staff member';if(!confirm(`Remove ${email} from ${teams[teamSelect.value]}? This removes only the team assignment.`))return;button.disabled=true;try{await callStaffFunction({action:'remove',membership_id:id});notice(`${email} removed from ${teams[teamSelect.value]}.`);await loadStaff();}catch(e){notice(e.message,true);button.disabled=false;}}
 async function init(){
   if(!client){notice('Supabase configuration is missing. Check public/supabase-config.js.',true);return;}
-  const {data,error}=await client.auth.getSession();if(error||!data.session){location.replace('admin.html');return;}
+  const {data,error}=await client.auth.getSession();if(error||!data.session){location.replace('parent-account.html');return;}
   const {data:isAdmin,error:adminError}=await client.rpc('kha_is_admin');if(adminError||isAdmin!==true){notice('This page is restricted to approved academy administrators.',true);document.querySelectorAll('input,select,button').forEach(el=>el.disabled=true);return;}
   const requestedTeam=params.get('team');const requestedAge=(params.get('age_group')||params.get('age')||'').toUpperCase();
   if(requestedTeam&&teams[requestedTeam]){teamSelect.value=requestedTeam;teamSelect.disabled=true;}
   if(['U9','U11','U13','U15'].includes(requestedAge)){ageGroupSelect.value=requestedAge;ageGroupSelect.disabled=true;}
   const email=document.querySelector('[data-staff-admin-email]');if(email)email.textContent=data.session.user.email||'';
-  document.querySelector('[data-staff-admin-logout]')?.addEventListener('click',async()=>{await client.auth.signOut();location.replace('admin.html');});
+  document.querySelector('[data-staff-admin-logout]')?.addEventListener('click',async()=>{await client.auth.signOut();location.replace('parent-account.html');});
   document.querySelectorAll('[data-staff-mode]').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.staffMode)));
   teamSelect.addEventListener('change',()=>{updateContext();notice('');void loadStaff();});ageGroupSelect.addEventListener('change',()=>{updateContext();renderStaff();});
   accountSearch.addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>void searchAccounts(),300);});

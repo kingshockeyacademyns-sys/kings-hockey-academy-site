@@ -61,7 +61,7 @@ async function init() {
 
   const { data, error } = await client.auth.getSession();
   if (error || !data.session) {
-    location.replace('admin.html');
+    location.replace('parent-account.html');
     return;
   }
 
@@ -79,7 +79,7 @@ async function init() {
   if (email) email.textContent = data.session.user.email || '';
   document.querySelector('[data-team-page-logout]')?.addEventListener('click', async () => {
     await client.auth.signOut();
-    location.replace('admin.html');
+    location.replace('parent-account.html');
   });
 }
 

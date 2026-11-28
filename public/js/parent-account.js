@@ -315,6 +315,17 @@ async function syncSession(session) {
     document.querySelector('[data-parent-email]').textContent = '';
     return;
   }
+
+  // Admins use the same sign-in form as parents and coaches. Authorization is
+  // determined by the protected database role check, never by email alone.
+  if (!passwordSetupRequired) {
+    const { data: isAdmin, error: roleError } = await client.rpc('kha_is_admin');
+    if (!roleError && isAdmin === true) {
+      window.location.replace('admin-dashboard.html');
+      return;
+    }
+  }
+
   document.querySelector('[data-parent-email]').textContent = session.user.email || '';
   passwordSetup.hidden = !passwordSetupRequired;
   accountContent.hidden = passwordSetupRequired;

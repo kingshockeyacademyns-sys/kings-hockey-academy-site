@@ -78,13 +78,20 @@ function renderAccounts() {
   }
   list.innerHTML = visible.length ? visible.map(account => {
     const status = account.is_admin ? 'ADMINISTRATOR' : account.disabled ? 'DISABLED' : account.email_confirmed ? 'ACTIVE' : 'EMAIL NOT CONFIRMED';
-    const actionButtons = account.is_admin
-      ? '<span class="account-protected-label">Protected</span>'
-      : `<button type="button" class="account-action-button" data-account-status="${account.disabled ? 'enable' : 'disable'}" data-account-id="${esc(account.id)}">${account.disabled ? 'Enable' : 'Disable'}</button><button type="button" class="account-delete-button" data-account-delete="${esc(account.id)}" data-account-email="${esc(account.email)}">Delete</button>`;
+    const roleButton = account.is_admin
+      ? (account.id === adminUser?.id
+          ? '<span class="account-protected-label">Your admin role</span>'
+          : `<button type="button" class="account-action-button" data-admin-role="revoke" data-account-id="${esc(account.id)}">Revoke admin</button>`)
+      : `<button type="button" class="account-action-button" data-admin-role="grant" data-account-id="${esc(account.id)}">Grant admin</button>`;
+    const accountButtons = account.is_admin
+      ? roleButton
+      : `${roleButton}<button type="button" class="account-action-button" data-account-status="${account.disabled ? 'enable' : 'disable'}" data-account-id="${esc(account.id)}">${account.disabled ? 'Enable' : 'Disable'}</button><button type="button" class="account-delete-button" data-account-delete="${esc(account.id)}" data-account-email="${esc(account.email)}">Delete</button>`;
+    const actionButtons = accountButtons;
     const profile = account.parent_profile;
     const contact = profile ? `<strong>${esc(profile.first_name)} ${esc(profile.last_name)}</strong><small>${esc(profile.phone)}<br>${esc([profile.street_number, profile.postal_code, profile.province].filter(Boolean).join(', '))}</small><details><summary>More details</summary><small>${profile.second_guardian_first ? `Second parent: ${esc([profile.second_guardian_first, profile.second_guardian_last].filter(Boolean).join(' '))}<br>${esc(profile.second_guardian_email)} · ${esc(profile.second_guardian_phone)}<br>${esc([profile.second_guardian_street_number, profile.second_guardian_postal_code, profile.second_guardian_province].filter(Boolean).join(', '))}<br>` : ''}Emergency contact: ${esc(profile.emergency_name)} (${esc(profile.emergency_relationship)})<br>${esc(profile.emergency_phone)}</small></details>` : '<span class="account-status is-disabled">Details missing</span>';
     return `<tr><td><strong>${esc(account.email || 'No email')}</strong>${account.id === adminUser?.id ? '<small>Signed in account</small>' : ''}</td><td>${contact}</td><td><span class="account-status ${account.disabled ? 'is-disabled' : account.is_admin ? 'is-admin' : ''}">${status}</span></td><td>${account.child_count} saved</td><td>${account.news_opt_in ? 'Opted in' : 'Not opted in'}</td><td>${esc(dateText(account.created_at))}</td><td>${esc(dateText(account.last_sign_in_at))}</td><td><div class="account-row-actions">${actionButtons}</div></td></tr>`;
   }).join('') : `<tr><td colspan="8">${accounts.length ? 'No accounts match that email.' : 'No accounts found.'}</td></tr>`;
+  list.querySelectorAll('[data-admin-role]').forEach(button => button.addEventListener('click', changeAdminRole));
   list.querySelectorAll('[data-account-status]').forEach(button => button.addEventListener('click', changeStatus));
   list.querySelectorAll('[data-account-delete]').forEach(button => button.addEventListener('click', removeAccount));
 }
@@ -247,6 +254,30 @@ document.querySelector('[data-team-access-form]')?.addEventListener('submit', as
   show(feedback, `${selectedRosterPlayer.first_name} ${selectedRosterPlayer.last_name} added to the ${teamNames[String(values.get('team_slug'))]} ${teamPlayerAgeGroupValue.value} roster.`, 'success');
   await loadTeamAccess();
 });
+
+async function changeAdminRole(event) {
+  const button = event.currentTarget;
+  const account = accounts.find(item => item.id === button.dataset.accountId);
+  const grant = button.dataset.adminRole === 'grant';
+  if (!account) return;
+  const actionText = grant ? 'grant administrator access to' : 'revoke administrator access from';
+  if (!confirm(`Are you sure you want to ${actionText} ${account.email}?`)) return;
+  button.disabled = true;
+  try {
+    const { data, error } = await client.rpc('kha_set_admin_role', {
+      target_user_id: account.id,
+      make_admin: grant
+    });
+    if (error) throw error;
+    if (data !== true) throw new Error('The database did not confirm the role change.');
+    show(feedback, `Administrator access ${grant ? 'granted to' : 'revoked from'} ${account.email}.`, 'success');
+    await loadAccounts();
+  } catch (error) {
+    console.error('Admin role change failed:', error);
+    show(feedback, error.message || 'The administrator role could not be changed.');
+    button.disabled = false;
+  }
+}
 
 async function changeStatus(event) {
   const button = event.currentTarget;
@@ -507,13 +538,13 @@ teamPlayerSearch?.addEventListener('input', () => {
   clearTimeout(teamPlayerSearchTimer);
   teamPlayerSearchTimer = setTimeout(() => { void searchTeamPlayers(); }, 280);
 });
-document.querySelector('[data-account-signout]')?.addEventListener('click', async () => { await client.auth.signOut(); window.location.replace('admin.html'); });
+document.querySelector('[data-account-signout]')?.addEventListener('click', async () => { await client.auth.signOut(); window.location.replace('parent-account.html'); });
 
 async function initialize() {
   adminMain.hidden = true;
   if (!client) { show(notice, 'The account portal is not connected to Supabase.'); return; }
   const { data: sessionData, error: sessionError } = await client.auth.getSession();
-  if (sessionError || !sessionData.session) { window.location.replace('admin.html'); return; }
+  if (sessionError || !sessionData.session) { window.location.replace('parent-account.html'); return; }
   const { data: isAdmin, error: roleError } = await client.rpc('kha_is_admin');
   if (roleError || isAdmin !== true) { show(notice, 'This account is not approved for family account administration.'); return; }
   adminUser = sessionData.session.user;
@@ -522,7 +553,7 @@ async function initialize() {
   await Promise.all([loadAccounts(), loadRegistrationOptions()]);
   if (accountView === 'add-player') await loadRegistrationRequests();
   updateCampaignMode();
-  client.auth.onAuthStateChange(event => { if (event === 'SIGNED_OUT') window.location.replace('admin.html'); });
+  client.auth.onAuthStateChange(event => { if (event === 'SIGNED_OUT') window.location.replace('parent-account.html'); });
 }
 
 initialize();

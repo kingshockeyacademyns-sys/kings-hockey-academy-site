@@ -269,7 +269,13 @@ async function initializePage() {
   }
 
   if (!isAuthenticatedAdminPage || !session) {
-    window.location.replace('admin.html');
+    window.location.replace('parent-account.html');
+    return;
+  }
+
+  const { data: isAdmin, error: roleError } = await client.rpc('kha_is_admin');
+  if (roleError || isAdmin !== true) {
+    window.location.replace('parent-account.html');
     return;
   }
 
@@ -450,7 +456,7 @@ login?.addEventListener('submit', async event => {
 
 document.querySelector('[data-admin-logout]')?.addEventListener('click', async () => {
   await client.auth.signOut();
-  window.location.replace('admin.html');
+  window.location.replace('parent-account.html');
 });
 
 document.querySelector('[data-admin-export]')?.addEventListener('click', async () => {
@@ -498,7 +504,7 @@ document.querySelector('[data-admin-export]')?.addEventListener('click', async (
 
 if (client) {
   client.auth.onAuthStateChange(event => {
-    if (event === 'SIGNED_OUT' && isAuthenticatedAdminPage) window.location.replace('admin.html');
+    if (event === 'SIGNED_OUT' && isAuthenticatedAdminPage) window.location.replace('parent-account.html');
     if (event === 'SIGNED_IN' && isLoginPage) window.location.replace('admin-dashboard.html');
   });
 }

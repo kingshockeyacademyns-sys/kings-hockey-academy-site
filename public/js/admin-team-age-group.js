@@ -55,12 +55,12 @@ async function init() {
   const valid = renderPage();
   if (!client) { notice('Supabase configuration is missing. Check public/supabase-config.js.', true); return; }
   const { data, error } = await client.auth.getSession();
-  if (error || !data.session) { location.replace('admin.html'); return; }
+  if (error || !data.session) { location.replace('parent-account.html'); return; }
   const { data: isAdmin, error: adminError } = await client.rpc('kha_is_admin');
   if (adminError || isAdmin !== true) { notice('This page is restricted to approved academy administrators.', true); document.querySelector('.age-hub-grid')?.setAttribute('aria-disabled', 'true'); document.querySelectorAll('.age-hub-card').forEach(a => a.addEventListener('click', e => e.preventDefault())); return; }
   const email = document.querySelector('[data-age-admin-email]');
   if (email) email.textContent = data.session.user.email || '';
-  document.querySelector('[data-age-group-logout]')?.addEventListener('click', async () => { await client.auth.signOut(); location.replace('admin.html'); });
+  document.querySelector('[data-age-group-logout]')?.addEventListener('click', async () => { await client.auth.signOut(); location.replace('parent-account.html'); });
   if (!valid) return;
 }
 init();
